@@ -1,6 +1,17 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ScheduleModule } from '@nestjs/schedule';
+import { AuthModule } from './auth/auth.module';
+import { UsersModule } from './users/users.module';
+import { PaymentsModule } from './payments/payments.module';
+import { ProjectsModule } from './projects/projects.module';
+import { SalariesModule } from './salaries/salaries.module';
+import { SheetsModule } from './sheets/sheets.module';
+import { MailModule } from './mail/mail.module';
+import { APP_GUARD } from '@nestjs/core';
+import { JwtGuard } from './auth/jwt.guard';
+
 
 @Module({
   imports: [
@@ -10,7 +21,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       useFactory: (configService: ConfigService) => ({
         type: 'postgres',
         host: configService.get('DB_HOST'),
-        port: +configService.get<number>('DB_PORT'),
+        port: configService.get<number>('DB_PORT'),
         username: configService.get('DB_USERNAME'),
         password: configService.get('DB_PASSWORD'),
         database: configService.get('DB_NAME'),
@@ -19,6 +30,20 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       }),
       inject: [ConfigService],
     }),
+    ScheduleModule.forRoot(), // ✅ Cron Job এর জন্য
+    AuthModule,
+    UsersModule,
+    PaymentsModule,
+    ProjectsModule,
+    SalariesModule,
+    SheetsModule,
+    MailModule,
+  ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: JwtGuard,
+    },
   ],
 })
 export class AppModule {}
