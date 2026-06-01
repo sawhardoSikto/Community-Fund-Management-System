@@ -30,8 +30,9 @@ export class User {
   @Column({ nullable: true })
   nid: string;
 
-  @Column({ nullable: true })
-  photoUrl: string;
+  // এখন
+@Column({ type: 'varchar', nullable: true })
+photoUrl: string | null;
 
   @Column({ default: false })
   isVerified: boolean; // OTP verify হলে true
