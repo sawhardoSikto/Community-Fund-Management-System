@@ -1,4 +1,148 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Project, ProjectStatus } from './entities/project.entity';
+import { ProjectTransaction, TransactionType } from './entities/project-transaction.entity';
+import { CreateProjectDto } from './dto/create-project.dto';
+import { UpdateProjectDto } from './dto/update-project.dto';
+import { CreateTransactionDto } from './dto/create-transaction.dto';
 
 @Injectable()
-export class ProjectsService {}
+export class ProjectsService {
+  constructor(
+    @InjectRepository(Project)
+    private projectRepo: Repository<Project>,
+    @InjectRepository(ProjectTransaction)
+    private transactionRepo: Repository<ProjectTransaction>,
+  ) {}
+
+  // সব project দেখো
+  async findAll() {
+    const projects = await this.projectRepo.find({
+      relations: { transactions: true },
+      order: { createdAt: 'DESC' },
+    });
+
+    // প্রতিটা project এর summary calculate করো
+    const data = projects.map(p => this.calculateProjectSummary(p));
+    return { message: 'Projects fetched', count: projects.length, data };
+  }
+
+  // একটা project দেখো
+  async findOne(id: number) {
+    const project = await this.projectRepo.findOne({
+      where: { id },
+      relations: { transactions: true },
+    });
+    if (!project) throw new NotFoundException(`Project with id ${id} not found`);
+    return { message: 'Project fetched', data: this.calculateProjectSummary(project) };
+  }
+
+  // Project বানাও
+  async create(dto: CreateProjectDto) {
+    const project = this.projectRepo.create(dto);
+    await this.projectRepo.save(project);
+    return { message: 'Project created', data: project };
+  }
+
+  // Project update করো
+  async update(id: number, dto: UpdateProjectDto) {
+    await this.findOne(id);
+    await this.projectRepo.update(id, dto);
+    return this.findOne(id);
+  }
+
+  // Project delete করো
+  async remove(id: number) {
+    await this.findOne(id);
+    await this.projectRepo.delete(id);
+    return { message: 'Project deleted', id };
+  }
+
+  // Transaction add করো
+  async addTransaction(projectId: number, dto: CreateTransactionDto) {
+    const projectData = await this.findOne(projectId);
+    const project = projectData.data;
+
+    const transaction = this.transactionRepo.create({
+      projectId,
+      type: dto.type,
+      amount: dto.amount,
+      description: dto.description,
+      date: new Date(dto.date),
+    });
+    await this.transactionRepo.save(transaction);
+
+    // totalInvested update করো
+    if (dto.type === TransactionType.EXPENSE) {
+      await this.projectRepo.update(projectId, {
+        totalInvested: Number(project.totalInvested) + dto.amount,
+      });
+    }
+
+    return { message: 'Transaction added', data: transaction };
+  }
+
+  // Project summary calculate করো
+  private calculateProjectSummary(project: Project) {
+    const transactions = project.transactions || [];
+
+    const totalExpense = transactions
+      .filter(t => t.type === TransactionType.EXPENSE)
+      .reduce((sum, t) => sum + Number(t.amount), 0);
+
+    const totalProfit = transactions
+      .filter(t => t.type === TransactionType.PROFIT)
+      .reduce((sum, t) => sum + Number(t.amount), 0);
+
+    const capitalReturn = transactions
+      .filter(t => t.type === TransactionType.CAPITAL_RETURN)
+      .reduce((sum, t) => sum + Number(t.amount), 0);
+
+    const totalReceived = totalProfit + capitalReturn;
+    const stillOutside = totalExpense - capitalReturn;
+
+    return {
+      ...project,
+      summary: {
+        totalExpense,
+        totalProfit,
+        capitalReturn,
+        totalReceived,
+        stillOutside: stillOutside > 0 ? stillOutside : 0,
+      },
+    };
+  }
+
+  // Sheet generate এর জন্য — একটা মাসের project income
+  async getProjectIncomeByMonth(month: number, year: number) {
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0);
+
+    return this.transactionRepo
+      .createQueryBuilder('tx')
+      .leftJoinAndSelect('tx.project', 'project')
+      .where('tx.date >= :startDate', { startDate })
+      .andWhere('tx.date <= :endDate', { endDate })
+      .andWhere('tx.type IN (:...types)', {
+        types: [TransactionType.PROFIT, TransactionType.CAPITAL_RETURN],
+      })
+      .getMany();
+  }
+
+  // Overall fund status এর জন্য
+  async getOverallInvestedAmount() {
+    const projects = await this.projectRepo.find({
+      where: { status: ProjectStatus.ACTIVE },
+      relations: { transactions: true },
+    });
+
+    let totalInvested = 0;
+    for (const project of projects) {
+      const summary = this.calculateProjectSummary(project);
+      totalInvested += summary.summary.stillOutside;
+    }
+
+    return totalInvested;
+  }
+}
