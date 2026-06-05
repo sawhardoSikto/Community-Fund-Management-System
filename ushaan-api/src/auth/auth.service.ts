@@ -87,6 +87,7 @@ export class AuthService {
       id: user.id,
       email: user.email,
       role: user.role,
+      photoUrl: user.photoUrl,
     });
 
     return {
@@ -98,6 +99,7 @@ export class AuthService {
         email: user.email,
         role: user.role,
         monthlyAmount: user.monthlyAmount,
+        photoUrl: user.photoUrl,
       },
     };
   }
