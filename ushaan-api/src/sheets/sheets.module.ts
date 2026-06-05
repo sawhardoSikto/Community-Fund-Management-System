@@ -7,6 +7,7 @@ import { PaymentsModule } from '../payments/payments.module';
 import { ProjectsModule } from '../projects/projects.module';
 import { SalariesModule } from '../salaries/salaries.module';
 import { UsersModule } from 'src/users/users.module';
+import { SettingsModule } from 'src/settings/settings.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { UsersModule } from 'src/users/users.module';
     ProjectsModule,
     SalariesModule,
     UsersModule,  
+    SettingsModule,
   ],
   controllers: [SheetsController],
   providers: [SheetsService],

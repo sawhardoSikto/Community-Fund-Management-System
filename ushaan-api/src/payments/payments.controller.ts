@@ -4,6 +4,8 @@ import { CreatePaymentDto } from './dto/create-payment.dto';
 import { UpdatePaymentDto } from './dto/update-payment.dto';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
+import { ManualPaymentDto } from './dto/manual-payment.dto';
+import { MemberOpeningBalanceDto } from './dto/member-opening-balance.dto';
 
 @Controller('payments')
 @UseGuards(RolesGuard)
@@ -55,4 +57,41 @@ export class PaymentsController {
   ) {
     return this.paymentsService.updatePaymentStatus(id, req.user.id, dto);
   }
+
+  // ✅ Admin/Accountant — manually payment add করো (auto approved)
+  @Post('manual')
+@Roles('admin', 'accountant')
+createManualPayment(@Body() dto: ManualPaymentDto, @Request() req) {
+  return this.paymentsService.createManualPayment(dto, req.user.id);
+}
+
+// ✅ Admin — member opening balance set করো
+@Post('opening-balance')
+@Roles('admin', 'accountant')
+setMemberOpeningBalance(
+  @Body() dto: MemberOpeningBalanceDto,
+  @Request() req,
+) {
+  return this.paymentsService.setMemberOpeningBalance(dto, req.user.id);
+}
+
+// ✅ সব member এর opening balance দেখো
+@Get('opening-balances')
+@Roles('admin', 'accountant', 'general_secretary')
+getAllOpeningBalances() {
+  return this.paymentsService.getAllOpeningBalances();
+}
+
+// ✅ Member এর total paid
+@Get('total-paid/:userId')
+@Roles('admin', 'accountant')
+getMemberTotalPaid(@Param('userId', ParseIntPipe) userId: number) {
+  return this.paymentsService.getMemberTotalPaid(userId);
+}
+
+// ✅ নিজের total paid
+@Get('my/total-paid')
+getMyTotalPaid(@Request() req) {
+  return this.paymentsService.getMemberTotalPaid(req.user.id);
+}
 }

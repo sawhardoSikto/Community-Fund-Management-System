@@ -7,6 +7,7 @@ import { PaymentsService } from '../payments/payments.service';
 import { ProjectsService } from '../projects/projects.service';
 import { SalariesService } from '../salaries/salaries.service';
 import { UsersService } from '../users/users.service';
+import { SettingsService } from 'src/settings/settings.service';
 
 @Injectable()
 export class SheetsService {
@@ -17,6 +18,7 @@ export class SheetsService {
     private projectsService: ProjectsService,
     private salariesService: SalariesService,
     private usersService: UsersService,
+    private settingsService: SettingsService,
   ) {}
 
   // Sheet generate করো (draft)
@@ -151,28 +153,61 @@ export class SheetsService {
   }
 
   // Overall Fund Status
-  async getOverallStatus() {
-    const latestSheet = await this.sheetRepo.findOne({
-      where: { status: SheetStatus.PUBLISHED },
-      order: { year: 'DESC', month: 'DESC' },
-    });
+ async getOverallStatus() {
+  const settings = await this.settingsService.getSettings();
 
-    const totalInvested = await this.projectsService.getOverallInvestedAmount();
+  // সব published sheets এর sum
+  const allSheets = await this.sheetRepo.find({
+    where: { status: SheetStatus.PUBLISHED },
+  });
 
-    return {
-      message: 'Overall fund status',
-      data: {
-        cashInHand: latestSheet ? Number(latestSheet.cashInHand) : 0,
-        totalInvested,
-        totalAsset: latestSheet
-          ? Number(latestSheet.cashInHand) + totalInvested
-          : totalInvested,
-        lastUpdated: latestSheet
-          ? `${latestSheet.month}/${latestSheet.year}`
-          : 'No sheet published yet',
+  const websiteMemberIncome = allSheets.reduce(
+    (sum, s) => sum + Number(s.totalMemberIncome), 0
+  );
+  const websiteProjectIncome = allSheets.reduce(
+    (sum, s) => sum + Number(s.totalProjectIncome), 0
+  );
+  const websiteSalary = allSheets.reduce(
+    (sum, s) => sum + Number(s.totalSalary), 0
+  );
+
+  // project invest এই মাসে কত গেছে
+  const totalInvested = await this.projectsService.getOverallInvestedAmount();
+
+  // Cash in Hand
+  const cashInHand = Number(settings.openingCashInHand)
+    + websiteMemberIncome
+    + websiteProjectIncome
+    - websiteSalary;
+
+  // Total Invested (opening + website)
+  const totalInvestedFinal = Number(settings.openingTotalInvested) + totalInvested;
+
+  // Total Profit (opening + website)
+  const websiteProfit = allSheets.reduce(
+    (sum, s) => sum + Number(s.totalProjectIncome), 0
+  );
+  const totalProfit = Number(settings.openingTotalProfit) + websiteProfit;
+
+  return {
+    message: 'Overall fund status',
+    data: {
+      cashInHand: cashInHand.toFixed(2),
+      totalInvested: totalInvestedFinal.toFixed(2),
+      totalProfit: totalProfit.toFixed(2),
+      totalAsset: (cashInHand + totalInvestedFinal).toFixed(2),
+      openingBalance: {
+        month: settings.openingMonth,
+        year: settings.openingYear,
+        cashInHand: settings.openingCashInHand,
+        totalInvested: settings.openingTotalInvested,
+        totalProfit: settings.openingTotalProfit,
       },
-    };
-  }
+    },
+  };
+}
+
+
 
   // Sheet delete করো (draft only)
   async remove(id: number) {

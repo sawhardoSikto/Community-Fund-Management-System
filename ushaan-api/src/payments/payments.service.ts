@@ -5,14 +5,18 @@ import { Payment, PaymentStatus } from './entities/payment.entity';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { UpdatePaymentDto } from './dto/update-payment.dto';
 import { UsersService } from '../users/users.service';
-
+import { ManualPaymentDto } from './dto/manual-payment.dto';
+import { MemberOpeningBalance } from './entities/member-opening-balance.entity';
+import { MemberOpeningBalanceDto } from './dto/member-opening-balance.dto';
 @Injectable()
 export class PaymentsService {
-  constructor(
-    @InjectRepository(Payment)
-    private paymentRepo: Repository<Payment>,
-    private usersService: UsersService,
-  ) {}
+constructor(
+  @InjectRepository(Payment)
+  private paymentRepo: Repository<Payment>,
+  @InjectRepository(MemberOpeningBalance)
+  private openingBalanceRepo: Repository<MemberOpeningBalance>,
+  private usersService: UsersService,
+) {}
 
   // Member — payment submit করো
   async createPayment(userId: number, dto: CreatePaymentDto) {
@@ -99,6 +103,33 @@ export class PaymentsService {
     });
   }
 
+  // Admin/Accountant — manually payment add করো (auto approved)
+async createManualPayment(dto: ManualPaymentDto, addedBy: number) {
+  const user = await this.usersService.findById(dto.userId);
+  if (!user) throw new NotFoundException('User not found');
+
+  const existing = await this.paymentRepo.findOne({
+    where: { userId: dto.userId, month: dto.month, year: dto.year },
+  });
+  if (existing) throw new BadRequestException(
+    `Payment for ${dto.month}/${dto.year} already exists for this user`
+  );
+
+  const payment = this.paymentRepo.create({
+    userId: dto.userId,
+    month: dto.month,
+    year: dto.year,
+    amount: user.monthlyAmount,
+    bkashNumber: dto.bkashNumber,
+    status: PaymentStatus.APPROVED, // ✅ auto approved
+    approvedBy: addedBy,
+    note: dto.note || 'Manually added by admin/accountant',
+  });
+  await this.paymentRepo.save(payment);
+
+  return { message: 'Payment added successfully', data: payment };
+}
+
   // Due check এর জন্য — কোন user এই মাসে pay করেছে
   async getPaidUserIdsByMonth(month: number, year: number): Promise<number[]> {
     const payments = await this.paymentRepo.find({
@@ -149,4 +180,67 @@ export class PaymentsService {
 
     return { message: 'Due history fetched', count: dueList.length, data: dueList };
   }
+
+
+  // ✅ Member opening balance set করো
+async setMemberOpeningBalance(dto: MemberOpeningBalanceDto, adminId: number) {
+  const user = await this.usersService.findById(dto.userId);
+  if (!user) throw new NotFoundException('User not found');
+
+  // আগে আছে কিনা check করো
+  const existing = await this.openingBalanceRepo.findOne({
+    where: { userId: dto.userId },
+  });
+
+  if (existing) {
+    await this.openingBalanceRepo.update(existing.id, {
+      totalPaid: dto.totalPaid,
+      upToMonth: dto.upToMonth,
+      upToYear: dto.upToYear,
+      setBy: adminId,
+    });
+  } else {
+    const balance = this.openingBalanceRepo.create({
+      ...dto,
+      setBy: adminId,
+    });
+    await this.openingBalanceRepo.save(balance);
+  }
+
+  return { message: 'Member opening balance set successfully' };
+}
+
+// ✅ সব member এর opening balance দেখো
+async getAllOpeningBalances() {
+  return this.openingBalanceRepo.find({
+    relations: { user: true },
+    order: { createdAt: 'DESC' },
+  });
+}
+
+// ✅ একজন member এর opening balance দেখো
+async getMemberOpeningBalance(userId: number) {
+  return this.openingBalanceRepo.findOne({
+    where: { userId },
+  });
+}
+
+// ✅ Member এর total paid (opening + website)
+async getMemberTotalPaid(userId: number) {
+  const opening = await this.getMemberOpeningBalance(userId);
+  const openingTotal = opening ? Number(opening.totalPaid) : 0;
+
+  const websitePayments = await this.paymentRepo.find({
+    where: { userId, status: PaymentStatus.APPROVED },
+  });
+  const websiteTotal = websitePayments.reduce(
+    (sum, p) => sum + Number(p.amount), 0
+  );
+
+  return {
+    openingTotal,
+    websiteTotal,
+    grandTotal: openingTotal + websiteTotal,
+  };
+}
 }
