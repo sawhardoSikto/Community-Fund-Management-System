@@ -8,6 +8,7 @@ import { UsersService } from '../users/users.service';
 import { ManualPaymentDto } from './dto/manual-payment.dto';
 import { MemberOpeningBalance } from './entities/member-opening-balance.entity';
 import { MemberOpeningBalanceDto } from './dto/member-opening-balance.dto';
+import { User } from '../users/entities/user.entity';
 @Injectable()
 export class PaymentsService {
 constructor(
@@ -38,7 +39,8 @@ constructor(
       month: dto.month,
       year: dto.year,
       amount: user.monthlyAmount,
-      bkashNumber: dto.bkashNumber,
+      paymentMethod: dto.paymentMethod,
+      transactionNumber: dto.transactionNumber,
       status: PaymentStatus.PENDING,
     });
     await this.paymentRepo.save(payment);
@@ -120,7 +122,8 @@ async createManualPayment(dto: ManualPaymentDto, addedBy: number) {
     month: dto.month,
     year: dto.year,
     amount: user.monthlyAmount,
-    bkashNumber: dto.bkashNumber,
+    paymentMethod: dto.paymentMethod,
+      transactionNumber: dto.transactionNumber,
     status: PaymentStatus.APPROVED, // ✅ auto approved
     approvedBy: addedBy,
     note: dto.note || 'Manually added by admin/accountant',

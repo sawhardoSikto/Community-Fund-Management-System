@@ -1,5 +1,6 @@
-import { IsInt, IsNotEmpty, IsPositive, IsString, Min, Max, IsOptional } from 'class-validator';
+import { IsInt, IsNotEmpty, IsPositive, IsString, Min, Max, IsOptional, IsEnum } from 'class-validator';
 import { Type } from 'class-transformer';
+import { PaymentMethod } from '../entities/payment.entity';
 
 export class ManualPaymentDto {
   @IsInt()
@@ -25,4 +26,10 @@ export class ManualPaymentDto {
   @IsString()
   @IsOptional()
   note?: string;
+   @IsEnum(PaymentMethod)
+    paymentMethod: PaymentMethod; // ✅ bkash/nagad/cash/card/other
+  
+    @IsString()
+    @IsOptional()
+    transactionNumber?: string;
 }

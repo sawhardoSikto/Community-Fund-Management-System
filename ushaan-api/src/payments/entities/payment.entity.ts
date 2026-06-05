@@ -1,10 +1,19 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, CreateDateColumn } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
+import { IsInt, IsNotEmpty, IsString, Min, Max, IsEnum, IsOptional } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export enum PaymentStatus {
   PENDING = 'pending',
   APPROVED = 'approved',
   REJECTED = 'rejected',
+}
+export enum PaymentMethod {
+  BKASH = 'bkash',
+  NAGAD = 'nagad',
+  CASH = 'cash',
+  CARD = 'card',
+  OTHER = 'other',
 }
 
 @Entity()
@@ -24,7 +33,7 @@ export class Payment {
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   amount: number;
 
-  @Column()
+  @Column({ nullable: true })
   bkashNumber: string;
 
   @Column({
@@ -46,4 +55,15 @@ export class Payment {
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })
   user: User;
+
+  @Column({
+    type: 'enum',
+    enum: PaymentMethod,
+    default: PaymentMethod.BKASH,
+  })
+  paymentMethod: PaymentMethod; // ✅ নতুন
+
+  @Column({ nullable: true })
+  transactionNumber: string; // ✅ bKash/Nagad number বা transaction ID
+
 }

@@ -1,5 +1,6 @@
-import { IsInt, IsNotEmpty, IsPositive, IsString, Min, Max } from 'class-validator';
+import { IsInt, IsNotEmpty, IsString, Min, Max, IsEnum, IsOptional,IsPositive } from 'class-validator';
 import { Type } from 'class-transformer';
+import { PaymentMethod } from '../entities/payment.entity';
 
 export class CreatePaymentDto {
   @IsInt()
@@ -13,7 +14,14 @@ export class CreatePaymentDto {
   @Type(() => Number)
   year: number;
 
+  @IsEnum(PaymentMethod)
+  paymentMethod: PaymentMethod; // ✅ bkash/nagad/cash/card/other
+
   @IsString()
-  @IsNotEmpty()
-  bkashNumber: string;
+  @IsOptional()
+  transactionNumber?: string; // ✅ number বা ID (cash হলে লাগবে না)
+
+  @IsString()
+  @IsOptional()
+  note?: string;
 }
