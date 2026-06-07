@@ -15,6 +15,7 @@ export default function RegisterPage() {
     phone: '',
     nid: '',
     monthlyAmount: '200',
+    role: 'member',
   });
   const [photo, setPhoto] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
@@ -54,6 +55,7 @@ export default function RegisterPage() {
       formData.append('phone', form.phone);
       formData.append('nid', form.nid);
       formData.append('monthlyAmount', form.monthlyAmount);
+      formData.append('role', form.role);
       if (photo) formData.append('photo', photo);
 
       await api.post('/auth/register', formData, {
@@ -184,6 +186,20 @@ export default function RegisterPage() {
                 </select>
               </div>
             </div>
+            <div>
+  <label className="block text-xs font-semibold text-slate-300 mb-2">ভূমিকা *</label>
+  <select
+    name="role"
+    value={form.role}
+    onChange={handleChange}
+    className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-amber-400/50 focus:ring-2 focus:ring-amber-400/10 transition-all"
+  >
+    <option value="member">সদস্য</option>
+    <option value="accountant">হিসাবরক্ষক</option>
+    <option value="general_secretary">সাধারণ সম্পাদক</option>
+    <option value="admin">সভাপতি</option>
+  </select>
+</div>
 
             {/* Password */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
