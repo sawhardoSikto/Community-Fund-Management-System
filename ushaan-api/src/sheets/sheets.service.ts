@@ -174,6 +174,7 @@ export class SheetsService {
 
   // Overall Fund Status
 async getOverallStatus() {
+  
   const settings = await this.settingsService.getSettings();
 
   const allSheets = await this.sheetRepo.find({
@@ -197,6 +198,7 @@ async getOverallStatus() {
       },
     };
   }
+  
 
   // ✅ Latest published sheet থেকে নাও
   const latestSheet = allSheets[0];
@@ -212,7 +214,9 @@ async getOverallStatus() {
   const totalProfit = Number(settings.openingTotalProfit) + websiteProjectIncome;
 
   // ✅ Cash in Hand — latest sheet থেকে
-  const cashInHand = Number(latestSheet.cashInHand);
+  // ✅ নতুন
+// ✅ Cash in Hand — latest sheet থেকে
+const cashInHand = Number(latestSheet.cashInHand);
 
   return {
     message: 'Overall fund status',
@@ -223,6 +227,8 @@ async getOverallStatus() {
       totalAsset: (cashInHand + totalInvestedFinal).toFixed(2),
     },
   };
+  console.log('Settings:', settings);
+console.log('Published Sheets:', allSheets.length);
 }
 
   // Sheet delete করো (draft only)

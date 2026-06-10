@@ -13,34 +13,55 @@ export class SettingsService {
 
   // Opening balance set করো
   async setOpeningBalance(dto: OpeningBalanceDto, adminId: number) {
-    let settings = await this.settingsRepo.findOne({ where: { id: 1 } });
+  let settings = await this.settingsRepo.find({
+  order: { id: 'DESC' },
+  take: 1,
+});
 
-    if (settings) {
-      // update করো
-      await this.settingsRepo.update(1, { ...dto, setBy: adminId });
-    } else {
-      // নতুন বানাও
-      settings = this.settingsRepo.create({ ...dto, setBy: adminId });
-      await this.settingsRepo.save(settings);
-    }
+const latest = settings[0];
 
-    return { message: 'Opening balance set successfully', data: await this.getSettings() };
-  }
+if (latest) {
+  await this.settingsRepo.update(
+    latest.id,
+    {
+      ...dto,
+      setBy: adminId,
+    },
+  );
+} else {
+  const newSettings = this.settingsRepo.create({
+    ...dto,
+    setBy: adminId,
+  });
 
+  await this.settingsRepo.save(newSettings);
+}
+  return {
+    message: 'Opening balance set successfully',
+    data: await this.getSettings(),
+  };
+}
   // Settings দেখো
-  async getSettings() {
-    const settings = await this.settingsRepo.findOne({ where: { id: 1 } });
-    if (!settings) {
-      return {
-        openingCashInHand: 0,
-        openingTotalInvested: 0,
-        openingTotalProfit: 0,
-        openingMonth: 1,
-        openingYear: new Date().getFullYear(),
-      };
-    }
-    return settings;
+async getSettings() {
+  const settings = await this.settingsRepo.find({
+    order: { id: 'DESC' },
+    take: 1,
+  });
+
+  const latest = settings[0];
+
+  if (!latest) {
+    return {
+      openingCashInHand: 0,
+      openingTotalInvested: 0,
+      openingTotalProfit: 0,
+      openingMonth: 1,
+      openingYear: new Date().getFullYear(),
+    };
   }
+
+  return latest;
+}
   async resetSettings() {
   await this.settingsRepo.query('DELETE FROM settings');
 }
