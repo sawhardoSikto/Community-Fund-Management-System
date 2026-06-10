@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Body, Param, Query, Request, ParseIntPipe, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, Param, Query, Request, ParseIntPipe, UseGuards, Delete } from '@nestjs/common';
 import { PaymentsService } from './payments.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { UpdatePaymentDto } from './dto/update-payment.dto';
@@ -93,5 +93,18 @@ getMemberTotalPaid(@Param('userId', ParseIntPipe) userId: number) {
 @Get('my/total-paid')
 getMyTotalPaid(@Request() req) {
   return this.paymentsService.getMemberTotalPaid(req.user.id);
+}
+@Delete('reset')
+@Roles('admin')
+async resetPayments() {
+  await this.paymentsService.resetAll();
+  return { message: 'All payments deleted' };
+}
+
+@Delete('opening-balances/reset')
+@Roles('admin')
+async resetOpeningBalances() {
+  await this.paymentsService.resetOpeningBalances();
+  return { message: 'All opening balances deleted' };
 }
 }

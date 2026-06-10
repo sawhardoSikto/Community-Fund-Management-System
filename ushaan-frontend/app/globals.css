@@ -25,3 +25,25 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+.screen-only {
+  display: block;
+}
+
+.print-only {
+  display: none;
+}
+
+@media print {
+  .screen-only {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  body {
+    background: white !important;
+  }
+}

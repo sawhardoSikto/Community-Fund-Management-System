@@ -6,6 +6,9 @@ import { ProjectTransaction, TransactionType } from './entities/project-transact
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
+import { SheetsService } from '../sheets/sheets.service';
+import { SettingsService } from 'src/settings/settings.service';
+
 
 @Injectable()
 export class ProjectsService {
@@ -132,17 +135,41 @@ export class ProjectsService {
 
   // Overall fund status এর জন্য
   async getOverallInvestedAmount() {
-    const projects = await this.projectRepo.find({
-      where: { status: ProjectStatus.ACTIVE },
-      relations: { transactions: true },
-    });
+  // ✅ সব projects (active + completed)
+  const projects = await this.projectRepo.find({
+    relations: { transactions: true },
+  });
 
-    let totalInvested = 0;
-    for (const project of projects) {
-      const summary = this.calculateProjectSummary(project);
-      totalInvested += summary.summary.stillOutside;
-    }
+  let totalStillOutside = 0;
+  for (const project of projects) {
+    const transactions = project.transactions || [];
 
-    return totalInvested;
+    const totalExpense = transactions
+      .filter(t => t.type === TransactionType.EXPENSE)
+      .reduce((sum, t) => sum + Number(t.amount), 0);
+
+    const capitalReturn = transactions
+      .filter(t => t.type === TransactionType.CAPITAL_RETURN)
+      .reduce((sum, t) => sum + Number(t.amount), 0);
+
+    // ✅ এখনো বাইরে = invest - return
+    const stillOutside = totalExpense - capitalReturn;
+    if (stillOutside > 0) totalStillOutside += stillOutside;
   }
+
+  return totalStillOutside;
+}
+// এই মাসের project expense
+async getProjectExpenseByMonth(month: number, year: number) {
+  const startDate = new Date(year, month - 1, 1);
+  const endDate = new Date(year, month, 0);
+
+  return this.transactionRepo
+    .createQueryBuilder('tx')
+    .leftJoinAndSelect('tx.project', 'project')
+    .where('tx.date >= :startDate', { startDate })
+    .andWhere('tx.date <= :endDate', { endDate })
+    .andWhere('tx.type = :type', { type: TransactionType.EXPENSE })
+    .getMany();
+}
 }

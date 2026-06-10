@@ -52,4 +52,6 @@ export class MonthlySheet {
 
   @CreateDateColumn()
   createdAt: Date;
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+totalProjectExpense: number; // ✅ নতুন
 }

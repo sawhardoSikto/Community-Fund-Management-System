@@ -78,10 +78,17 @@ export default function MemberDashboard() {
     </div>
   );
 
-  const currentMonth = new Date().getMonth() + 1;
-  const currentYear = new Date().getFullYear();
-  const thisMonthPaid = myPayments.find(p => p.month === currentMonth && p.year === currentYear && p.status === 'approved');
-  const thisMonthPending = myPayments.find(p => p.month === currentMonth && p.year === currentYear && p.status === 'pending');
+  // ✅ selected month এর payment check
+  const selectedMonthPaid = myPayments.find(
+    p => p.month === paymentForm.month &&
+         p.year === paymentForm.year &&
+         p.status === 'approved'
+  );
+  const selectedMonthPending = myPayments.find(
+    p => p.month === paymentForm.month &&
+         p.year === paymentForm.year &&
+         p.status === 'pending'
+  );
 
   return (
     <div className="min-h-screen bg-slate-950">
@@ -125,7 +132,7 @@ export default function MemberDashboard() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-          {/* ✅ Payment Form — পুরোটা */}
+          {/* Payment Form */}
           <div className="lg:col-span-1 space-y-4">
             <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
               <h2 className="text-base font-bold text-white mb-4 flex items-center gap-2">
@@ -133,32 +140,32 @@ export default function MemberDashboard() {
                 পেমেন্ট করুন
               </h2>
 
-              {/* This month status */}
-              {thisMonthPaid ? (
+              {/* ✅ Selected month status */}
+              {selectedMonthPaid ? (
                 <div className="flex items-center gap-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4 mb-4">
                   <svg className="w-5 h-5 text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   <div>
                     <p className="text-sm font-semibold text-emerald-400">এই মাসের পেমেন্ট হয়েছে ✅</p>
-                    <p className="text-xs text-slate-400 mt-0.5">{MONTH_NAMES[currentMonth - 1]} {currentYear}</p>
+                    <p className="text-xs text-slate-400 mt-0.5">{MONTH_NAMES[paymentForm.month - 1]} {paymentForm.year}</p>
                   </div>
                 </div>
-              ) : thisMonthPending ? (
+              ) : selectedMonthPending ? (
                 <div className="flex items-center gap-3 bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 mb-4">
                   <svg className="w-5 h-5 text-amber-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   <div>
                     <p className="text-sm font-semibold text-amber-400">অনুমোদনের অপেক্ষায় ⏳</p>
-                    <p className="text-xs text-slate-400 mt-0.5">{thisMonthPending.transactionNumber || thisMonthPending.paymentMethod}</p>
+                    <p className="text-xs text-slate-400 mt-0.5">{selectedMonthPending.transactionNumber || selectedMonthPending.paymentMethod}</p>
                   </div>
                 </div>
               ) : null}
 
               <form onSubmit={handlePaymentSubmit} className="space-y-3">
 
-                {/* ✅ Month + Year */}
+                {/* Month + Year */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-semibold text-slate-400 mb-1.5">মাস</label>
@@ -176,7 +183,7 @@ export default function MemberDashboard() {
                   </div>
                 </div>
 
-                {/* ✅ Payment Method */}
+                {/* Payment Method */}
                 <div>
                   <label className="block text-xs font-semibold text-slate-400 mb-1.5">পেমেন্ট পদ্ধতি</label>
                   <div className="grid grid-cols-2 gap-2">
@@ -195,7 +202,7 @@ export default function MemberDashboard() {
                   </div>
                 </div>
 
-                {/* ✅ Transaction Number */}
+                {/* Transaction Number */}
                 {paymentForm.paymentMethod !== 'cash' && (
                   <div>
                     <label className="block text-xs font-semibold text-slate-400 mb-1.5">
@@ -209,7 +216,7 @@ export default function MemberDashboard() {
                   </div>
                 )}
 
-                {/* ✅ Note */}
+                {/* Note */}
                 <div>
                   <label className="block text-xs font-semibold text-slate-400 mb-1.5">নোট (ঐচ্ছিক)</label>
                   <input type="text" value={paymentForm.note}
@@ -226,10 +233,13 @@ export default function MemberDashboard() {
 
                 {/* ✅ Submit Button */}
                 <button type="submit"
-                  disabled={submitting || !!thisMonthPaid || !!thisMonthPending}
+                  disabled={submitting || !!selectedMonthPaid || !!selectedMonthPending}
                   className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white font-bold rounded-xl shadow-lg shadow-amber-500/20 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed">
                   {submitting && <span className="loading loading-spinner loading-xs" />}
-                  {submitting ? 'জমা হচ্ছে...' : thisMonthPaid ? '✅ এই মাস পরিশোধিত' : thisMonthPending ? '⏳ অনুমোদন বাকি' : 'পেমেন্ট জমা দিন'}
+                  {submitting ? 'জমা হচ্ছে...'
+                    : selectedMonthPaid ? '✅ এই মাস পরিশোধিত'
+                    : selectedMonthPending ? '⏳ অনুমোদন বাকি'
+                    : 'পেমেন্ট জমা দিন'}
                 </button>
               </form>
             </div>
@@ -253,13 +263,12 @@ export default function MemberDashboard() {
           {/* Right Side */}
           <div className="lg:col-span-2 space-y-6">
 
-            {/* ✅ Payment History */}
+            {/* Payment History */}
             <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
               <h2 className="text-base font-bold text-white mb-4 flex items-center gap-2">
                 <span className="w-7 h-7 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-400 text-sm">📋</span>
                 পেমেন্ট ইতিহাস
               </h2>
-
               {myPayments.length === 0 ? (
                 <div className="text-center py-8 text-slate-500 text-sm">কোনো পেমেন্ট নেই</div>
               ) : (
@@ -304,7 +313,6 @@ export default function MemberDashboard() {
                 </h2>
                 <Link href="/projects" className="text-xs text-amber-400 hover:text-amber-300 font-semibold">সব দেখুন →</Link>
               </div>
-
               {projects.length === 0 ? (
                 <div className="text-center py-8 text-slate-500 text-sm">কোনো প্রজেক্ট নেই</div>
               ) : (

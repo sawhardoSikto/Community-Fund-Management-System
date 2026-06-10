@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import api from '@/lib/api';
 import { MONTH_NAMES, ROLE_LABELS } from '@/lib/constants';
 import PaymentForm from '@/components/PaymentForm';
@@ -13,15 +14,13 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState({ show: false, msg: '', success: true });
 
-  // States
   const [allUsers, setAllUsers] = useState([]);
   const [projects, setProjects] = useState([]);
   const [overallStatus, setOverallStatus] = useState(null);
   const [sheets, setSheets] = useState([]);
   const [pendingPayments, setPendingPayments] = useState([]);
   const [allPayments, setAllPayments] = useState([]);
-
-  // Settings form
+  const [currentSettings, setCurrentSettings] = useState(null);
   const [settingsForm, setSettingsForm] = useState({
     openingCashInHand: '',
     openingTotalInvested: '',
@@ -29,13 +28,8 @@ export default function AdminDashboard() {
     openingMonth: new Date().getMonth() + 1,
     openingYear: new Date().getFullYear(),
   });
-  const [currentSettings, setCurrentSettings] = useState(null);
 
-  // User form
-  const [userForm, setUserForm] = useState({
-    name: '', email: '', phone: '', nid: '',
-    role: 'member', monthlyAmount: '200',
-  });
+  const [userForm, setUserForm] = useState({ name: '', email: '', phone: '', nid: '', role: 'member', monthlyAmount: '200' });
   const [editingUser, setEditingUser] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [processing, setProcessing] = useState(null);
@@ -73,15 +67,17 @@ export default function AdminDashboard() {
       setOverallStatus(overallRes.data.data);
       setSheets(sheetsRes.data.data || []);
       setPendingPayments(pendingRes.data.data || []);
-      setCurrentSettings(settingsRes.data);
 
-      if (settingsRes.data) {
+      // ✅ Settings সঠিকভাবে set করো
+      const settings = settingsRes.data;
+      setCurrentSettings(settings);
+      if (settings) {
         setSettingsForm({
-          openingCashInHand: settingsRes.data.openingCashInHand || '',
-          openingTotalInvested: settingsRes.data.openingTotalInvested || '',
-          openingTotalProfit: settingsRes.data.openingTotalProfit || '',
-          openingMonth: settingsRes.data.openingMonth || new Date().getMonth() + 1,
-          openingYear: settingsRes.data.openingYear || new Date().getFullYear(),
+          openingCashInHand: Number(settings.openingCashInHand) || '',
+          openingTotalInvested: Number(settings.openingTotalInvested) || '',
+          openingTotalProfit: Number(settings.openingTotalProfit) || '',
+          openingMonth: settings.openingMonth || new Date().getMonth() + 1,
+          openingYear: settings.openingYear || new Date().getFullYear(),
         });
       }
     } catch (err) { console.error(err); }
@@ -95,15 +91,14 @@ export default function AdminDashboard() {
     } catch (err) { console.error(err); }
   };
 
-  // Settings save
   const handleSettingsSave = async (e) => {
     e.preventDefault();
     setSubmitting(true);
     try {
       await api.post('/settings/opening-balance', {
-        openingCashInHand: parseFloat(settingsForm.openingCashInHand),
-        openingTotalInvested: parseFloat(settingsForm.openingTotalInvested),
-        openingTotalProfit: parseFloat(settingsForm.openingTotalProfit),
+        openingCashInHand: parseFloat(settingsForm.openingCashInHand) || 0,
+        openingTotalInvested: parseFloat(settingsForm.openingTotalInvested) || 0,
+        openingTotalProfit: parseFloat(settingsForm.openingTotalProfit) || 0,
         openingMonth: parseInt(settingsForm.openingMonth),
         openingYear: parseInt(settingsForm.openingYear),
       });
@@ -114,15 +109,11 @@ export default function AdminDashboard() {
     } finally { setSubmitting(false); }
   };
 
-  // User update
   const handleUserUpdate = async (e) => {
     e.preventDefault();
     setSubmitting(true);
     try {
-      await api.patch(`/users/${editingUser.id}`, {
-        ...userForm,
-        monthlyAmount: parseInt(userForm.monthlyAmount),
-      });
+      await api.patch(`/users/${editingUser.id}`, { ...userForm, monthlyAmount: parseInt(userForm.monthlyAmount) });
       showToast('সদস্য আপডেট হয়েছে!');
       setEditingUser(null);
       fetchAll();
@@ -131,7 +122,6 @@ export default function AdminDashboard() {
     } finally { setSubmitting(false); }
   };
 
-  // User delete
   const handleUserDelete = async (userId) => {
     if (!confirm('এই সদস্যকে মুছে ফেলবেন?')) return;
     setProcessing(userId);
@@ -144,7 +134,6 @@ export default function AdminDashboard() {
     } finally { setProcessing(null); }
   };
 
-  // Payment approve
   const handlePaymentStatus = async (id, status) => {
     setProcessing(id);
     try {
@@ -154,6 +143,17 @@ export default function AdminDashboard() {
     } catch (err) {
       showToast(err.response?.data?.message || 'ব্যর্থ হয়েছে', false);
     } finally { setProcessing(null); }
+  };
+
+  const handleReset = async (label, endpoint) => {
+    if (!confirm(`"${label}" — আপনি কি নিশ্চিত? এটি পূর্বাবস্থায় ফেরানো যাবে না!`)) return;
+    try {
+      await api.delete(endpoint);
+      showToast(`${label} সম্পন্ন হয়েছে`);
+      fetchAll();
+    } catch (err) {
+      showToast(err.response?.data?.message || 'ব্যর্থ হয়েছে', false);
+    }
   };
 
   if (loading) return (
@@ -193,7 +193,7 @@ export default function AdminDashboard() {
           <div className="bg-slate-900 border border-white/10 rounded-2xl w-full max-w-md shadow-2xl">
             <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
               <h3 className="text-base font-bold text-white">সদস্য সম্পাদনা</h3>
-              <button onClick={() => setEditingUser(null)} className="text-slate-400 hover:text-white transition-colors">
+              <button onClick={() => setEditingUser(null)} className="text-slate-400 hover:text-white">
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
@@ -201,21 +201,18 @@ export default function AdminDashboard() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-slate-400 mb-1.5">নাম</label>
-                  <input type="text" value={userForm.name}
-                    onChange={e => setUserForm(f => ({ ...f, name: e.target.value }))} required
+                  <input type="text" value={userForm.name} onChange={e => setUserForm(f => ({ ...f, name: e.target.value }))} required
                     className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-amber-400/50 transition-all" />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-400 mb-1.5">ফোন</label>
-                  <input type="tel" value={userForm.phone}
-                    onChange={e => setUserForm(f => ({ ...f, phone: e.target.value }))}
+                  <input type="tel" value={userForm.phone} onChange={e => setUserForm(f => ({ ...f, phone: e.target.value }))}
                     className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-amber-400/50 transition-all" />
                 </div>
               </div>
               <div>
                 <label className="block text-xs font-semibold text-slate-400 mb-1.5">ভূমিকা</label>
-                <select value={userForm.role}
-                  onChange={e => setUserForm(f => ({ ...f, role: e.target.value }))}
+                <select value={userForm.role} onChange={e => setUserForm(f => ({ ...f, role: e.target.value }))}
                   className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-amber-400/50 transition-all">
                   <option value="member">সদস্য</option>
                   <option value="accountant">হিসাবরক্ষক</option>
@@ -225,8 +222,7 @@ export default function AdminDashboard() {
               </div>
               <div>
                 <label className="block text-xs font-semibold text-slate-400 mb-1.5">মাসিক চাঁদা</label>
-                <select value={userForm.monthlyAmount}
-                  onChange={e => setUserForm(f => ({ ...f, monthlyAmount: e.target.value }))}
+                <select value={userForm.monthlyAmount} onChange={e => setUserForm(f => ({ ...f, monthlyAmount: e.target.value }))}
                   className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-amber-400/50 transition-all">
                   <option value="200">২০০ ৳</option>
                   <option value="400">৪০০ ৳ (২X)</option>
@@ -234,13 +230,10 @@ export default function AdminDashboard() {
               </div>
               <div className="flex gap-2 pt-2">
                 <button type="button" onClick={() => setEditingUser(null)}
-                  className="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold rounded-xl transition-all text-sm">
-                  বাতিল
-                </button>
+                  className="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold rounded-xl text-sm">বাতিল</button>
                 <button type="submit" disabled={submitting}
-                  className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-xl transition-all text-sm disabled:opacity-60">
-                  {submitting && <span className="loading loading-spinner loading-xs" />}
-                  সংরক্ষণ
+                  className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-xl text-sm disabled:opacity-60">
+                  {submitting && <span className="loading loading-spinner loading-xs" />}সংরক্ষণ
                 </button>
               </div>
             </form>
@@ -256,12 +249,10 @@ export default function AdminDashboard() {
             <h1 className="text-2xl font-black text-white">সভাপতি প্যানেল</h1>
             <p className="text-slate-400 text-sm mt-0.5">স্বাগতম, {user?.name}</p>
           </div>
-          <span className="px-3 py-1.5 bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-bold rounded-xl">
-            👑 সভাপতি
-          </span>
+          <span className="px-3 py-1.5 bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-bold rounded-xl">👑 সভাপতি</span>
         </div>
 
-        {/* Overall Status Cards */}
+        {/* Overall Status */}
         {overallStatus && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
             {[
@@ -300,24 +291,17 @@ export default function AdminDashboard() {
             <button key={t.key} onClick={() => setTab(t.key)}
               className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all ${tab === t.key ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/20' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}>
               {t.label}
-              {t.count > 0 && (
-                <span className="w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-black">
-                  {t.count}
-                </span>
-              )}
+              {t.count > 0 && <span className="w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-black">{t.count}</span>}
             </button>
           ))}
         </div>
 
-        {/* ── Overview Tab ── */}
+        {/* Overview */}
         {tab === 'overview' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Recent Sheets */}
             <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
               <h2 className="text-base font-bold text-white mb-4">সাম্প্রতিক শিট</h2>
-              {sheets.length === 0 ? (
-                <p className="text-center text-slate-500 text-sm py-6">কোনো শিট নেই</p>
-              ) : (
+              {sheets.length === 0 ? <p className="text-slate-500 text-sm py-6 text-center">কোনো শিট নেই</p> : (
                 <div className="space-y-2">
                   {sheets.slice(0, 5).map(sheet => (
                     <div key={sheet.id} className="flex items-center justify-between px-4 py-3 bg-slate-800/50 rounded-xl">
@@ -325,21 +309,20 @@ export default function AdminDashboard() {
                         <p className="text-sm font-bold text-white">{MONTH_NAMES[sheet.month - 1]} {sheet.year}</p>
                         <p className="text-xs text-slate-400">হাতে: {Number(sheet.cashInHand).toFixed(0)} ৳</p>
                       </div>
-                      <span className={`text-xs font-bold px-2.5 py-1 rounded-lg ${sheet.status === 'published' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'}`}>
-                        {sheet.status === 'published' ? '✅ প্রকাশিত' : '📝 খসড়া'}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className={`text-xs font-bold px-2.5 py-1 rounded-lg ${sheet.status === 'published' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'}`}>
+                          {sheet.status === 'published' ? '✅ প্রকাশিত' : '📝 খসড়া'}
+                        </span>
+                        <Link href={`/sheets/${sheet.id}`} className="px-2.5 py-1 bg-slate-700 hover:bg-slate-600 text-white text-xs rounded-lg transition-colors">দেখুন</Link>
+                      </div>
                     </div>
                   ))}
                 </div>
               )}
             </div>
-
-            {/* Projects Overview */}
             <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
               <h2 className="text-base font-bold text-white mb-4">প্রজেক্ট সারসংক্ষেপ</h2>
-              {projects.length === 0 ? (
-                <p className="text-center text-slate-500 text-sm py-6">কোনো প্রজেক্ট নেই</p>
-              ) : (
+              {projects.length === 0 ? <p className="text-slate-500 text-sm py-6 text-center">কোনো প্রজেক্ট নেই</p> : (
                 <div className="space-y-2">
                   {projects.map(project => (
                     <div key={project.id} className="px-4 py-3 bg-slate-800/50 rounded-xl">
@@ -351,9 +334,7 @@ export default function AdminDashboard() {
                       </div>
                       <div className="flex gap-3">
                         <span className="text-xs text-red-400">বিনিয়োগ: {Number(project.totalInvested).toFixed(0)} ৳</span>
-                        {project.summary && (
-                          <span className="text-xs text-emerald-400">মুনাফা: {Number(project.summary.totalProfit).toFixed(0)} ৳</span>
-                        )}
+                        {project.summary && <span className="text-xs text-emerald-400">মুনাফা: {Number(project.summary.totalProfit).toFixed(0)} ৳</span>}
                       </div>
                     </div>
                   ))}
@@ -363,10 +344,9 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* ── Members Tab ── */}
+        {/* Members */}
         {tab === 'members' && (
           <div className="space-y-4">
-            {/* Staff */}
             <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
               <h2 className="text-sm font-bold text-amber-400 mb-3">পদস্থ সদস্য ({staffs.length})</h2>
               <div className="space-y-2">
@@ -374,9 +354,7 @@ export default function AdminDashboard() {
                   <div key={u.id} className="flex items-center justify-between px-4 py-3 bg-slate-800/50 rounded-xl">
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-xl overflow-hidden bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white text-sm font-black shrink-0">
-                        {u.photoUrl ? (
-                          <img src={`${process.env.NEXT_PUBLIC_API_URL}${u.photoUrl}`} alt={u.name} className="w-full h-full object-cover" />
-                        ) : u.name?.[0]?.toUpperCase()}
+                        {u.photoUrl ? <img src={`${process.env.NEXT_PUBLIC_API_URL}${u.photoUrl}`} alt={u.name} className="w-full h-full object-cover" /> : u.name?.[0]?.toUpperCase()}
                       </div>
                       <div>
                         <p className="text-sm font-bold text-white">{u.name}</p>
@@ -384,9 +362,7 @@ export default function AdminDashboard() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-semibold px-2 py-0.5 bg-amber-500/10 text-amber-400 rounded-lg">
-                        {ROLE_LABELS[u.role]}
-                      </span>
+                      <span className="text-xs font-semibold px-2 py-0.5 bg-amber-500/10 text-amber-400 rounded-lg">{ROLE_LABELS[u.role]}</span>
                       <button onClick={() => { setEditingUser(u); setUserForm({ name: u.name, email: u.email, phone: u.phone || '', nid: u.nid || '', role: u.role, monthlyAmount: u.monthlyAmount?.toString() || '200' }); }}
                         className="p-1.5 rounded-lg text-slate-400 hover:text-amber-400 hover:bg-amber-500/10 transition-colors">
                         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" /></svg>
@@ -396,18 +372,14 @@ export default function AdminDashboard() {
                 ))}
               </div>
             </div>
-
-            {/* Members */}
             <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
               <h2 className="text-sm font-bold text-slate-300 mb-3">সাধারণ সদস্য ({members.length})</h2>
               <div className="space-y-2">
                 {members.map(u => (
-                  <div key={u.id} className="flex items-center justify-between px-4 py-3 bg-slate-800/50 rounded-xl hover:bg-slate-800 transition-colors">
+                  <div key={u.id} className="flex items-center justify-between px-4 py-3 bg-slate-800/50 rounded-xl">
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-xl overflow-hidden bg-gradient-to-br from-slate-600 to-slate-700 flex items-center justify-center text-white text-sm font-black shrink-0">
-                        {u.photoUrl ? (
-                          <img src={`${process.env.NEXT_PUBLIC_API_URL}${u.photoUrl}`} alt={u.name} className="w-full h-full object-cover" />
-                        ) : u.name?.[0]?.toUpperCase()}
+                        {u.photoUrl ? <img src={`${process.env.NEXT_PUBLIC_API_URL}${u.photoUrl}`} alt={u.name} className="w-full h-full object-cover" /> : u.name?.[0]?.toUpperCase()}
                       </div>
                       <div>
                         <p className="text-sm font-bold text-white">{u.name}</p>
@@ -424,10 +396,7 @@ export default function AdminDashboard() {
                       </button>
                       <button onClick={() => handleUserDelete(u.id)} disabled={processing === u.id}
                         className="p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-colors disabled:opacity-50">
-                        {processing === u.id
-                          ? <span className="loading loading-spinner loading-xs" />
-                          : <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>
-                        }
+                        {processing === u.id ? <span className="loading loading-spinner loading-xs" /> : <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>}
                       </button>
                     </div>
                   </div>
@@ -437,15 +406,12 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* ── Payments Tab ── */}
+        {/* Payments */}
         {tab === 'payments' && (
           <div className="space-y-5">
-            {/* Pending */}
             {pendingPayments.length > 0 && (
               <div className="bg-slate-900/50 border border-red-500/10 rounded-2xl p-5">
-                <h2 className="text-base font-bold text-white mb-4">
-                  অনুমোদন অপেক্ষায় ({pendingPayments.length})
-                </h2>
+                <h2 className="text-base font-bold text-white mb-4">অনুমোদন অপেক্ষায় ({pendingPayments.length})</h2>
                 <div className="space-y-3">
                   {pendingPayments.map(payment => (
                     <div key={payment.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-800/50 rounded-xl p-4">
@@ -457,9 +423,8 @@ export default function AdminDashboard() {
                           <p className="text-sm font-bold text-white">{payment.user?.name}</p>
                           <p className="text-xs text-slate-400">{MONTH_NAMES[payment.month - 1]} {payment.year} · {Number(payment.amount).toFixed(0)} ৳</p>
                           <p className="text-xs text-slate-500">{payment.paymentMethod}</p>
-                          {payment.transactionNumber && (
-                            <p className="text-xs text-amber-400 font-medium">📱 {payment.transactionNumber}</p>
-                          )}
+                          {payment.transactionNumber && <p className="text-xs text-amber-400 font-medium">📱 {payment.transactionNumber}</p>}
+                          {payment.note && <p className="text-xs text-slate-500 italic">"{payment.note}"</p>}
                         </div>
                       </div>
                       <div className="flex gap-2">
@@ -477,22 +442,17 @@ export default function AdminDashboard() {
                 </div>
               </div>
             )}
-
-            {/* All Payments Filter */}
             <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-4">
                 <h2 className="text-base font-bold text-white flex-1">সব পেমেন্ট</h2>
                 <div className="flex gap-2">
                   <select value={filterMonth} onChange={e => setFilterMonth(parseInt(e.target.value))}
-                    className="px-3 py-2 bg-slate-800 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-amber-400/50 transition-all">
+                    className="px-3 py-2 bg-slate-800 border border-white/10 rounded-xl text-white text-sm focus:outline-none transition-all">
                     {MONTH_NAMES.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
                   </select>
                   <input type="number" value={filterYear} onChange={e => setFilterYear(parseInt(e.target.value))}
-                    className="w-24 px-3 py-2 bg-slate-800 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-amber-400/50 transition-all" />
-                  <button onClick={fetchPayments}
-                    className="px-4 py-2 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-xl text-sm font-semibold hover:bg-amber-500/20 transition-all">
-                    দেখুন
-                  </button>
+                    className="w-24 px-3 py-2 bg-slate-800 border border-white/10 rounded-xl text-white text-sm focus:outline-none transition-all" />
+                  <button onClick={fetchPayments} className="px-4 py-2 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-xl text-sm font-semibold hover:bg-amber-500/20 transition-all">দেখুন</button>
                 </div>
               </div>
               {allPayments.length === 0 ? (
@@ -504,6 +464,7 @@ export default function AdminDashboard() {
                       <div>
                         <p className="text-sm font-bold text-white">{p.user?.name}</p>
                         <p className="text-xs text-slate-400">{p.paymentMethod} {p.transactionNumber && `· ${p.transactionNumber}`}</p>
+                        {p.note && <p className="text-xs text-slate-500 italic">"{p.note}"</p>}
                       </div>
                       <div className="text-right">
                         <p className="text-sm font-bold text-white">{Number(p.amount).toFixed(0)} ৳</p>
@@ -519,7 +480,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* ── My Payment Tab ── */}
+        {/* My Payment */}
         {tab === 'my-payment' && (
           <div className="max-w-md">
             <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
@@ -532,10 +493,12 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* ── Projects Tab ── */}
+        {/* Projects */}
         {tab === 'projects' && (
           <div className="space-y-4">
-            {projects.map(project => (
+            {projects.length === 0 ? (
+              <p className="text-center text-slate-500 py-12">কোনো প্রজেক্ট নেই</p>
+            ) : projects.map(project => (
               <div key={project.id} className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
                 <div className="flex items-center justify-between mb-3">
                   <div>
@@ -547,7 +510,7 @@ export default function AdminDashboard() {
                   </span>
                 </div>
                 {project.summary && (
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
                     {[
                       { label: 'বিনিয়োগ', value: `${Number(project.summary.totalExpense).toFixed(0)} ৳`, color: 'text-red-400' },
                       { label: 'মুনাফা', value: `${Number(project.summary.totalProfit).toFixed(0)} ৳`, color: 'text-emerald-400' },
@@ -561,24 +524,50 @@ export default function AdminDashboard() {
                     ))}
                   </div>
                 )}
+                <div className="flex items-center gap-2 pt-3 border-t border-white/5">
+                  <button onClick={async () => {
+                    try {
+                      await api.patch(`/projects/${project.id}`, { status: project.status === 'active' ? 'completed' : 'active' });
+                      showToast('প্রজেক্ট আপডেট হয়েছে!');
+                      fetchAll();
+                    } catch { showToast('আপডেট ব্যর্থ হয়েছে', false); }
+                  }} className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${project.status === 'active' ? 'bg-slate-700 hover:bg-slate-600 text-slate-300' : 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400'}`}>
+                    {project.status === 'active' ? '✓ সম্পন্ন করুন' : '↺ পুনরায় চালু করুন'}
+                  </button>
+                  <button onClick={async () => {
+                    if (!confirm('এই প্রজেক্ট মুছে ফেলবেন?')) return;
+                    try {
+                      await api.delete(`/projects/${project.id}`);
+                      showToast('প্রজেক্ট মুছে ফেলা হয়েছে');
+                      fetchAll();
+                    } catch { showToast('Delete ব্যর্থ হয়েছে', false); }
+                  }} className="px-3 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl text-xs font-bold transition-all">
+                    🗑️ মুছুন
+                  </button>
+                </div>
               </div>
             ))}
           </div>
         )}
 
-        {/* ── Settings Tab ── */}
+        {/* Settings */}
         {tab === 'settings' && (
-          <div className="max-w-lg">
+          <div className="max-w-lg space-y-5">
+            {/* Opening Balance Form */}
             <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
               <h2 className="text-base font-bold text-white mb-1">প্রারম্ভিক ব্যালেন্স</h2>
-              <p className="text-xs text-slate-400 mb-4">ওয়েবসাইট চালু হওয়ার আগের হিসাব এখানে দিন</p>
+              <p className="text-xs text-slate-400 mb-4">ওয়েবসাইট চালু হওয়ার আগের হিসাব</p>
 
-              {currentSettings?.openingCashInHand > 0 && (
+              {/* ✅ Settings দেখাও */}
+              {currentSettings && Number(currentSettings.openingCashInHand) > 0 && (
                 <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-xl p-3 mb-4">
                   <p className="text-xs text-emerald-400 font-semibold">✅ সেটিংস সংরক্ষিত আছে</p>
-                  <p className="text-xs text-slate-400 mt-1">
-                    {MONTH_NAMES[currentSettings.openingMonth - 1]} {currentSettings.openingYear} থেকে শুরু
-                  </p>
+                  <div className="flex gap-4 mt-2">
+                    <span className="text-xs text-slate-400">নগদ: <span className="text-white font-semibold">{Number(currentSettings.openingCashInHand).toFixed(0)} ৳</span></span>
+                    <span className="text-xs text-slate-400">বিনিয়োগ: <span className="text-white font-semibold">{Number(currentSettings.openingTotalInvested).toFixed(0)} ৳</span></span>
+                    <span className="text-xs text-slate-400">মুনাফা: <span className="text-white font-semibold">{Number(currentSettings.openingTotalProfit).toFixed(0)} ৳</span></span>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-1">{MONTH_NAMES[(currentSettings.openingMonth || 1) - 1]} {currentSettings.openingYear} থেকে শুরু</p>
                 </div>
               )}
 
@@ -587,7 +576,7 @@ export default function AdminDashboard() {
                   <label className="block text-xs font-semibold text-slate-400 mb-1.5">হাতে নগদ (৳)</label>
                   <input type="number" value={settingsForm.openingCashInHand}
                     onChange={e => setSettingsForm(f => ({ ...f, openingCashInHand: e.target.value }))}
-                    placeholder="যেমন: 21028" required
+                    placeholder="যেমন: 21028"
                     className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-amber-400/50 transition-all" />
                 </div>
                 <div>
@@ -626,6 +615,29 @@ export default function AdminDashboard() {
                   সেটিংস সংরক্ষণ করুন
                 </button>
               </form>
+            </div>
+
+            {/* ✅ Danger Zone */}
+            <div className="bg-red-500/5 border border-red-500/10 rounded-2xl p-5">
+              <h2 className="text-base font-bold text-red-400 mb-1">⚠️ বিপজ্জনক অঞ্চল</h2>
+              <p className="text-xs text-slate-400 mb-4">এই অ্যাকশনগুলো পূর্বাবস্থায় ফেরানো যাবে না।</p>
+              <div className="space-y-2">
+                {[
+                  { label: 'সব শিট মুছুন', endpoint: '/sheets/reset' },
+                  { label: 'সব বেতন মুছুন', endpoint: '/salaries/reset' },
+                  { label: 'সব পেমেন্ট মুছুন', endpoint: '/payments/reset' },
+                  { label: 'সব ওপেনিং ব্যালেন্স মুছুন', endpoint: '/payments/opening-balances/reset' },
+                  { label: 'সেটিংস রিসেট করুন', endpoint: '/settings/reset' },
+                ].map((item, i) => (
+                  <button key={i} onClick={() => handleReset(item.label, item.endpoint)}
+                    className="w-full flex items-center justify-between px-4 py-3 bg-red-500/5 hover:bg-red-500/10 border border-red-500/10 hover:border-red-500/20 rounded-xl text-sm font-semibold text-red-400 transition-all">
+                    <span>{item.label}</span>
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                    </svg>
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         )}

@@ -91,4 +91,7 @@ const created: Salary[] = [];
     }
     return created;
   }
+  async resetAll() {
+  await this.salaryRepo.query('DELETE FROM salary');
+}
 }

@@ -26,12 +26,16 @@ constructor(
     if (!user) throw new NotFoundException('User not found');
 
     // ২. এই মাসে already payment করেছে কিনা check
-    const existing = await this.paymentRepo.findOne({
-      where: { userId, month: dto.month, year: dto.year },
-    });
-    if (existing) throw new BadRequestException(
-      `Payment for ${dto.month}/${dto.year} already submitted`
-    );
+    // ✅ pending বা approved — দুটোই check করো
+const existing = await this.paymentRepo.findOne({
+  where: [
+    { userId, month: dto.month, year: dto.year, status: PaymentStatus.APPROVED },
+    { userId, month: dto.month, year: dto.year, status: PaymentStatus.PENDING },
+  ],
+});
+if (existing) throw new BadRequestException(
+  `Payment for ${dto.month}/${dto.year} already submitted`
+);
 
     // ৩. payment বানাও
     const payment = this.paymentRepo.create({
@@ -245,5 +249,13 @@ async getMemberTotalPaid(userId: number) {
     websiteTotal,
     grandTotal: openingTotal + websiteTotal,
   };
+}
+
+async resetAll() {
+  await this.paymentRepo.query('DELETE FROM payment');
+}
+
+async resetOpeningBalances() {
+  await this.openingBalanceRepo.query('DELETE FROM member_opening_balance');
 }
 }

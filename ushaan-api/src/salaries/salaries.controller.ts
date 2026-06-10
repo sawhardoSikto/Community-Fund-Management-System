@@ -39,4 +39,10 @@ export class SalariesController {
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.salariesService.remove(id);
   }
+  @Delete('reset')
+@Roles('admin')
+async reset() {
+  await this.salariesService.resetAll();
+  return { message: 'All salaries deleted' };
+}
 }

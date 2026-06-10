@@ -9,6 +9,7 @@ import { SalariesService } from '../salaries/salaries.service';
 import { UsersService } from '../users/users.service';
 import { SettingsService } from 'src/settings/settings.service';
 
+
 @Injectable()
 export class SheetsService {
   constructor(
@@ -22,64 +23,83 @@ export class SheetsService {
   ) {}
 
   // Sheet generate করো (draft)
-  async generateSheet(dto: CreateSheetDto, accountantId: number) {
-    // ১. এই মাসের sheet already আছে কিনা check
-    const existing = await this.sheetRepo.findOne({
-      where: { month: dto.month, year: dto.year },
-    });
-    if (existing) throw new BadRequestException(
-      `Sheet for ${dto.month}/${dto.year} already exists`
-    );
+ async generateSheet(dto: CreateSheetDto, accountantId: number) {
+  const existing = await this.sheetRepo.findOne({
+    where: { month: dto.month, year: dto.year },
+  });
+  if (existing) throw new BadRequestException(
+    `Sheet for ${dto.month}/${dto.year} already exists`
+  );
 
-    // ২. এই মাসের approved payments
-    const payments = await this.paymentsService.getApprovedPaymentsByMonth(
-      dto.month, dto.year
-    );
-    const totalMemberIncome = payments.reduce((sum, p) => sum + Number(p.amount), 0);
+  // ১. Member payments
+  const payments = await this.paymentsService.getApprovedPaymentsByMonth(
+    dto.month, dto.year
+  );
+  const totalMemberIncome = payments.reduce(
+    (sum, p) => sum + Number(p.amount), 0
+  );
 
-    // ৩. এই মাসের project income
-    const projectTransactions = await this.projectsService.getProjectIncomeByMonth(
-      dto.month, dto.year
-    );
-    const totalProjectIncome = projectTransactions.reduce(
-      (sum, t) => sum + Number(t.amount), 0
-    );
+  // ২. Project income (profit + capital_return)
+  const projectIncomes = await this.projectsService.getProjectIncomeByMonth(
+    dto.month, dto.year
+  );
+  const totalProjectIncome = projectIncomes.reduce(
+    (sum, t) => sum + Number(t.amount), 0
+  );
 
-    // ৪. এই মাসের salary
-    const salaries = await this.salariesService.getSalariesByMonth(dto.month, dto.year);
-    const totalSalary = salaries.reduce((sum, s) => sum + Number(s.amount), 0);
+  // ✅ ৩. Project expense (invest) — এই মাসে কত invest হয়েছে
+  const projectExpenses = await this.projectsService.getProjectExpenseByMonth(
+    dto.month, dto.year
+  );
+  const totalProjectExpense = projectExpenses.reduce(
+    (sum, t) => sum + Number(t.amount), 0
+  );
 
-    // ৫. আগের মাসের balance নাও
-    const previousSheet = await this.getPreviousSheet(dto.month, dto.year);
-    const previousBalance = previousSheet ? Number(previousSheet.cashInHand) : 0;
+  // ৪. Salary
+  const salaries = await this.salariesService.getSalariesByMonth(
+    dto.month, dto.year
+  );
+  const totalSalary = salaries.reduce(
+    (sum, s) => sum + Number(s.amount), 0
+  );
 
-    // ৬. Cash in Hand calculate করো
-    const cashInHand = previousBalance + totalMemberIncome + totalProjectIncome - totalSalary;
+  // ৫. Previous balance
+  const previousSheet = await this.getPreviousSheet(dto.month, dto.year);
+  const previousBalance = previousSheet
+    ? Number(previousSheet.cashInHand)
+    : Number((await this.settingsService.getSettings()).openingCashInHand);
 
-    // ৭. Total invested (active projects এ বাইরে আছে)
-    const totalInvested = await this.projectsService.getOverallInvestedAmount();
+  // ✅ ৬. Cash in Hand = previous + member + project income - salary - project expense
+  const cashInHand = previousBalance
+    + totalMemberIncome
+    + totalProjectIncome
+    - totalSalary
+    - totalProjectExpense;
 
-    // ৮. Total asset
-    const totalAsset = cashInHand + totalInvested;
+  // ✅ ৭. Total Invested = সব project এ stillOutside
+  const totalInvested = await this.projectsService.getOverallInvestedAmount();
 
-    // ৯. Sheet বানাও
-    const sheet = this.sheetRepo.create({
-      month: dto.month,
-      year: dto.year,
-      totalMemberIncome,
-      totalProjectIncome,
-      totalSalary,
-      previousBalance,
-      cashInHand,
-      totalInvested,
-      totalAsset,
-      status: SheetStatus.DRAFT,
-      publishedBy: accountantId,
-    });
-    await this.sheetRepo.save(sheet);
+  // ✅ ৮. Total Asset
+  const totalAsset = cashInHand + totalInvested;
 
-    return { message: 'Sheet generated (draft)', data: sheet };
-  }
+  const sheet = this.sheetRepo.create({
+    month: dto.month,
+    year: dto.year,
+    totalMemberIncome,
+    totalProjectIncome,
+    totalProjectExpense, // ✅
+    totalSalary,
+    previousBalance,
+    cashInHand,
+    totalInvested,
+    totalAsset,
+    status: SheetStatus.DRAFT,
+    publishedBy: accountantId,
+  });
+  await this.sheetRepo.save(sheet);
+
+  return { message: 'Sheet generated (draft)', data: sheet };
+}
 
   // Sheet publish করো
   async publishSheet(id: number, accountantId: number) {
@@ -153,41 +173,46 @@ export class SheetsService {
   }
 
   // Overall Fund Status
- async getOverallStatus() {
+async getOverallStatus() {
   const settings = await this.settingsService.getSettings();
 
-  // সব published sheets এর sum
   const allSheets = await this.sheetRepo.find({
     where: { status: SheetStatus.PUBLISHED },
+    order: { year: 'DESC', month: 'DESC' },
   });
 
-  const websiteMemberIncome = allSheets.reduce(
-    (sum, s) => sum + Number(s.totalMemberIncome), 0
-  );
+  if (allSheets.length === 0) {
+    // Sheet নেই — শুধু opening balance
+    const totalInvested = await this.projectsService.getOverallInvestedAmount();
+    const totalInvestedFinal = Number(settings.openingTotalInvested) + totalInvested;
+    const cashInHand = Number(settings.openingCashInHand);
+
+    return {
+      message: 'Overall fund status',
+      data: {
+        cashInHand: cashInHand.toFixed(2),
+        totalInvested: totalInvestedFinal.toFixed(2),
+        totalProfit: Number(settings.openingTotalProfit).toFixed(2),
+        totalAsset: (cashInHand + totalInvestedFinal).toFixed(2),
+      },
+    };
+  }
+
+  // ✅ Latest published sheet থেকে নাও
+  const latestSheet = allSheets[0];
+
+  // ✅ Total Invested — এখনো বাইরে আছে
+  const totalInvested = await this.projectsService.getOverallInvestedAmount();
+  const totalInvestedFinal = Number(settings.openingTotalInvested) + totalInvested;
+
+  // ✅ Total Profit — opening + সব sheet এর project income
   const websiteProjectIncome = allSheets.reduce(
     (sum, s) => sum + Number(s.totalProjectIncome), 0
   );
-  const websiteSalary = allSheets.reduce(
-    (sum, s) => sum + Number(s.totalSalary), 0
-  );
+  const totalProfit = Number(settings.openingTotalProfit) + websiteProjectIncome;
 
-  // project invest এই মাসে কত গেছে
-  const totalInvested = await this.projectsService.getOverallInvestedAmount();
-
-  // Cash in Hand
-  const cashInHand = Number(settings.openingCashInHand)
-    + websiteMemberIncome
-    + websiteProjectIncome
-    - websiteSalary;
-
-  // Total Invested (opening + website)
-  const totalInvestedFinal = Number(settings.openingTotalInvested) + totalInvested;
-
-  // Total Profit (opening + website)
-  const websiteProfit = allSheets.reduce(
-    (sum, s) => sum + Number(s.totalProjectIncome), 0
-  );
-  const totalProfit = Number(settings.openingTotalProfit) + websiteProfit;
+  // ✅ Cash in Hand — latest sheet থেকে
+  const cashInHand = Number(latestSheet.cashInHand);
 
   return {
     message: 'Overall fund status',
@@ -196,18 +221,9 @@ export class SheetsService {
       totalInvested: totalInvestedFinal.toFixed(2),
       totalProfit: totalProfit.toFixed(2),
       totalAsset: (cashInHand + totalInvestedFinal).toFixed(2),
-      openingBalance: {
-        month: settings.openingMonth,
-        year: settings.openingYear,
-        cashInHand: settings.openingCashInHand,
-        totalInvested: settings.openingTotalInvested,
-        totalProfit: settings.openingTotalProfit,
-      },
     },
   };
 }
-
-
 
   // Sheet delete করো (draft only)
   async remove(id: number) {
@@ -230,4 +246,7 @@ export class SheetsService {
       where: { month: prevMonth, year: prevYear, status: SheetStatus.PUBLISHED },
     });
   }
+  async resetAll() {
+  await this.sheetRepo.query('DELETE FROM monthly_sheet');
+}
 }

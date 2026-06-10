@@ -41,4 +41,7 @@ export class SettingsService {
     }
     return settings;
   }
+  async resetSettings() {
+  await this.settingsRepo.query('DELETE FROM settings');
+}
 }
