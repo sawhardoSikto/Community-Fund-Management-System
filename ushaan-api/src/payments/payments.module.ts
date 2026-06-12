@@ -5,8 +5,9 @@ import { PaymentsService } from './payments.service';
 import { PaymentsController } from './payments.controller';
 import { UsersModule } from 'src/users/users.module';
 import { MemberOpeningBalance } from './entities/member-opening-balance.entity'; // ✅ MemberOpeningBalance entity
+import { MonthlySheet } from 'src/sheets/entities/monthly-sheet.entity';
 @Module({
-  imports: [TypeOrmModule.forFeature([Payment, MemberOpeningBalance]), UsersModule], // ✅ শুধু Payment, আর usersModule
+  imports: [TypeOrmModule.forFeature([Payment, MemberOpeningBalance, MonthlySheet]), UsersModule], // ✅ শুধু Payment, আর usersModule
   controllers: [PaymentsController],
   providers: [PaymentsService],
   exports: [PaymentsService], // ✅ export আছে

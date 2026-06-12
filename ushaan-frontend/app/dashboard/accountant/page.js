@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import api from "@/lib/api";
 import { MONTH_NAMES } from "@/lib/constants";
+import PaymentForm from "@/components/PaymentForm";
 
 const PAYMENT_METHOD_LABELS = {
   bkash: "🟣 বিকাশ",
@@ -62,6 +63,7 @@ export default function AccountantDashboard() {
     startDate: "",
     endDate: "",
   });
+  
 
   const [processing, setProcessing] = useState(null);
   const [submitting, setSubmitting] = useState(false);
@@ -120,20 +122,22 @@ export default function AccountantDashboard() {
   };
 
   // Payment approve/reject
-  const handlePaymentStatus = async (id, status) => {
-    setProcessing(id);
-    try {
-      await api.patch(`/payments/${id}/status`, { status });
-      showToast(
-        `পেমেন্ট ${status === "approved" ? "অনুমোদিত" : "বাতিল"} হয়েছে`,
-      );
-      fetchAll();
-    } catch (err) {
-      showToast(err.response?.data?.message || "ব্যর্থ হয়েছে", false);
-    } finally {
-      setProcessing(null);
+const handlePaymentStatus = async (id, status) => {
+  setProcessing(id);
+  try {
+    const res = await api.patch(`/payments/${id}/status`, { status });
+
+    // ✅ Warning check করো
+    if (res.data.sheetWarning) {
+      showToast(res.data.sheetWarning, false); // ⚠️ warning toast
+    } else {
+      showToast(`পেমেন্ট ${status === 'approved' ? 'অনুমোদিত' : 'বাতিল'} হয়েছে`);
     }
-  };
+    fetchAll();
+  } catch (err) {
+    showToast(err.response?.data?.message || 'ব্যর্থ হয়েছে', false);
+  } finally { setProcessing(null); }
+};
 
   // Manual payment
   const handleManualPayment = async (e) => {
@@ -375,6 +379,18 @@ export default function AccountantDashboard() {
             </button>
           ))}
         </div>
+               {/* My Payment */}
+                {tab === 'my-payment' && (
+                  <div className="max-w-md">
+                    <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
+                      <h2 className="text-base font-bold text-white mb-4 flex items-center gap-2">
+                        <span className="w-7 h-7 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-400 text-sm">💰</span>
+                        আমার মাসিক পেমেন্ট
+                      </h2>
+                      <PaymentForm user={user} onSuccess={(msg) => showToast(msg)} />
+                    </div>
+                  </div>
+                )}
 
         {/* ── Payments Tab ── */}
         {tab === "payments" && (
@@ -1215,6 +1231,29 @@ export default function AccountantDashboard() {
                         >
                           দেখুন
                         </Link>
+                        {sheet.status === 'published' && (
+  <button
+    onClick={async () => {
+      if (!confirm(`${MONTH_NAMES[sheet.month - 1]} ${sheet.year} শিট regenerate করবেন?`)) return;
+      try {
+        // ১. পুরনো sheet delete করো
+        await api.delete(`/sheets/${sheet.id}`);
+        // ২. নতুন করে generate করো
+        await api.post('/sheets/generate', { month: sheet.month, year: sheet.year });
+        // ৩. Publish করো
+        const newSheet = await api.get(`/sheets/by-month?month=${sheet.month}&year=${sheet.year}`);
+        await api.patch(`/sheets/${newSheet.data.data.id}/publish`);
+        showToast('শিট regenerate হয়েছে!');
+        fetchAll();
+      } catch (err) {
+        showToast(err.response?.data?.message || 'ব্যর্থ হয়েছে', false);
+      }
+    }}
+    className="px-3 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 text-xs font-semibold rounded-lg transition-colors"
+  >
+    🔄 Regenerate
+  </button>
+)}
                         {sheet.status === "draft" && (
                           <button
                             onClick={() => handlePublishSheet(sheet.id)}

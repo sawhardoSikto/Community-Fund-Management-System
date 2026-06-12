@@ -143,7 +143,7 @@ export class SheetsService {
 
     // সব members এর payment status
     const allUsers = await this.usersService.findAll();
-    const members = allUsers.filter(u => u.role === 'member');
+   const members = allUsers;
     const paidUserIds = payments.map(p => p.userId);
 
     const memberPaymentStatus = members.map(member => ({
@@ -232,16 +232,22 @@ console.log('Published Sheets:', allSheets.length);
 }
 
   // Sheet delete করো (draft only)
-  async remove(id: number) {
-    const sheet = await this.sheetRepo.findOne({ where: { id } });
-    if (!sheet) throw new NotFoundException('Sheet not found');
-    if (sheet.status === SheetStatus.PUBLISHED) {
-      throw new BadRequestException('Cannot delete published sheet');
-    }
-    await this.sheetRepo.delete(id);
-    return { message: 'Sheet deleted', id };
+async remove(id: number) {
+  const sheet = await this.sheetRepo.findOne({
+    where: { id },
+  });
+
+  if (!sheet) {
+    throw new NotFoundException('Sheet not found');
   }
 
+  await this.sheetRepo.delete(id);
+
+  return {
+    message: 'Sheet deleted',
+    id,
+  };
+}
   // আগের মাসের sheet খোঁজো
   private async getPreviousSheet(month: number, year: number) {
     let prevMonth = month - 1;

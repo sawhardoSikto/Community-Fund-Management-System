@@ -9,6 +9,8 @@ import { ManualPaymentDto } from './dto/manual-payment.dto';
 import { MemberOpeningBalance } from './entities/member-opening-balance.entity';
 import { MemberOpeningBalanceDto } from './dto/member-opening-balance.dto';
 import { User } from '../users/entities/user.entity';
+import { MonthlySheet, SheetStatus } from 'src/sheets/entities/monthly-sheet.entity';
+import { SettingsService } from 'src/settings/settings.service';
 @Injectable()
 export class PaymentsService {
 constructor(
@@ -16,6 +18,8 @@ constructor(
   private paymentRepo: Repository<Payment>,
   @InjectRepository(MemberOpeningBalance)
   private openingBalanceRepo: Repository<MemberOpeningBalance>,
+  @InjectRepository(MonthlySheet)  // ✅ add করো
+  private sheetRepo: Repository<MonthlySheet>,
   private usersService: UsersService,
 ) {}
 
@@ -87,19 +91,38 @@ if (existing) throw new BadRequestException(
 
   // Accountant — payment approve/reject করো
   async updatePaymentStatus(paymentId: number, accountantId: number, dto: UpdatePaymentDto) {
-    const payment = await this.paymentRepo.findOne({ where: { id: paymentId } });
-    if (!payment) throw new NotFoundException('Payment not found');
-    if (payment.status !== PaymentStatus.PENDING) {
-      throw new BadRequestException('Payment already processed');
-    }
-
-    payment.status = dto.status;
-    payment.approvedBy = accountantId;
-    if (dto.note) payment.note = dto.note;
-    await this.paymentRepo.save(payment);
-
-    return { message: `Payment ${dto.status}`, data: payment };
+  const payment = await this.paymentRepo.findOne({ where: { id: paymentId } });
+  if (!payment) throw new NotFoundException('Payment not found');
+  if (payment.status !== PaymentStatus.PENDING) {
+    throw new BadRequestException('Payment already processed');
   }
+
+  payment.status = dto.status;
+  payment.approvedBy = accountantId;
+  if (dto.note) payment.note = dto.note;
+  await this.paymentRepo.save(payment);
+
+  // ✅ Approved হলে check করো sheet published কিনা
+  let sheetWarning: string | null = null;
+  if (dto.status === PaymentStatus.APPROVED) {
+    const publishedSheet = await this.sheetRepo.findOne({
+      where: {
+        month: payment.month,
+        year: payment.year,
+        status: SheetStatus.PUBLISHED,
+      },
+    });
+    if (publishedSheet) { 
+      sheetWarning = `${payment.month}/${payment.year} এর শিট ইতোমধ্যে প্রকাশিত হয়েছে। অনুগ্রহ করে শিট regenerate করুন।`;
+    }
+  }
+
+  return {
+    message: `Payment ${dto.status}`,
+    sheetWarning,
+    data: payment,
+  };
+}
 
   // Sheet generate এর জন্য — একটা মাসের approved payments
   async getApprovedPaymentsByMonth(month: number, year: number) {
