@@ -12,6 +12,7 @@ import { MailModule } from './mail/mail.module';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtGuard } from './auth/jwt.guard';
 import { SettingsModule } from './settings/settings.module';
+import { ExpensesModule } from './expenses/expenses.module';
 
 
 @Module({
@@ -40,6 +41,7 @@ import { SettingsModule } from './settings/settings.module';
     SheetsModule,
     MailModule,
     SettingsModule,
+    ExpensesModule,
   ],
   providers: [
     {

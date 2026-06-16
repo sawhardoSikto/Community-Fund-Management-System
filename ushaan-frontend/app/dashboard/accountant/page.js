@@ -15,13 +15,24 @@ const PAYMENT_METHOD_LABELS = {
   other: "🔵 অন্যান্য",
 };
 
-export default function AccountantDashboard() {
+
+
+
+export default  function AccountantDashboard() {
   const router = useRouter();
   const [user, setUser] = useState(null);
   const [tab, setTab] = useState("payments");
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState({ show: false, msg: "", success: true });
-
+  
+  const [expenses, setExpenses] = useState([]);
+  const [expenseForm, setExpenseForm] = useState({
+    title: '',
+    amount: '',
+    category: 'other',
+    description: '',
+    date: new Date().toISOString().split('T')[0],
+  });
   // States
   const [pendingPayments, setPendingPayments] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
@@ -87,28 +98,27 @@ export default function AccountantDashboard() {
     }
   }, []);
 
-  const fetchAll = async () => {
-    setLoading(true);
-    try {
-      const [pendingRes, usersRes, projectsRes, overallRes, sheetsRes] =
-        await Promise.all([
-          api.get("/payments/pending"),
-          api.get("/users"),
-          api.get("/projects"),
-          api.get("/sheets/overall-status"),
-          api.get("/sheets"),
-        ]);
-      setPendingPayments(pendingRes.data.data || []);
-      setAllUsers(usersRes.data || []);
-      setProjects(projectsRes.data.data || []);
-      setOverallStatus(overallRes.data.data);
-      setSheets(sheetsRes.data.data || []);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+const fetchAll = async () => {
+  setLoading(true);
+  try {
+    const [pendingRes, usersRes, projectsRes, overallRes, sheetsRes, expensesRes] =
+      await Promise.all([
+        api.get('/payments/pending'),
+        api.get('/users'),
+        api.get('/projects'),
+        api.get('/sheets/overall-status'),
+        api.get('/sheets'),
+        api.get('/expenses'), // ✅ এখানে add করো
+      ]);
+    setPendingPayments(pendingRes.data.data || []);
+    setAllUsers(usersRes.data || []);
+    setProjects(projectsRes.data.data || []);
+    setOverallStatus(overallRes.data.data);
+    setSheets(sheetsRes.data.data || []);
+    setExpenses(expensesRes.data || []); // ✅
+  } catch (err) { console.error(err); }
+  finally { setLoading(false); }
+};
 
   const fetchSalaries = async () => {
     try {
@@ -120,6 +130,8 @@ export default function AccountantDashboard() {
       console.error(err);
     }
   };
+
+
 
   // Payment approve/reject
 const handlePaymentStatus = async (id, status) => {
@@ -263,6 +275,7 @@ const handlePaymentStatus = async (id, status) => {
     { key: "projects", label: "📁 প্রজেক্ট" },
     { key: "salary", label: "👔 বেতন" },
     { key: "sheets", label: "📋 শিট" },
+    { key: 'expenses', label: '💸 খরচ' },
   ];
 
   return (
@@ -1132,6 +1145,133 @@ const handlePaymentStatus = async (id, status) => {
             </div>
           </div>
         )}
+        {tab === 'expenses' && (
+  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    {/* Add Expense Form */}
+    <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
+      <h2 className="text-base font-bold text-white mb-4">নতুন খরচ যোগ করুন</h2>
+      <form onSubmit={async (e) => {
+        e.preventDefault();
+        setSubmitting(true);
+        try {
+          await api.post('/expenses', {
+            ...expenseForm,
+            amount: parseFloat(expenseForm.amount),
+          });
+          showToast('খরচ যোগ হয়েছে!');
+          setExpenseForm(f => ({ ...f, title: '', amount: '', description: '' }));
+          fetchAll();
+        } catch (err) {
+          showToast(err.response?.data?.message || 'ব্যর্থ হয়েছে', false);
+        } finally { setSubmitting(false); }
+      }} className="space-y-3">
+
+        <div>
+          <label className="block text-xs font-semibold text-slate-400 mb-1.5">খরচের নাম</label>
+          <input type="text" value={expenseForm.title}
+            onChange={e => setExpenseForm(f => ({ ...f, title: e.target.value }))}
+            placeholder="যেমন: মিটিং খরচ" required
+            className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-amber-400/50 transition-all" />
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="block text-xs font-semibold text-slate-400 mb-1.5">পরিমাণ (৳)</label>
+            <input type="number" value={expenseForm.amount}
+              onChange={e => setExpenseForm(f => ({ ...f, amount: e.target.value }))}
+              placeholder="0" required
+              className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-amber-400/50 transition-all" />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-400 mb-1.5">তারিখ</label>
+            <input type="date" value={expenseForm.date}
+              onChange={e => setExpenseForm(f => ({ ...f, date: e.target.value }))}
+              className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-amber-400/50 transition-all" />
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-xs font-semibold text-slate-400 mb-1.5">ক্যাটাগরি</label>
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              { value: 'food', label: '🍽️ খাবার' },
+              { value: 'transport', label: '🚗 যাতায়াত' },
+              { value: 'meeting', label: '🤝 মিটিং' },
+              { value: 'utility', label: '🔧 ইউটিলিটি' },
+              { value: 'other', label: '📦 অন্যান্য' },
+            ].map(cat => (
+              <button key={cat.value} type="button"
+                onClick={() => setExpenseForm(f => ({ ...f, category: cat.value }))}
+                className={`py-2 rounded-xl text-xs font-semibold transition-all ${expenseForm.category === cat.value ? 'bg-amber-500 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}>
+                {cat.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-xs font-semibold text-slate-400 mb-1.5">বিবরণ (ঐচ্ছিক)</label>
+          <input type="text" value={expenseForm.description}
+            onChange={e => setExpenseForm(f => ({ ...f, description: e.target.value }))}
+            placeholder="খরচের বিবরণ"
+            className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-amber-400/50 transition-all" />
+        </div>
+
+        <button type="submit" disabled={submitting}
+          className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white font-bold rounded-xl transition-all disabled:opacity-60">
+          {submitting && <span className="loading loading-spinner loading-xs" />}
+          খরচ যোগ করুন
+        </button>
+      </form>
+    </div>
+
+    {/* Expense List */}
+    <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
+      <h2 className="text-base font-bold text-white mb-4">
+        খরচের তালিকা
+        <span className="ml-2 text-sm font-normal text-slate-400">
+          মোট: {expenses.reduce((sum, e) => sum + Number(e.amount), 0).toFixed(0)} ৳
+        </span>
+      </h2>
+      {expenses.length === 0 ? (
+        <p className="text-center text-slate-500 text-sm py-8">কোনো খরচ নেই</p>
+      ) : (
+        <div className="space-y-2 max-h-96 overflow-y-auto">
+          {expenses.map(expense => (
+            <div key={expense.id} className="flex items-center justify-between px-4 py-3 bg-slate-800/50 rounded-xl">
+              <div>
+                <p className="text-sm font-semibold text-white">{expense.title}</p>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <span className="text-xs text-slate-500">
+                    {expense.category === 'food' ? '🍽️' :
+                     expense.category === 'transport' ? '🚗' :
+                     expense.category === 'meeting' ? '🤝' :
+                     expense.category === 'utility' ? '🔧' : '📦'}
+                    {' '}{new Date(expense.date).toLocaleDateString('bn-BD')}
+                  </span>
+                </div>
+                {expense.description && <p className="text-xs text-slate-500 italic mt-0.5">"{expense.description}"</p>}
+              </div>
+              <div className="flex items-center gap-3">
+                <p className="text-sm font-bold text-red-400">-{Number(expense.amount).toFixed(0)} ৳</p>
+                <button onClick={async () => {
+                  if (!confirm('এই খরচ মুছে ফেলবেন?')) return;
+                  await api.delete(`/expenses/${expense.id}`);
+                  showToast('খরচ মুছে ফেলা হয়েছে');
+                  fetchAll();
+                }} className="p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-colors">
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  </div>
+)}
 
         {/* ── Sheets Tab ── */}
         {tab === "sheets" && (
@@ -1268,7 +1408,7 @@ const handlePaymentStatus = async (id, status) => {
                           </button>
                         )}
                       </div>
-                    </div>
+                    </div> 
                   ))}
                 </div>
               )}

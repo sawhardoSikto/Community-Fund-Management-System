@@ -8,6 +8,7 @@ import { ProjectsService } from '../projects/projects.service';
 import { SalariesService } from '../salaries/salaries.service';
 import { UsersService } from '../users/users.service';
 import { SettingsService } from 'src/settings/settings.service';
+import { ExpensesService } from 'src/expenses/expenses.service';
 
 
 @Injectable()
@@ -20,6 +21,7 @@ export class SheetsService {
     private salariesService: SalariesService,
     private usersService: UsersService,
     private settingsService: SettingsService,
+    private expensesService: ExpensesService, // ✅ নতুন
   ) {}
 
   // Sheet generate করো (draft)
@@ -62,6 +64,10 @@ export class SheetsService {
   const totalSalary = salaries.reduce(
     (sum, s) => sum + Number(s.amount), 0
   );
+  // ✅ General Expense
+const totalGeneralExpense = await this.expensesService.getTotalExpenseByMonth(
+  dto.month, dto.year
+);
 
   // ৫. Previous balance
   const previousSheet = await this.getPreviousSheet(dto.month, dto.year);
@@ -74,7 +80,8 @@ export class SheetsService {
     + totalMemberIncome
     + totalProjectIncome
     - totalSalary
-    - totalProjectExpense;
+    - totalProjectExpense
+    - totalGeneralExpense;
 
   // ✅ ৭. Total Invested = সব project এ stillOutside
   const totalInvested = await this.projectsService.getOverallInvestedAmount();
@@ -90,6 +97,7 @@ export class SheetsService {
     totalProjectExpense, // ✅
     totalSalary,
     previousBalance,
+    totalGeneralExpense, // ✅
     cashInHand,
     totalInvested,
     totalAsset,
@@ -181,6 +189,9 @@ async getOverallStatus() {
     where: { status: SheetStatus.PUBLISHED },
     order: { year: 'DESC', month: 'DESC' },
   });
+  const websiteGeneralExpense = allSheets.reduce(
+  (sum, s) => sum + Number(s.totalGeneralExpense || 0), 0
+);
 
   if (allSheets.length === 0) {
     // Sheet নেই — শুধু opening balance

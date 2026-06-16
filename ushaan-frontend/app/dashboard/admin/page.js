@@ -628,6 +628,7 @@ export default function AdminDashboard() {
                   { label: 'সব পেমেন্ট মুছুন', endpoint: '/payments/reset' },
                   { label: 'সব ওপেনিং ব্যালেন্স মুছুন', endpoint: '/payments/opening-balances/reset' },
                   { label: 'সেটিংস রিসেট করুন', endpoint: '/settings/reset' },
+                  { label: 'সব সাধারণ খরচ মুছুন', endpoint: '/expenses/reset/all' },
                 ].map((item, i) => (
                   <button key={i} onClick={() => handleReset(item.label, item.endpoint)}
                     className="w-full flex items-center justify-between px-4 py-3 bg-red-500/5 hover:bg-red-500/10 border border-red-500/10 hover:border-red-500/20 rounded-xl text-sm font-semibold text-red-400 transition-all">
