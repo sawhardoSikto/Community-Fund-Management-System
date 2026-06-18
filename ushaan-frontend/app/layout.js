@@ -5,10 +5,11 @@ import Navbar from '@/components/Navbar'
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata = {
-  title: 'ঊষাণ - Community Fund Management',
-  description: 'ঊষাণ Community Fund Management System',
-};
-
+  title: 'ঊষাণ',
+  icons: {
+    icon: '/ushaan.png',
+  },
+}
 export default function RootLayout({ children }) {
   return (
     <html lang="bn">
