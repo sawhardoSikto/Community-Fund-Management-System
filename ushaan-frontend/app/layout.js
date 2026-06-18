@@ -5,9 +5,15 @@ import Navbar from '@/components/Navbar'
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata = {
-  title: 'ঊষাণ',
+  title: {
+    default: 'ঊষাণ',
+    template: '%s | ঊষাণ',
+  },
+  description: 'ঊষাণ কমিউনিটি ফান্ড ম্যানেজমেন্ট সিস্টেম',
   icons: {
     icon: '/ushaan.png',
+    shortcut: '/ushaan.png',
+    apple: '/ushaan.png',
   },
 }
 export default function RootLayout({ children }) {
