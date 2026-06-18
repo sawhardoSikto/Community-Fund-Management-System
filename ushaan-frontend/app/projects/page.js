@@ -115,12 +115,13 @@ function ProjectCard({ project }) {
       {s && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {[
-            { label: 'মোট বিনিয়োগ', value: `${Number(s.totalExpense).toFixed(0)} ৳`, color: 'text-red-400' },
-            { label: 'মোট মুনাফা', value: `${Number(s.totalProfit).toFixed(0)} ৳`, color: 'text-emerald-400' },
-            { label: 'মূলধন ফেরত', value: `${Number(s.capitalReturn).toFixed(0)} ৳`, color: 'text-blue-400' },
-            { label: 'এখনো বাইরে', value: `${Number(s.stillOutside).toFixed(0)} ৳`, color: 'text-amber-400' },
+            { label: 'পুরনো বিনিয়োগ', value: `${Number(s.openingInvested).toFixed(0)} ৳`, color: 'text-slate-300', bg: 'border-slate-500/20' },
+  { label: 'নতুন বিনিয়োগ', value: `${Number(s.newExpense).toFixed(0)} ৳`, color: 'text-red-400', bg: 'border-red-500/20' },
+  { label: 'মোট মুনাফা', value: `${Number(s.totalProfit).toFixed(0)} ৳`, color: 'text-emerald-400', bg: 'border-emerald-500/20' },
+  { label: 'মূলধন ফেরত', value: `${Number(s.capitalReturn).toFixed(0)} ৳`, color: 'text-blue-400', bg: 'border-blue-500/20' },
+  { label: 'এখনো বাইরে', value: `${Number(s.stillOutside).toFixed(0)} ৳`, color: 'text-amber-400', bg: 'border-amber-500/20' },
           ].map((item, i) => (
-            <div key={i} className="bg-slate-800/50 rounded-xl p-3 text-center">
+            <div key={i} className={`bg-slate-800/50 rounded-xl p-3 text-center border ${item.bg}`}>
               <p className={`text-sm font-black ${item.color}`}>{item.value}</p>
               <p className="text-xs text-slate-500 mt-0.5">{item.label}</p>
             </div>

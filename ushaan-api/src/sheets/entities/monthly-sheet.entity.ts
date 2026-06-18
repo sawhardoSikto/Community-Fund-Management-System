@@ -56,4 +56,6 @@ export class MonthlySheet {
 totalProjectExpense: number; // ✅ নতুন
 @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
 totalGeneralExpense: number; // ✅ নতুন
+@Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+totalCapitalReturn: number; // ✅ নতুন
 }

@@ -76,9 +76,23 @@ export default function RegisterPage() {
 
         {/* Logo */}
         <div className="text-center mb-6">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 shadow-lg shadow-amber-500/30 mb-3">
-            <span className="text-xl font-black text-white">ঊ</span>
-          </div>
+<div className="flex justify-center mb-6">
+  <div className="relative">
+    <img
+      src="/ushaan.png"
+      alt="ঊষাণ"
+      className="w-20 h-20 rounded-2xl object-contain shadow-lg shadow-amber-500/30"
+      onError={(e) => {
+        e.target.style.display = "none";
+        e.target.nextSibling.style.display = "flex";
+      }}
+    />
+
+    <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 items-center justify-center text-3xl font-black text-white shadow-lg shadow-amber-500/30 hidden">
+      ঊ
+    </div>
+  </div>
+</div>
           <h1 className="text-2xl font-black text-white">ঊষাণ</h1>
           <p className="text-slate-400 text-xs mt-1">নতুন সদস্য নিবন্ধন</p>
         </div>

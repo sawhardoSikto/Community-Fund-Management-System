@@ -48,7 +48,15 @@ export class SheetsService {
   const totalProjectIncome = projectIncomes.reduce(
     (sum, t) => sum + Number(t.amount), 0
   );
+  const capitalReturns = await this.projectsService.getCapitalReturnByMonth(
+  dto.month,
+  dto.year,
+);
 
+const totalCapitalReturn = capitalReturns.reduce(
+  (sum, t) => sum + Number(t.amount),
+  0,
+);
   // ✅ ৩. Project expense (invest) — এই মাসে কত invest হয়েছে
   const projectExpenses = await this.projectsService.getProjectExpenseByMonth(
     dto.month, dto.year
@@ -77,11 +85,12 @@ const totalGeneralExpense = await this.expensesService.getTotalExpenseByMonth(
 
   // ✅ ৬. Cash in Hand = previous + member + project income - salary - project expense
   const cashInHand = previousBalance
-    + totalMemberIncome
-    + totalProjectIncome
-    - totalSalary
-    - totalProjectExpense
-    - totalGeneralExpense;
+  + totalMemberIncome
+  + totalProjectIncome
+  + totalCapitalReturn
+  - totalSalary
+  - totalProjectExpense
+  - totalGeneralExpense;
 
   // ✅ ৭. Total Invested = সব project এ stillOutside
   const totalInvested = await this.projectsService.getOverallInvestedAmount();
@@ -103,6 +112,7 @@ const totalGeneralExpense = await this.expensesService.getTotalExpenseByMonth(
     totalAsset,
     status: SheetStatus.DRAFT,
     publishedBy: accountantId,
+    totalCapitalReturn, // ✅
   });
   await this.sheetRepo.save(sheet);
 
@@ -182,23 +192,22 @@ const totalGeneralExpense = await this.expensesService.getTotalExpenseByMonth(
 
   // Overall Fund Status
 async getOverallStatus() {
-  
   const settings = await this.settingsService.getSettings();
+
+  // ✅ Project থেকে stillOutside নাও (openingInvested সহ)
+  const totalInvested = await this.projectsService.getOverallInvestedAmount();
+
+  // ✅ settings এর openingTotalInvested আর লাগবে না
+  // কারণ project এ openingInvested set হচ্ছে
+  const totalInvestedFinal = totalInvested;
 
   const allSheets = await this.sheetRepo.find({
     where: { status: SheetStatus.PUBLISHED },
     order: { year: 'DESC', month: 'DESC' },
   });
-  const websiteGeneralExpense = allSheets.reduce(
-  (sum, s) => sum + Number(s.totalGeneralExpense || 0), 0
-);
 
   if (allSheets.length === 0) {
-    // Sheet নেই — শুধু opening balance
-    const totalInvested = await this.projectsService.getOverallInvestedAmount();
-    const totalInvestedFinal = Number(settings.openingTotalInvested) + totalInvested;
     const cashInHand = Number(settings.openingCashInHand);
-
     return {
       message: 'Overall fund status',
       data: {
@@ -209,25 +218,14 @@ async getOverallStatus() {
       },
     };
   }
-  
 
-  // ✅ Latest published sheet থেকে নাও
   const latestSheet = allSheets[0];
+  const cashInHand = Number(latestSheet.cashInHand);
 
-  // ✅ Total Invested — এখনো বাইরে আছে
-  const totalInvested = await this.projectsService.getOverallInvestedAmount();
-  const totalInvestedFinal = Number(settings.openingTotalInvested) + totalInvested;
-
-  // ✅ Total Profit — opening + সব sheet এর project income
   const websiteProjectIncome = allSheets.reduce(
     (sum, s) => sum + Number(s.totalProjectIncome), 0
   );
   const totalProfit = Number(settings.openingTotalProfit) + websiteProjectIncome;
-
-  // ✅ Cash in Hand — latest sheet থেকে
-  // ✅ নতুন
-// ✅ Cash in Hand — latest sheet থেকে
-const cashInHand = Number(latestSheet.cashInHand);
 
   return {
     message: 'Overall fund status',
@@ -238,10 +236,7 @@ const cashInHand = Number(latestSheet.cashInHand);
       totalAsset: (cashInHand + totalInvestedFinal).toFixed(2),
     },
   };
-  console.log('Settings:', settings);
-console.log('Published Sheets:', allSheets.length);
 }
-
   // Sheet delete করো (draft only)
 async remove(id: number) {
   const sheet = await this.sheetRepo.findOne({

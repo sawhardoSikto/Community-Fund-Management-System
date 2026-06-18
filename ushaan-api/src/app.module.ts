@@ -27,6 +27,9 @@ import { ExpensesModule } from './expenses/expenses.module';
         username: configService.get('DB_USERNAME'),
         password: configService.get('DB_PASSWORD'),
         database: configService.get('DB_NAME'),
+        ssl:{
+          rejectUnauthorized: false
+        },
         autoLoadEntities: true,
         synchronize: true,
       }),

@@ -71,6 +71,7 @@ export default  function AccountantDashboard() {
   const [projectForm, setProjectForm] = useState({
     name: "",
     description: "",
+    openingInvested: "", // ✅ নতুন ফিল্ড
     startDate: "",
     endDate: "",
   });
@@ -225,20 +226,21 @@ const handlePaymentStatus = async (id, status) => {
   };
 
   // Project create
-  const handleCreateProject = async (e) => {
-    e.preventDefault();
-    setSubmitting(true);
-    try {
-      await api.post("/projects", projectForm);
-      showToast("প্রজেক্ট তৈরি হয়েছে!");
-      setProjectForm({ name: "", description: "", startDate: "", endDate: "" });
-      fetchAll();
-    } catch (err) {
-      showToast(err.response?.data?.message || "ব্যর্থ হয়েছে", false);
-    } finally {
-      setSubmitting(false);
-    }
-  };
+const handleCreateProject = async (e) => {
+  e.preventDefault();
+  setSubmitting(true);
+  try {
+    await api.post('/projects', {
+      ...projectForm,
+      openingInvested: parseFloat(projectForm.openingInvested) || 0, // ✅
+    });
+    showToast('প্রজেক্ট তৈরি হয়েছে!');
+    setProjectForm({ name: '', description: '', openingInvested: '', startDate: '', endDate: '' });
+    fetchAll();
+  } catch (err) {
+    showToast(err.response?.data?.message || 'ব্যর্থ হয়েছে', false);
+  } finally { setSubmitting(false); }
+};
 
   // Transaction add
   const handleAddTransaction = async (e) => {
@@ -679,14 +681,12 @@ const handlePaymentStatus = async (id, status) => {
                     required
                     className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-amber-400/50 transition-all"
                   >
-                    <option value="">সদস্য নির্বাচন করুন</option>
-                    {allUsers
-                      .filter((u) => u.role === "member")
-                      .map((u) => (
-                        <option key={u.id} value={u.id}>
-                          {u.name}
-                        </option>
-                      ))}
+  <option value="">সদস্য নির্বাচন করুন</option>
+{allUsers.map(u => (
+  <option key={u.id} value={u.id}>
+    {u.name} ({u.role})
+  </option>
+))}
                   </select>
                 </div>
                 <div>
@@ -819,6 +819,21 @@ const handlePaymentStatus = async (id, status) => {
                       className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-amber-400/50 transition-all"
                     />
                   </div>
+                  <div>
+  <label className="block text-xs font-semibold text-slate-400 mb-1.5">
+    পুরনো বিনিয়োগ (৳)
+  </label>
+  <input
+    type="number"
+    value={projectForm.openingInvested}
+    onChange={e => setProjectForm(f => ({ ...f, openingInvested: e.target.value }))}
+    placeholder="আগে থেকে যা invest আছে (না থাকলে 0)"
+    className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-amber-400/50 transition-all"
+  />
+  <p className="text-xs text-slate-500 mt-1">
+    ওয়েবসাইটের আগে যদি এই project এ invest করা থাকে
+  </p>
+</div>
                 </div>
                 <button
                   type="submit"

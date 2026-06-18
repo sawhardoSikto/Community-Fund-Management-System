@@ -103,7 +103,8 @@ export class ProjectsService {
       .reduce((sum, t) => sum + Number(t.amount), 0);
 
     const totalReceived = totalProfit + capitalReturn;
-    const stillOutside = totalExpense - capitalReturn;
+// ✅ openingInvested যোগ করো
+  const stillOutside = Number(project.openingInvested) + totalExpense - capitalReturn;
 
     return {
       ...project,
@@ -118,20 +119,34 @@ export class ProjectsService {
   }
 
   // Sheet generate এর জন্য — একটা মাসের project income
-  async getProjectIncomeByMonth(month: number, year: number) {
-    const startDate = new Date(year, month - 1, 1);
-    const endDate = new Date(year, month, 0);
+async getProjectIncomeByMonth(month: number, year: number) {
+  const startDate = new Date(year, month - 1, 1);
+  const endDate = new Date(year, month, 0);
 
-    return this.transactionRepo
-      .createQueryBuilder('tx')
-      .leftJoinAndSelect('tx.project', 'project')
-      .where('tx.date >= :startDate', { startDate })
-      .andWhere('tx.date <= :endDate', { endDate })
-      .andWhere('tx.type IN (:...types)', {
-        types: [TransactionType.PROFIT, TransactionType.CAPITAL_RETURN],
-      })
-      .getMany();
-  }
+  return this.transactionRepo
+    .createQueryBuilder('tx')
+    .leftJoinAndSelect('tx.project', 'project')
+    .where('tx.date >= :startDate', { startDate })
+    .andWhere('tx.date <= :endDate', { endDate })
+    .andWhere('tx.type = :type', {
+      type: TransactionType.PROFIT,
+    })
+    .getMany();
+}
+async getCapitalReturnByMonth(month: number, year: number) {
+  const startDate = new Date(year, month - 1, 1);
+  const endDate = new Date(year, month, 0);
+
+  return this.transactionRepo
+    .createQueryBuilder('tx')
+    .leftJoinAndSelect('tx.project', 'project')
+    .where('tx.date >= :startDate', { startDate })
+    .andWhere('tx.date <= :endDate', { endDate })
+    .andWhere('tx.type = :type', {
+      type: TransactionType.CAPITAL_RETURN,
+    })
+    .getMany();
+}
 
   // Overall fund status এর জন্য
   async getOverallInvestedAmount() {
@@ -153,7 +168,7 @@ export class ProjectsService {
       .reduce((sum, t) => sum + Number(t.amount), 0);
 
     // ✅ এখনো বাইরে = invest - return
-    const stillOutside = totalExpense - capitalReturn;
+    const stillOutside = Number(project.openingInvested) + totalExpense - capitalReturn;
     if (stillOutside > 0) totalStillOutside += stillOutside;
   }
 

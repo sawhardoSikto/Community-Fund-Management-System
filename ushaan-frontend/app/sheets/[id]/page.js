@@ -34,7 +34,10 @@ const handleDownloadPDF = useReactToPrint({
 
   if (!sheet) return null;
 
-  const totalIncome = Number(sheet.totalMemberIncome) + Number(sheet.totalProjectIncome);
+ const totalIncome =
+  Number(sheet.totalMemberIncome) +
+  Number(sheet.totalProjectIncome) +
+  Number(sheet.totalCapitalReturn || 0);
 const totalExpense =
   Number(sheet.totalSalary || 0) +
   Number(sheet.totalProjectExpense || 0) +
@@ -168,7 +171,12 @@ const totalExpense =
         +{Number(sheet.totalProjectIncome).toFixed(0)} ৳
       </td>
     </tr>
-
+    <tr>
+  <td className="border p-2">মূলধন ফেরত</td>
+  <td className="border p-2 text-right">
+    +{Number(sheet.totalCapitalReturn || 0).toFixed(0)} ৳
+  </td>
+</tr>
     <tr>
       <td className="border p-2">প্রজেক্ট বিনিয়োগ</td>
       <td className="border p-2 text-right">
@@ -198,6 +206,7 @@ const totalExpense =
       <td className="border p-2 text-right font-bold">
         {(Number(sheet.totalMemberIncome)
           + Number(sheet.totalProjectIncome)
+          + Number(sheet.totalCapitalReturn || 0)
           - Number(sheet.totalProjectExpense || 0)
           - Number(sheet.totalSalary)
           - Number(sheet.totalGeneralExpense || 0)
@@ -349,12 +358,37 @@ const totalExpense =
             <h2 className="text-base font-bold text-white mb-4">📊 মাসিক সারসংক্ষেপ</h2>
             <div className="space-y-2">
               {[
-                { label: 'সদস্য চাঁদা', value: `+${Number(sheet.totalMemberIncome).toFixed(0)} ৳`, color: 'text-emerald-400' },
-                { label: 'প্রজেক্ট আয়', value: `+${Number(sheet.totalProjectIncome).toFixed(0)} ৳`, color: 'text-emerald-400' },
-                { label: 'প্রজেক্ট বিনিয়োগ', value: `-${Number(sheet.totalProjectExpense || 0).toFixed(0)} ৳`, color: 'text-red-400' },
-                { label: 'বেতন', value: `-${Number(sheet.totalSalary).toFixed(0)} ৳`, color: 'text-red-400' },
-                { label: 'সাধারণ খরচ', value: `-${Number(sheet.totalGeneralExpense || 0).toFixed(0)} ৳`, color: 'text-red-400' },
-              ].map((item, i) => (
+  {
+    label: 'সদস্য চাঁদা',
+    value: `+${Number(sheet.totalMemberIncome).toFixed(0)} ৳`,
+    color: 'text-emerald-400'
+  },
+  {
+    label: 'প্রজেক্ট আয়',
+    value: `+${Number(sheet.totalProjectIncome).toFixed(0)} ৳`,
+    color: 'text-emerald-400'
+  },
+  {
+    label: 'মূলধন ফেরত',
+    value: `+${Number(sheet.totalCapitalReturn || 0).toFixed(0)} ৳`,
+    color: 'text-blue-400'
+  },
+  {
+    label: 'প্রজেক্ট বিনিয়োগ',
+    value: `-${Number(sheet.totalProjectExpense || 0).toFixed(0)} ৳`,
+    color: 'text-red-400'
+  },
+  {
+    label: 'বেতন',
+    value: `-${Number(sheet.totalSalary).toFixed(0)} ৳`,
+    color: 'text-red-400'
+  },
+  {
+    label: 'সাধারণ খরচ',
+    value: `-${Number(sheet.totalGeneralExpense || 0).toFixed(0)} ৳`,
+    color: 'text-red-400'
+  },
+].map((item, i) => (
                 <div key={i} className="flex justify-between px-4 py-2 bg-slate-800/50 rounded-xl">
                   <span className="text-sm text-slate-300">{item.label}</span>
                   <span className={`text-sm font-bold ${item.color}`}>{item.value}</span>

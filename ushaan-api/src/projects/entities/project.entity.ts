@@ -20,6 +20,9 @@ export class Project {
   @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
   totalInvested: number;
 
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+  openingInvested: number; // ✅ নতুন
+
   @Column({ type: 'date', nullable: true })
   startDate: Date;
 

@@ -51,15 +51,37 @@ export default function LoginPage() {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
 
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 shadow-lg shadow-amber-500/30 mb-4">
-            {/* Logo placeholder — তুমি এখানে <img> দেবে */}
-            <span className="text-2xl font-black text-white">ঊ</span>
-          </div>
-          <h1 className="text-3xl font-black text-white tracking-tight">ঊষাণ</h1>
-          <p className="text-slate-400 text-sm mt-1">Community Fund Management</p>
-        </div>
+{/* Logo */}
+<div className="text-center mb-8">
+  <div className="inline-flex flex-col items-center gap-3 mb-6">
+    {/* Logo */}
+    <div className="relative">
+      <img
+        src="/ushaan.png"
+        alt="ঊষাণ"
+        className="w-20 h-20 rounded-2xl object-contain shadow-lg shadow-amber-500/30"
+        onError={(e) => {
+          e.target.style.display = 'none';
+          e.target.nextSibling.style.display = 'flex';
+        }}
+      />
+      {/* Fallback */}
+      <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 items-center justify-center text-3xl font-black text-white shadow-lg shadow-amber-500/30 hidden">
+        ঊ
+      </div>
+    </div>
+
+    <h1 className="text-3xl font-black text-white tracking-tight">ঊষাণ</h1>
+   
+
+    {/* ✅ Animated Welcome Text */}
+    <div className="overflow-hidden h-7">
+     <p className="text-amber-400 text-sm font-semibold animate-slide-up">
+  ✨ Welcome to Ushaan Family ✨
+</p>
+    </div>
+  </div>
+</div>
 
         {/* Card */}
         <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-8 shadow-2xl">
