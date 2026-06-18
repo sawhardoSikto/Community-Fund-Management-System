@@ -16,13 +16,16 @@ import { MailService } from './mail.service';
             user: configService.get('MAIL_USER'),
             pass: configService.get('MAIL_PASS'),
           },
+          tls:{
+            rejectUnauthorized: false
+          },
         },
         defaults: {
           from: `"USHAAN" <${configService.get('MAIL_USER')}>`,
         },
       }),
       inject: [ConfigService],
-    }),
+    }), 
   ],
   providers: [MailService],
   exports: [MailService],
