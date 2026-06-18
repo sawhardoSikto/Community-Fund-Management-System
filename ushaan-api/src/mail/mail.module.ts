@@ -10,6 +10,7 @@ import { MailService } from './mail.service';
       useFactory: (configService: ConfigService) => ({
         transport: {
           host: 'smtp.gmail.com',
+          family: 4, // Force IPv4
           port: 587,
           secure: false,
           auth: {
