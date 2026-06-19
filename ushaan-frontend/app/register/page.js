@@ -56,7 +56,7 @@ export default function RegisterPage() {
       formData.append('phone', form.phone);
       formData.append('nid', form.nid);
       formData.append('monthlyAmount', form.monthlyAmount);
-      formData.append('role', form.role);
+
       if (photo) formData.append('photo', photo);
 
       await api.post('/auth/register', formData, {

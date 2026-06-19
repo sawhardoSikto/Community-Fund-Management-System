@@ -31,6 +31,21 @@ const [showNotifications, setShowNotifications] = useState(false);
     console.error(err);
   }
 };
+useEffect(() => {
+  loadUser();
+
+  window.addEventListener(
+    "userChanged",
+    loadUser
+  );
+
+  return () => {
+    window.removeEventListener(
+      "userChanged",
+      loadUser
+    );
+  };
+}, []);
 
 useEffect(() => {
   if (!user) return;
