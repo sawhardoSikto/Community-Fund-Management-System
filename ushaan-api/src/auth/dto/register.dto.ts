@@ -26,9 +26,5 @@ export class RegisterDto {
   @Type(() => Number)
   monthlyAmount?: number; // 200 বা 400, default 200
 
-  @IsString()
-  @IsOptional()
-  @IsIn(['member', 'accountant', 'admin', 'general_secretary'])
-  role?: string;
-  
+
 }

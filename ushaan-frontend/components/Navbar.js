@@ -11,6 +11,8 @@ export default function Navbar() {
   const pathname = usePathname();
   const [user, setUser] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+const [showNotifications, setShowNotifications] = useState(false);
 
   const loadUser = () => {
     try {
@@ -21,12 +23,26 @@ export default function Navbar() {
       setUser(null);
     }
   };
+  const fetchNotifications = async () => {
+  try {
+    const res = await api.get('/notifications/my');
+    setNotifications(res.data);
+  } catch (err) {
+    console.error(err);
+  }
+};
 
-  useEffect(() => {
-    loadUser();
-    window.addEventListener("userChanged", loadUser);
-    return () => window.removeEventListener("userChanged", loadUser);
-  }, []);
+useEffect(() => {
+  if (!user) return;
+
+  fetchNotifications();
+
+  const interval = setInterval(() => {
+    fetchNotifications();
+  }, 30000);
+
+  return () => clearInterval(interval);
+}, [user]);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -43,7 +59,9 @@ export default function Navbar() {
     return "/dashboard/member";
   };
   console.log(user);
- 
+ const unreadCount = notifications.filter(
+  n => !n.isRead
+).length;
   return (
     <nav className="sticky top-0 z-50 bg-slate-900/95 backdrop-blur-md border-b border-white/5 shadow-xl">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -95,6 +113,80 @@ export default function Navbar() {
               <span className="hidden sm:block px-2.5 py-1 text-xs font-semibold bg-amber-500/10 text-amber-400 rounded-lg border border-amber-500/20">
                 {ROLE_LABELS[user.role]}
               </span>
+              <div className="relative">
+  <button
+    onClick={() =>
+      setShowNotifications(!showNotifications)
+    }
+    className="relative p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
+  >
+    <span className="text-lg">🔔</span>
+
+    {unreadCount > 0 && (
+      <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center font-bold">
+        {unreadCount}
+      </span>
+    )}
+  </button>
+
+  {showNotifications && (
+    <div className="absolute right-0 mt-2 w-80 bg-slate-800 border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-50">
+      <div className="px-4 py-3 border-b border-white/10">
+        <h3 className="font-bold text-white">
+          Notifications
+        </h3>
+      </div>
+
+      <div className="max-h-96 overflow-y-auto">
+        {notifications.length === 0 ? (
+          <div className="p-4 text-sm text-slate-400">
+            কোনো নোটিফিকেশন নেই
+          </div>
+        ) : (
+          notifications.map((n) => (
+            <div
+              key={n.id}
+              className={`p-4 border-b border-white/5 cursor-pointer hover:bg-white/5 ${
+                !n.isRead
+                  ? 'bg-amber-500/5'
+                  : ''
+              }`}
+              onClick={async () => {
+                if (!n.isRead) {
+                  await api.patch(
+                    `/notifications/${n.id}/read`
+                  );
+
+                  setNotifications(prev =>
+                    prev.map(item =>
+                      item.id === n.id
+                        ? {
+                            ...item,
+                            isRead: true,
+                          }
+                        : item
+                    )
+                  );
+                }
+              }}
+            >
+              <p className="text-sm text-white">
+                {n.message}
+              </p>
+
+              <p className="text-xs text-slate-400 mt-1">
+                {new Date(
+                  n.createdAt
+                ).toLocaleString()
+                }
+              </p>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  )}
+</div>
 
               {/* User Dropdown */}
               <div className="dropdown dropdown-end">

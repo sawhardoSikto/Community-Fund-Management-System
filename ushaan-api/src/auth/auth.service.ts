@@ -7,39 +7,32 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
-import { MailService } from '../mail/mail.service';
 import * as bcrypt from 'bcrypt';
+
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
-import { VerifyOtpDto } from './dto/verify-otp.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
-import { ResetPasswordDto } from './dto/reset-password.dto';
 
 @Injectable()
 export class AuthService {
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
-    private mailService: MailService,
   ) {}
 
   async register(dto: RegisterDto, file?: Express.Multer.File) {
-    // ১. email check
     const existing = await this.usersService.findByEmail(dto.email);
-    if (existing) throw new ConflictException('Email already registered');
 
-    // ২. password hash
+    if (existing) {
+      throw new ConflictException('Email already registered');
+    }
+
     const hashedPassword = await bcrypt.hash(dto.password, 10);
 
-    // ৩. OTP বানাও
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const otpExpiry = new Date();
-    otpExpiry.setMinutes(otpExpiry.getMinutes() + 10);
+    const photoUrl = file
+      ? `/uploads/${file.filename}`
+      : null;
 
-    // ৪. photo URL — file আসলে path বানাও, না আসলে null
-    const photoUrl = file ? `/uploads/${file.filename}` : null;
-
-    // ৫. User save
     const user = await this.usersService.create({
       name: dto.name,
       email: dto.email,
@@ -47,41 +40,39 @@ export class AuthService {
       phone: dto.phone,
       nid: dto.nid,
       monthlyAmount: dto.monthlyAmount || 200,
-      role: dto.role || 'member',
-      isVerified: false,
-      otp,
-      otpExpiry,
-      photoUrl,  // ← এটাই নতুন
+     role: 'member',
+      isVerified: true,
+      photoUrl,
     });
 
-    // ৬. OTP email
-    await this.mailService.sendRegistrationOtp(user.email, user.name, otp);
-
     return {
-      message: 'Registration successful! Please verify your email with the OTP sent.',
-      email: user.email,
+      message: 'Registration successful',
+      data: {
+        id: user.id,
+        email: user.email,
+      },
     };
-  }
-
-  async verifyOtp(dto: VerifyOtpDto) {
-    const user = await this.usersService.findByEmail(dto.email);
-    if (!user) throw new NotFoundException('User not found');
-    if (user.isVerified) throw new BadRequestException('Email already verified');
-    if (!user.otp || !user.otpExpiry) throw new BadRequestException('No OTP requested');
-    if (new Date() > user.otpExpiry) throw new BadRequestException('OTP expired');
-    if (user.otp !== dto.otp) throw new BadRequestException('Invalid OTP');
-
-    await this.usersService.verifyUser(user.id);
-    return { message: 'Email verified successfully! You can now login.' };
   }
 
   async login(dto: LoginDto) {
     const user = await this.usersService.findByEmail(dto.email);
-    if (!user) throw new UnauthorizedException('Invalid email or password');
-    if (!user.isVerified) throw new UnauthorizedException('Please verify your email first');
 
-    const isMatch = await bcrypt.compare(dto.password, user.password);
-    if (!isMatch) throw new UnauthorizedException('Invalid email or password');
+    if (!user) {
+      throw new UnauthorizedException(
+        'Invalid email or password',
+      );
+    }
+
+    const isMatch = await bcrypt.compare(
+      dto.password,
+      user.password,
+    );
+
+    if (!isMatch) {
+      throw new UnauthorizedException(
+        'Invalid email or password',
+      );
+    }
 
     const token = this.jwtService.sign({
       id: user.id,
@@ -105,35 +96,51 @@ export class AuthService {
   }
 
   async forgotPassword(dto: ForgotPasswordDto) {
-    const user = await this.usersService.findByEmail(dto.email);
-    if (!user) throw new NotFoundException('Email not found');
+    const user = await this.usersService.findByEmail(
+      dto.email,
+    );
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiry = new Date();
-    expiry.setMinutes(expiry.getMinutes() + 10);
+    if (!user) {
+      throw new NotFoundException(
+        'User not found',
+      );
+    }
 
-    await this.usersService.saveOtp(user.id, otp, expiry);
-    await this.mailService.sendPasswordResetOtp(user.email, user.name, otp);
+    if (
+      user.phone !== dto.phone ||
+      user.nid !== dto.nid
+    ) {
+      throw new BadRequestException(
+        'Email, Phone or NID does not match',
+      );
+    }
 
-    return { message: 'OTP sent to your email' };
-  }
+    const hashedPassword = await bcrypt.hash(
+      dto.newPassword,
+      10,
+    );
 
-  async resetPassword(dto: ResetPasswordDto) {
-    const user = await this.usersService.findByEmail(dto.email);
-    if (!user) throw new NotFoundException('Email not found');
-    if (!user.otp || !user.otpExpiry) throw new BadRequestException('No OTP requested');
-    if (new Date() > user.otpExpiry) throw new BadRequestException('OTP expired');
-    if (user.otp !== dto.otp) throw new BadRequestException('Invalid OTP');
+    await this.usersService.resetPassword(
+      user.id,
+      hashedPassword,
+    );
 
-    const hashedPassword = await bcrypt.hash(dto.newPassword, 10);
-    await this.usersService.resetPassword(user.id, hashedPassword);
-
-    return { message: 'Password reset successfully' };
+    return {
+      message: 'Password reset successful',
+    };
   }
 
   async getProfile(userId: number) {
-    const user = await this.usersService.findById(userId);
-    if (!user) throw new NotFoundException('User not found');
+    const user = await this.usersService.findById(
+      userId,
+    );
+
+    if (!user) {
+      throw new NotFoundException(
+        'User not found',
+      );
+    }
+
     return {
       message: 'Profile fetched',
       data: {

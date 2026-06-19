@@ -1,0 +1,52 @@
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Notification } from './entities/notification.entity';
+
+@Injectable()
+export class NotificationsService {
+  constructor(
+    @InjectRepository(Notification)
+    private notificationRepo: Repository<Notification>,
+  ) {}
+
+  async create(
+    userId: number,
+    message: string,
+  ) {
+    const notification =
+      this.notificationRepo.create({
+        userId,
+        message,
+      });
+
+    return this.notificationRepo.save(
+      notification,
+    );
+  }
+
+  async getMyNotifications(
+    userId: number,
+  ) {
+    return this.notificationRepo.find({
+      where: { userId },
+      order: {
+        createdAt: 'DESC',
+      },
+    });
+  }
+
+  async markAsRead(id: number) {
+    await this.notificationRepo.update(
+      id,
+      {
+        isRead: true,
+      },
+    );
+
+    return {
+      message:
+        'Notification marked as read',
+    };
+  }
+}

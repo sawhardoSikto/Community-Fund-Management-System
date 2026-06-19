@@ -8,11 +8,12 @@ import { PaymentsModule } from './payments/payments.module';
 import { ProjectsModule } from './projects/projects.module';
 import { SalariesModule } from './salaries/salaries.module';
 import { SheetsModule } from './sheets/sheets.module';
-import { MailModule } from './mail/mail.module';
+
 import { APP_GUARD } from '@nestjs/core';
 import { JwtGuard } from './auth/jwt.guard';
 import { SettingsModule } from './settings/settings.module';
 import { ExpensesModule } from './expenses/expenses.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 
 @Module({
@@ -42,9 +43,10 @@ import { ExpensesModule } from './expenses/expenses.module';
     ProjectsModule,
     SalariesModule,
     SheetsModule,
-    MailModule,
+   
     SettingsModule,
     ExpensesModule,
+    NotificationsModule,
   ],
   providers: [
     {

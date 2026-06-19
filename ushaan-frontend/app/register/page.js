@@ -22,6 +22,7 @@ export default function RegisterPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPass, setShowPass] = useState(false);
+  const [success, setSuccess] = useState('');
 
   const handleChange = (e) => {
     setForm(f => ({ ...f, [e.target.name]: e.target.value }));
@@ -59,10 +60,14 @@ export default function RegisterPage() {
       if (photo) formData.append('photo', photo);
 
       await api.post('/auth/register', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+  headers: { 'Content-Type': 'multipart/form-data' },
+});
 
-      router.push(`/verify-otp?email=${encodeURIComponent(form.email)}`);
+setSuccess('নিবন্ধন সফল হয়েছে! লগইন পেজে নিয়ে যাচ্ছি...');
+
+setTimeout(() => {
+  router.push('/login');
+}, 1500);
     } catch (err) {
       setError(err.response?.data?.message || 'নিবন্ধন ব্যর্থ হয়েছে');
     } finally {
@@ -108,6 +113,25 @@ export default function RegisterPage() {
               {error}
             </div>
           )}
+          {success && (
+  <div className="flex items-center gap-2.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl px-4 py-3 mb-5 text-sm">
+    <svg
+      className="w-4 h-4 shrink-0"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={2}
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M4.5 12.75l6 6 9-13.5"
+      />
+    </svg>
+
+    {success}
+  </div>
+)}
 
           <form onSubmit={handleSubmit} className="space-y-4">
 
@@ -201,18 +225,7 @@ export default function RegisterPage() {
               </div>
             </div>
             <div>
-  <label className="block text-xs font-semibold text-slate-300 mb-2">ভূমিকা *</label>
-  <select
-    name="role"
-    value={form.role}
-    onChange={handleChange}
-    className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-amber-400/50 focus:ring-2 focus:ring-amber-400/10 transition-all"
-  >
-    <option value="member">সদস্য</option>
-    <option value="accountant">হিসাবরক্ষক</option>
-    <option value="general_secretary">সাধারণ সম্পাদক</option>
-    <option value="admin">সভাপতি</option>
-  </select>
+
 </div>
 
             {/* Password */}
