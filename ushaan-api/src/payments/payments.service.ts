@@ -11,6 +11,7 @@ import { MemberOpeningBalanceDto } from './dto/member-opening-balance.dto';
 import { User } from '../users/entities/user.entity';
 import { MonthlySheet, SheetStatus } from 'src/sheets/entities/monthly-sheet.entity';
 import { SettingsService } from 'src/settings/settings.service';
+import { NotificationsService } from '../notifications/notifications.service';
 @Injectable()
 export class PaymentsService {
 constructor(
@@ -21,6 +22,7 @@ constructor(
   @InjectRepository(MonthlySheet)  // ✅ add করো
   private sheetRepo: Repository<MonthlySheet>,
   private usersService: UsersService,
+  private notificationsService: NotificationsService,
 ) {}
 
   // Member — payment submit করো
@@ -52,6 +54,10 @@ if (existing) throw new BadRequestException(
       status: PaymentStatus.PENDING,
     });
     await this.paymentRepo.save(payment);
+    await this.notificationsService.create(
+  userId,
+  'আপনার পেমেন্ট জমা হয়েছে এবং অনুমোদনের অপেক্ষায় আছে।',
+);
 
     return { message: 'Payment submitted! Waiting for approval.', data: payment };
   }
@@ -101,6 +107,18 @@ if (existing) throw new BadRequestException(
   payment.approvedBy = accountantId;
   if (dto.note) payment.note = dto.note;
   await this.paymentRepo.save(payment);
+  if (dto.status === PaymentStatus.APPROVED) {
+  await this.notificationsService.create(
+    payment.userId,
+    'আপনার পেমেন্ট অনুমোদিত হয়েছে।',
+  );
+}
+if (dto.status === PaymentStatus.REJECTED) {
+  await this.notificationsService.create(
+    payment.userId,
+    'আপনার পেমেন্ট বাতিল করা হয়েছে।',
+  );
+}
 
   // ✅ Approved হলে check করো sheet published কিনা
   let sheetWarning: string | null = null;
@@ -156,6 +174,10 @@ async createManualPayment(dto: ManualPaymentDto, addedBy: number) {
     note: dto.note || 'Manually added by admin/accountant',
   });
   await this.paymentRepo.save(payment);
+  await this.notificationsService.create(
+  dto.userId,
+  `আপনার ${dto.month}/${dto.year} মাসের পেমেন্ট যুক্ত করা হয়েছে।`,
+);
 
   return { message: 'Payment added successfully', data: payment };
 }

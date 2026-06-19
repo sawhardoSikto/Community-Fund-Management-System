@@ -9,6 +9,7 @@ import { SalariesService } from '../salaries/salaries.service';
 import { UsersService } from '../users/users.service';
 import { SettingsService } from 'src/settings/settings.service';
 import { ExpensesService } from 'src/expenses/expenses.service';
+import { NotificationsService } from 'src/notifications/notifications.service';
 
 
 @Injectable()
@@ -22,6 +23,7 @@ export class SheetsService {
     private usersService: UsersService,
     private settingsService: SettingsService,
     private expensesService: ExpensesService, // ✅ নতুন
+    private notificationsService: NotificationsService, // ✅ নতুন
   ) {}
 
   // Sheet generate করো (draft)
@@ -115,6 +117,14 @@ const totalGeneralExpense = await this.expensesService.getTotalExpenseByMonth(
     totalCapitalReturn, // ✅
   });
   await this.sheetRepo.save(sheet);
+  const users = await this.usersService.findAll();
+
+for (const user of users) {
+  await this.notificationsService.create(
+    user.id,
+    `${sheet.month}/${sheet.year} মাসের শীট প্রকাশ করা হয়েছে।`,
+  );
+}
 
   return { message: 'Sheet generated (draft)', data: sheet };
 }

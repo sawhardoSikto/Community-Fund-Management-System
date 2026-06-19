@@ -8,6 +8,8 @@ import { UpdateProjectDto } from './dto/update-project.dto';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { SheetsService } from '../sheets/sheets.service';
 import { SettingsService } from 'src/settings/settings.service';
+import { UsersService } from '../users/users.service';
+import { NotificationsService } from 'src/notifications/notifications.service';
 
 
 @Injectable()
@@ -17,6 +19,8 @@ export class ProjectsService {
     private projectRepo: Repository<Project>,
     @InjectRepository(ProjectTransaction)
     private transactionRepo: Repository<ProjectTransaction>,
+    private usersService: UsersService,
+    private notificationsService: NotificationsService,
   ) {}
 
   // সব project দেখো
@@ -45,6 +49,14 @@ export class ProjectsService {
   async create(dto: CreateProjectDto) {
     const project = this.projectRepo.create(dto);
     await this.projectRepo.save(project);
+    const users = await this.usersService.findAll();
+
+for (const user of users) {
+  await this.notificationsService.create(
+    user.id,
+    `নতুন প্রকল্প যুক্ত হয়েছে: ${project.name}`,
+  );
+}
     return { message: 'Project created', data: project };
   }
 
@@ -74,6 +86,16 @@ export class ProjectsService {
       description: dto.description,
       date: new Date(dto.date),
     });
+    if (dto.type === TransactionType.PROFIT) {
+  const users = await this.usersService.findAll();
+
+  for (const user of users) {
+    await this.notificationsService.create(
+      user.id,
+      `${project.name} প্রকল্পে নতুন লাভ যুক্ত হয়েছে।`,
+    );
+  }
+}
     await this.transactionRepo.save(transaction);
 
     // totalInvested update করো

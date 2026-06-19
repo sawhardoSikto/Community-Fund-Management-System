@@ -9,6 +9,7 @@ import { SalariesModule } from '../salaries/salaries.module';
 import { UsersModule } from 'src/users/users.module';
 import { SettingsModule } from 'src/settings/settings.module';
 import { ExpensesModule } from 'src/expenses/expenses.module';
+import { NotificationsModule } from 'src/notifications/notifications.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { ExpensesModule } from 'src/expenses/expenses.module';
     UsersModule,  
     SettingsModule,
     ExpensesModule, // ✅ নতুন - ExpenseService ব্যবহার করার জন্য
+    NotificationsModule, // ✅ নতুন - NotificationsService ব্যবহার করার জন্য
   ],
   controllers: [SheetsController],
   providers: [SheetsService],
