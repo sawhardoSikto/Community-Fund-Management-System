@@ -6,7 +6,7 @@ import Link from 'next/link';
 import api from '@/lib/api';
 import { MONTH_NAMES } from '@/lib/constants';
 import { useReactToPrint } from 'react-to-print';
-import api from '@/lib/api';
+
 
 
 export default function SheetDetailPage() {
@@ -15,13 +15,23 @@ export default function SheetDetailPage() {
   const printRef = useRef();
   const [sheet, setSheet] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [downloading, setDownloading] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     api.get(`/sheets/${id}`)
-      .then(res => { setSheet(res.data.data); setLoading(false); })
-      .catch(() => router.push('/sheets'));
-  }, [id]);
+      .then((res) => {
+        const sheetData = res?.data?.data ?? res?.data ?? null;
+        if (!sheetData || typeof sheetData !== 'object') {
+          setError('শিটের তথ্য পাওয়া যায়নি।');
+          return;
+        }
+        setSheet(sheetData);
+      })
+      .catch(() => {
+        setError('শিট লোড করতে সমস্যা হয়েছে।');
+      })
+      .finally(() => setLoading(false));
+  }, [id, router]);
 
 const handleDownloadPDF = useReactToPrint({
   contentRef: printRef,
@@ -34,7 +44,21 @@ const handleDownloadPDF = useReactToPrint({
     </div>
   );
 
-  if (!sheet) return null;
+  if (!sheet) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4">
+        <div className="text-center">
+          <p className="text-slate-200 font-semibold">{error || 'শিট পাওয়া যায়নি'}</p>
+          <button
+            onClick={() => router.push('/sheets')}
+            className="mt-4 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-sm font-bold rounded-xl transition-all"
+          >
+            শিট তালিকায় ফিরে যান
+          </button>
+        </div>
+      </div>
+    );
+  }
 
  const totalIncome =
   Number(sheet.totalMemberIncome) +

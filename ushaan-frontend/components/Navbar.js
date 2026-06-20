@@ -5,6 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { ROLE_LABELS } from "@/lib/constants";
+import api from '@/lib/api';
 
 export default function Navbar() {
   const router = useRouter();
@@ -73,7 +74,6 @@ useEffect(() => {
     if (user.role === "general_secretary") return "/dashboard/secretary";
     return "/dashboard/member";
   };
-  console.log(user);
  const unreadCount = notifications.filter(
   n => !n.isRead
 ).length;
