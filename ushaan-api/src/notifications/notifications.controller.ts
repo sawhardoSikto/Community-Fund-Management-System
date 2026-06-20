@@ -30,4 +30,13 @@ export class NotificationsController {
       Number(id),
     );
   }
+
+  @Patch('read-all')
+  markAllAsRead(
+    @Request() req,
+  ) {
+    return this.notificationsService.markAllAsRead(
+      req.user.id,
+    );
+  }
 }

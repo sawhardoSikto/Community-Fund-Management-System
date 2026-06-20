@@ -32,6 +32,16 @@ const [showNotifications, setShowNotifications] = useState(false);
     console.error(err);
   }
 };
+
+  const clearAllNotifications = async () => {
+    try {
+      await api.patch('/notifications/read-all');
+      setNotifications([]);
+      setShowNotifications(false);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 useEffect(() => {
   loadUser();
 
@@ -130,9 +140,14 @@ useEffect(() => {
               </span>
               <div className="relative">
   <button
-    onClick={() =>
-      setShowNotifications(!showNotifications)
-    }
+    onClick={() => {
+      if (showNotifications) {
+        setShowNotifications(false);
+        return;
+      }
+
+      setShowNotifications(true);
+    }}
     className="relative p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
   >
     <span className="text-lg">🔔</span>
@@ -166,24 +181,7 @@ useEffect(() => {
                   ? 'bg-amber-500/5'
                   : ''
               }`}
-              onClick={async () => {
-                if (!n.isRead) {
-                  await api.patch(
-                    `/notifications/${n.id}/read`
-                  );
-
-                  setNotifications(prev =>
-                    prev.map(item =>
-                      item.id === n.id
-                        ? {
-                            ...item,
-                            isRead: true,
-                          }
-                        : item
-                    )
-                  );
-                }
-              }}
+              onClick={clearAllNotifications}
             >
               <p className="text-sm text-white">
                 {n.message}
