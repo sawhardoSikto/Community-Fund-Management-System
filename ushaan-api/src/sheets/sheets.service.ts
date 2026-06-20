@@ -162,17 +162,27 @@ for (const user of users) {
     const payments = await this.paymentsService.getApprovedPaymentsByMonth(
       sheet.month, sheet.year
     );
-    const projectTransactions = await this.projectsService.getProjectIncomeByMonth(
-      sheet.month, sheet.year
+    const [projectIncomes, projectExpenses, capitalReturns] = await Promise.all([
+      this.projectsService.getProjectIncomeByMonth(sheet.month, sheet.year),
+      this.projectsService.getProjectExpenseByMonth(sheet.month, sheet.year),
+      this.projectsService.getCapitalReturnByMonth(sheet.month, sheet.year),
+    ]);
+
+    const projectTransactions = [
+      ...projectIncomes,
+      ...projectExpenses,
+      ...capitalReturns,
+    ].sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
     );
+
     const salaries = await this.salariesService.getSalariesByMonth(
       sheet.month, sheet.year
     );
 
     // সব members এর payment status
     const allUsers = await this.usersService.findAll();
-   const members = allUsers;
-    const paidUserIds = payments.map(p => p.userId);
+    const members = allUsers.filter((u) => u.role === 'member');
 
 // Member payment status এ due months দেখাও
 const memberPaymentStatus = await Promise.all(
@@ -200,6 +210,16 @@ const memberPaymentStatus = await Promise.all(
     };
   })
 );
+
+    return {
+      message: 'Sheet details fetched',
+      data: {
+        ...sheet,
+        memberPayments: memberPaymentStatus,
+        projectTransactions,
+        salaries,
+      },
+    };
   }
 
   // Month/Year দিয়ে sheet দেখো
