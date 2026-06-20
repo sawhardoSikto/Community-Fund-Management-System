@@ -7,6 +7,7 @@ import api from '@/lib/api';
 import { MONTH_NAMES } from '@/lib/constants';
 import { useReactToPrint } from 'react-to-print';
 
+
 export default function SheetDetailPage() {
   const { id } = useParams();
   const router = useRouter();
@@ -267,7 +268,7 @@ const totalExpense =
             </span>
           </div>
 
-// Member payment card
+{/* Member payment card */}
 {sheet.memberPayments?.map((mp, i) => (
   <div key={i} className={`px-3 py-3 rounded-xl ${mp.status === 'paid' ? 'bg-slate-800/50' : 'bg-red-500/5 border border-red-500/10'}`}>
     <div className="flex items-center justify-between">
