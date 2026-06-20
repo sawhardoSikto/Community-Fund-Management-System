@@ -179,6 +179,7 @@ setTimeout(() => {
                   value={form.phone}
                   onChange={handleChange}
                   placeholder="01XXXXXXXXX"
+                  required
                   className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-slate-500 text-sm focus:outline-none focus:border-amber-400/50 focus:ring-2 focus:ring-amber-400/10 transition-all"
                 />
               </div>
@@ -208,6 +209,7 @@ setTimeout(() => {
                   value={form.nid}
                   onChange={handleChange}
                   placeholder="NID নম্বর"
+                  required
                   className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-slate-500 text-sm focus:outline-none focus:border-amber-400/50 focus:ring-2 focus:ring-amber-400/10 transition-all"
                 />
               </div>
@@ -217,6 +219,7 @@ setTimeout(() => {
                   name="monthlyAmount"
                   value={form.monthlyAmount}
                   onChange={handleChange}
+                  required
                   className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-amber-400/50 focus:ring-2 focus:ring-amber-400/10 transition-all"
                 >
                   <option value="200">২০০ টাকা</option>

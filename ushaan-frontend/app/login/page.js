@@ -18,6 +18,22 @@ export default function LoginPage() {
     setError('');
   };
 
+  const getLoginErrorMessage = (err) => {
+    const status = err?.response?.status;
+    const rawMessage = err?.response?.data?.message;
+    const message = Array.isArray(rawMessage) ? rawMessage.join(', ') : rawMessage;
+
+    if (status === 401) return 'ইমেইল বা পাসওয়ার্ড ভুল';
+    if (status === 404) return 'এই ইমেইল দিয়ে কোনো অ্যাকাউন্ট পাওয়া যায়নি';
+    if (status === 429) return 'অনেকবার চেষ্টা করা হয়েছে, একটু পরে আবার চেষ্টা করুন';
+
+    if (typeof message === 'string' && message.trim()) {
+      return message;
+    }
+
+    return 'লগইন ব্যর্থ হয়েছে, আবার চেষ্টা করুন';
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -41,7 +57,7 @@ export default function LoginPage() {
       else window.location.href = '/dashboard/member';
 
     } catch (err) {
-      setError(err.response?.data?.message || 'Invalid email or password');
+      setError(getLoginErrorMessage(err));
     } finally {
       setLoading(false);
     }
