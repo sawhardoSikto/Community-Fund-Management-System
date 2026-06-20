@@ -26,41 +26,130 @@ constructor(
 ) {}
 
   // Member — payment submit করো
-  async createPayment(userId: number, dto: CreatePaymentDto) {
-    // ১. user আছে কিনা check
-    const user = await this.usersService.findById(userId);
-    if (!user) throw new NotFoundException('User not found');
+async createPayment(userId: number, dto: CreatePaymentDto) {
+  const user = await this.usersService.findById(userId);
+  if (!user) throw new NotFoundException('User not found');
 
-    // ২. এই মাসে already payment করেছে কিনা check
-    // ✅ pending বা approved — দুটোই check করো
-const existing = await this.paymentRepo.findOne({
-  where: [
-    { userId, month: dto.month, year: dto.year, status: PaymentStatus.APPROVED },
-    { userId, month: dto.month, year: dto.year, status: PaymentStatus.PENDING },
-  ],
-});
-if (existing) throw new BadRequestException(
-  `Payment for ${dto.month}/${dto.year} already submitted`
-);
+  // ১. Due months খোঁজো
+  const dueMonths = await this.getDueMonths(userId, dto.month, dto.year);
 
-    // ৩. payment বানাও
-    const payment = this.paymentRepo.create({
-      userId,
-      month: dto.month,
-      year: dto.year,
-      amount: user.monthlyAmount,
-      paymentMethod: dto.paymentMethod,
-      transactionNumber: dto.transactionNumber,
-      status: PaymentStatus.PENDING,
+  // ২. Current month already paid?
+  const existing = await this.paymentRepo.findOne({
+    where: [
+      { userId, month: dto.month, year: dto.year, status: PaymentStatus.APPROVED },
+      { userId, month: dto.month, year: dto.year, status: PaymentStatus.PENDING },
+    ],
+  });
+  if (existing) throw new BadRequestException(
+    `Payment for ${dto.month}/${dto.year} already submitted`
+  );
+const created: Payment[] = [];
+
+  // ৩. Due months এর payment create করো
+  for (const due of dueMonths) {
+    const dueExisting = await this.paymentRepo.findOne({
+      where: [
+        { userId, month: due.month, year: due.year, status: PaymentStatus.APPROVED },
+        { userId, month: due.month, year: due.year, status: PaymentStatus.PENDING },
+      ],
     });
-    await this.paymentRepo.save(payment);
-    await this.notificationsService.create(
-  userId,
-  'আপনার পেমেন্ট জমা হয়েছে এবং অনুমোদনের অপেক্ষায় আছে।',
-);
-
-    return { message: 'Payment submitted! Waiting for approval.', data: payment };
+    if (!dueExisting) {
+      const duePayment = this.paymentRepo.create({
+        userId,
+        month: due.month,
+        year: due.year,
+        amount: user.monthlyAmount,
+        paymentMethod: dto.paymentMethod,
+        transactionNumber: dto.transactionNumber,
+        note: `Due payment (paid with ${dto.month}/${dto.year})`,
+        status: PaymentStatus.PENDING,
+      });
+      await this.paymentRepo.save(duePayment);
+      created.push(duePayment);
+    }
   }
+
+  // ৪. Current month payment create করো
+  const payment = this.paymentRepo.create({
+    userId,
+    month: dto.month,
+    year: dto.year,
+    amount: user.monthlyAmount,
+    paymentMethod: dto.paymentMethod,
+    transactionNumber: dto.transactionNumber,
+    note: dto.note,
+    status: PaymentStatus.PENDING,
+  });
+  await this.paymentRepo.save(payment);
+  created.push(payment);
+
+  return {
+    message: `Payment submitted (${created.length} months)`,
+    dueMonths: dueMonths.length,
+    totalAmount: user.monthlyAmount * created.length,
+    data: created,
+  };
+}
+
+// Due months calculate করো
+private async getDueMonths(
+  userId: number,
+  currentMonth: number,
+  currentYear: number,
+) {
+  const user = await this.usersService.findById(userId);
+
+  if (!user) {
+    throw new NotFoundException('User not found');
+  }
+
+  const joinDate = new Date(user.createdAt);
+  const joinMonth = joinDate.getMonth() + 1;
+  const joinYear = joinDate.getFullYear();
+
+  const dueMonths: { month: number; year: number }[] = [];
+
+  let checkMonth = joinMonth;
+  let checkYear = joinYear;
+
+  while (
+    checkYear < currentYear ||
+    (checkYear === currentYear && checkMonth < currentMonth)
+  ) {
+    const paid = await this.paymentRepo.findOne({
+      where: [
+        {
+          userId,
+          month: checkMonth,
+          year: checkYear,
+          status: PaymentStatus.APPROVED,
+        },
+        {
+          userId,
+          month: checkMonth,
+          year: checkYear,
+          status: PaymentStatus.PENDING,
+        },
+      ],
+    });
+
+    if (!paid) {
+      dueMonths.push({
+        month: checkMonth,
+        year: checkYear,
+      });
+    }
+
+    checkMonth++;
+
+    if (checkMonth > 12) {
+      checkMonth = 1;
+      checkYear++;
+    }
+  }
+
+  return dueMonths;
+}
 
   // Member — নিজের payments দেখো
   async getMyPayments(userId: number) {
@@ -302,5 +391,35 @@ async resetAll() {
 
 async resetOpeningBalances() {
   await this.openingBalanceRepo.query('DELETE FROM member_opening_balance');
+}
+async getMemberDuesUpToMonth(userId: number, month: number, year: number) {
+  const user = await this.usersService.findById(userId);
+  if (!user) return [];
+
+  const joinDate = new Date(user.createdAt);
+  const joinMonth = joinDate.getMonth() + 1;
+  const joinYear = joinDate.getFullYear();
+
+  const dues: { month: number; year: number }[] = [];
+  let checkMonth = joinMonth;
+  let checkYear = joinYear;
+
+  while (
+    checkYear < year ||
+    (checkYear === year && checkMonth < month)
+  ) {
+    const paid = await this.paymentRepo.findOne({
+      where: { userId, month: checkMonth, year: checkYear, status: PaymentStatus.APPROVED },
+    });
+
+    if (!paid) {
+      dues.push({ month: checkMonth, year: checkYear });
+    }
+
+    checkMonth++;
+    if (checkMonth > 12) { checkMonth = 1; checkYear++; }
+  }
+
+  return dues;
 }
 }

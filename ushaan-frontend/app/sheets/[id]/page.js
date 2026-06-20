@@ -267,36 +267,47 @@ const totalExpense =
             </span>
           </div>
 
-          {/* Member Payments */}
-          <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
-            <h2 className="text-base font-bold text-white mb-4">💰 সদস্য চাঁদা</h2>
-            {sheet.memberPayments?.length === 0 ? (
-              <p className="text-slate-500 text-sm">কোনো তথ্য নেই</p>
-            ) : (
-              <>
-                <div className="space-y-2 mb-3">
-                  {sheet.memberPayments?.map((mp, i) => (
-                    <div key={i} className="flex items-center justify-between px-3 py-2 bg-slate-800/50 rounded-xl">
-                      <div className="flex items-center gap-2">
-                        <div className={`w-2 h-2 rounded-full ${mp.status === 'paid' ? 'bg-emerald-400' : 'bg-red-400'}`} />
-                        <span className="text-sm text-white">{mp.name}</span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className="text-xs text-slate-400">{mp.monthlyAmount} ৳</span>
-                        <span className={`text-xs font-bold ${mp.status === 'paid' ? 'text-emerald-400' : 'text-red-400'}`}>
-                          {mp.status === 'paid' ? '✅ পরিশোধ' : '❌ বকেয়া'}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <div className="flex justify-between px-3 py-2 bg-emerald-500/5 border border-emerald-500/10 rounded-xl">
-                  <span className="text-sm font-bold text-white">মোট সংগ্রহ</span>
-                  <span className="text-sm font-black text-emerald-400">{Number(sheet.totalMemberIncome).toFixed(0)} ৳</span>
-                </div>
-              </>
-            )}
+// Member payment card
+{sheet.memberPayments?.map((mp, i) => (
+  <div key={i} className={`px-3 py-3 rounded-xl ${mp.status === 'paid' ? 'bg-slate-800/50' : 'bg-red-500/5 border border-red-500/10'}`}>
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-2">
+        <div className={`w-2 h-2 rounded-full ${mp.status === 'paid' ? 'bg-emerald-400' : 'bg-red-400'}`} />
+        <span className="text-sm font-semibold text-white">{mp.name}</span>
+      </div>
+      <span className={`text-sm font-bold ${mp.status === 'paid' ? 'text-emerald-400' : 'text-red-400'}`}>
+        {mp.status === 'paid' ? '✅' : '❌'}
+      </span>
+    </div>
+
+    {/* Due months দেখাও */}
+    {mp.dueMonths?.length > 0 && mp.status === 'paid' && (
+      <div className="mt-2 pl-4 space-y-1">
+        {mp.dueMonths.map((d, j) => (
+          <div key={j} className="flex justify-between">
+            <span className="text-xs text-red-400">
+              {MONTH_NAMES[d.month - 1]} {d.year} (বকেয়া)
+            </span>
+            <span className="text-xs font-bold text-red-400">{mp.monthlyAmount} ৳</span>
           </div>
+        ))}
+        <div className="flex justify-between border-t border-white/5 pt-1">
+          <span className="text-xs text-slate-400">এই মাস</span>
+          <span className="text-xs font-bold text-emerald-400">{mp.monthlyAmount} ৳</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-xs font-bold text-white">মোট</span>
+          <span className="text-xs font-black text-amber-400">
+            {(mp.dueMonths.length + 1) * mp.monthlyAmount} ৳
+          </span>
+        </div>
+      </div>
+    )}
+
+    {/* Display amount */}
+    <p className="text-xs text-slate-500 mt-1 pl-4">{mp.displayAmount}</p>
+  </div>
+))}
 
           {/* Project Transactions */}
           {sheet.projectTransactions?.length > 0 && (

@@ -174,23 +174,32 @@ for (const user of users) {
    const members = allUsers;
     const paidUserIds = payments.map(p => p.userId);
 
-    const memberPaymentStatus = members.map(member => ({
+// Member payment status এ due months দেখাও
+const memberPaymentStatus = await Promise.all(
+  members.map(async (member) => {
+    const paid = payments.find(p => p.userId === member.id);
+
+    // এই member এর due months খোঁজো (এই sheet এর মাসের আগে)
+    const memberDues = await this.paymentsService.getMemberDuesUpToMonth(
+      member.id, sheet.month, sheet.year
+    );
+
+    return {
       id: member.id,
       name: member.name,
       monthlyAmount: member.monthlyAmount,
-      status: paidUserIds.includes(member.id) ? 'paid' : 'due',
-      payment: payments.find(p => p.userId === member.id) || null,
-    }));
-
-    return {
-      message: 'Sheet fetched',
-      data: {
-        ...sheet,
-        memberPayments: memberPaymentStatus,
-        projectTransactions,
-        salaries,
-      },
+      status: paid ? 'paid' : 'due',
+      payment: paid || null,
+      dueMonths: memberDues, // ✅ due months
+      totalDue: memberDues.length * member.monthlyAmount,
+      displayAmount: paid
+        ? memberDues.length > 0
+          ? `${memberDues.length}×${member.monthlyAmount}(বকেয়া) + ${member.monthlyAmount}(এই মাস)`
+          : `${member.monthlyAmount} ৳`
+        : `${member.monthlyAmount} ৳ (বকেয়া)`,
     };
+  })
+);
   }
 
   // Month/Year দিয়ে sheet দেখো

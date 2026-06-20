@@ -24,6 +24,8 @@ export default function MemberDashboard() {
   });
   const [submitting, setSubmitting] = useState(false);
   const [toast, setToast] = useState({ show: false, msg: '', success: true });
+  const [dueInfo, setDueInfo] = useState(null);
+
 
   const showToast = (msg, success = true) => {
     setToast({ show: true, msg, success });
@@ -39,6 +41,22 @@ export default function MemberDashboard() {
       fetchAll();
     } catch { router.push('/login'); }
   }, []);
+useEffect(() => {
+  checkDues();
+}, [paymentForm.month, paymentForm.year]);
+const checkDues = async () => {
+  try {
+    const res = await api.get('/payments/my/dues');
+    const dues = res.data.data || [];
+    // current month এর আগের due গুলো filter করো
+    const relevantDues = dues.filter(d =>
+      d.year < paymentForm.year ||
+      (d.year === paymentForm.year && d.month < paymentForm.month)
+    );
+    setDueInfo(relevantDues);
+  } catch (err) { console.error(err); }
+};
+
 
   const fetchAll = async () => {
     setLoading(true);
@@ -225,11 +243,45 @@ export default function MemberDashboard() {
                     className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-amber-400/50 transition-all" />
                 </div>
 
-                {/* Amount info */}
-                <div className="bg-amber-500/5 border border-amber-500/10 rounded-xl p-3">
-                  <p className="text-xs text-slate-400">পরিমাণ: <span className="text-amber-400 font-bold">{user?.monthlyAmount || 200} ৳</span></p>
-                  <p className="text-xs text-slate-500 mt-0.5">পেমেন্ট করার পর এই ফর্ম পূরণ করুন</p>
-                </div>
+{/* Amount info */}
+<div className="bg-amber-500/5 border border-amber-500/10 rounded-xl p-3 space-y-2">
+  {dueInfo && dueInfo.length > 0 && (
+    <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-2.5">
+      <p className="text-xs font-bold text-red-400 mb-1.5">
+        ⚠️ {dueInfo.length} মাস বকেয়া আছে!
+      </p>
+      <div className="space-y-1">
+        {dueInfo.map((d, i) => (
+          <div key={i} className="flex justify-between">
+            <span className="text-xs text-slate-400">
+              {MONTH_NAMES[d.month - 1]} {d.year} (বকেয়া)
+            </span>
+            <span className="text-xs font-bold text-red-400">{d.amount} ৳</span>
+          </div>
+        ))}
+        <div className="flex justify-between pt-1 border-t border-red-500/20">
+          <span className="text-xs text-slate-400">
+            {MONTH_NAMES[paymentForm.month - 1]} {paymentForm.year} (এই মাস)
+          </span>
+          <span className="text-xs font-bold text-white">{user?.monthlyAmount} ৳</span>
+        </div>
+      </div>
+      <div className="flex justify-between mt-2 pt-2 border-t border-red-500/20">
+        <span className="text-xs font-bold text-white">মোট দিতে হবে</span>
+        <span className="text-sm font-black text-amber-400">
+          {(dueInfo.length + 1) * (user?.monthlyAmount || 200)} ৳
+        </span>
+      </div>
+    </div>
+  )}
+
+  {(!dueInfo || dueInfo.length === 0) && (
+    <p className="text-xs text-slate-400">
+      পরিমাণ: <span className="text-amber-400 font-bold">{user?.monthlyAmount || 200} ৳</span>
+    </p>
+  )}
+  <p className="text-xs text-slate-500">পেমেন্ট করার পর এই ফর্ম পূরণ করুন</p>
+</div>
 
                 {/* ✅ Submit Button */}
                 <button type="submit"
