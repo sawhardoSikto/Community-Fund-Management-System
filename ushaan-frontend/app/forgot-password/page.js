@@ -55,23 +55,26 @@ export default function ForgotPasswordPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        <div className="text-center mb-8">
+
     {/* Logo */}
-    <div className="relative">
-      <img
-        src="/ushaan.png"
-        alt="ঊষাণ"
-        className="w-20 h-20 rounded-2xl object-contain shadow-lg shadow-amber-500/30"
-        onError={(e) => {
-          e.target.style.display = 'none';
-          e.target.nextSibling.style.display = 'flex';
-        }}
-      />
-      {/* Fallback */}
-      <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 items-center justify-center text-3xl font-black text-white shadow-lg shadow-amber-500/30 hidden">
-        ঊ
-      </div>
+        <div className="text-center mb-6">
+<div className="flex justify-center mb-6">
+  <div className="relative">
+    <img
+      src="/ushaan.png"
+      alt="ঊষাণ"
+      className="w-20 h-20 rounded-2xl object-contain shadow-lg shadow-amber-500/30"
+      onError={(e) => {
+        e.target.style.display = "none";
+        e.target.nextSibling.style.display = "flex";
+      }}
+    />
+
+    <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 items-center justify-center text-3xl font-black text-white shadow-lg shadow-amber-500/30 hidden">
+      ঊ
     </div>
+  </div>
+</div>
           <h1 className="text-3xl font-black text-white">
             ঊষাণ
           </h1>
