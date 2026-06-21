@@ -298,8 +298,8 @@ const totalExpense =
             <h1 className="text-2xl font-black text-white">ঊষাণ</h1>
             <p className="text-slate-400 text-sm mt-1">মাসিক হিসাব শিট</p>
             <p className="text-amber-400 font-bold text-lg mt-2">{MONTH_NAMES[sheet.month - 1]} {sheet.year}</p>
-            <span className={`inline-block mt-2 text-xs font-bold px-3 py-1 rounded-lg ${sheet.status === 'published' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'}`}>
-              {sheet.status === 'published' ? '✅ প্রকাশিত' : '📝 খসড়া'}
+            <span className={`inline-flex items-center gap-1 mt-2 text-xs font-bold px-3 py-1 rounded-lg ${sheet.status === 'published' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'}`}>
+              {sheet.status === 'published' ? '✓ প্রকাশিত' : '✎ খসড়া'}
             </span>
           </div>
 
@@ -311,8 +311,8 @@ const totalExpense =
         <div className={`w-2 h-2 rounded-full ${mp.status === 'paid' ? 'bg-emerald-400' : 'bg-red-400'}`} />
         <span className="text-sm font-semibold text-white">{mp.name}</span>
       </div>
-      <span className={`text-sm font-bold ${mp.status === 'paid' ? 'text-emerald-400' : 'text-red-400'}`}>
-        {mp.status === 'paid' ? '✅' : '❌'}
+      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-lg border ${mp.status === 'paid' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'}`}>
+        {mp.status === 'paid' ? 'পরিশোধিত' : 'বকেয়া'}
       </span>
     </div>
 

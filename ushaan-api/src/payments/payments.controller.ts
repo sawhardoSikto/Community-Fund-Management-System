@@ -30,6 +30,13 @@ export class PaymentsController {
     return this.paymentsService.getMemberDueHistory(req.user.id);
   }
 
+  // ✅ Admin/Accountant — member's due history দেখো
+  @Get('dues/:userId')
+  @Roles('admin', 'accountant')
+  getMemberDues(@Param('userId', ParseIntPipe) userId: number) {
+    return this.paymentsService.getMemberDueHistory(userId);
+  }
+
   // ✅ Accountant — pending payments দেখো
   @Get('pending')
   @Roles('accountant', 'admin')

@@ -202,30 +202,27 @@ const totalGeneralExpense = await this.expensesService.getTotalExpenseByMonth(
         let checkYear = joinYear;
 
         while (checkYear < sheet.year || (checkYear === sheet.year && checkMonth < sheet.month)) {
-          const coveringPayment = memberApprovedPayments.find(p => 
+          const coveringPayment = memberApprovedPayments.find(p =>
             this.paymentsService.paymentCoversMonth(p, checkMonth, checkYear)
           );
 
           if (coveringPayment) {
-            // Check where it was captured
+            // Determine the capture date of the payment
             const capYear = coveringPayment.capturedInYear ?? coveringPayment.year;
             const capMonth = coveringPayment.capturedInMonth ?? coveringPayment.month;
-            const isCapturedBeforeOrThis = 
-              capYear < sheet.year || 
-              (capYear === sheet.year && capMonth <= sheet.month);
-
-            if (isCapturedBeforeOrThis) {
-              if (capMonth === sheet.month && capYear === sheet.year) {
-                paidDues.push({ month: checkMonth, year: checkYear });
-              }
+            // If captured on or before the sheet date, consider it paid for that month
+            if (capYear < sheet.year || (capYear === sheet.year && capMonth <= sheet.month)) {
+              paidDues.push({ month: checkMonth, year: checkYear });
             } else {
-              // Captured in the future (after this sheet)
+              // Captured after the sheet date, still unpaid for this month
               unpaidDues.push({ month: checkMonth, year: checkYear });
             }
           } else {
+            // No payment covering this month
             unpaidDues.push({ month: checkMonth, year: checkYear });
           }
 
+          // Increment month/year
           checkMonth++;
           if (checkMonth > 12) {
             checkMonth = 1;
@@ -252,8 +249,8 @@ const totalGeneralExpense = await this.expensesService.getTotalExpenseByMonth(
             displayAmount = `${member.monthlyAmount} current = ${member.monthlyAmount} ৳`;
           }
         } else {
-          if (paidDues.length > 0) {
-            displayAmount = `${member.monthlyAmount} × ${paidDues.length} due paid + ${member.monthlyAmount} current due = ${paidDues.length * member.monthlyAmount} ৳`;
+          if (unpaidDues.length > 0) {
+            displayAmount = `${member.monthlyAmount} × ${unpaidDues.length} due + ${member.monthlyAmount} current due = ${(unpaidDues.length + 1) * member.monthlyAmount} ৳`;
           } else {
             displayAmount = `${member.monthlyAmount} ৳ due`;
           }

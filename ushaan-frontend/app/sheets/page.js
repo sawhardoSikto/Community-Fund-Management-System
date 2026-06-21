@@ -70,8 +70,8 @@ export default function SheetsPage() {
                     <p className="text-sm font-black text-white">{Number(sheet.totalAsset).toFixed(0)} ৳</p>
                     <p className="text-xs text-slate-400">মোট সম্পদ</p>
                   </div>
-                  <span className={`text-xs font-bold px-2.5 py-1 rounded-lg shrink-0 ${sheet.status === 'published' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'}`}>
-                    {sheet.status === 'published' ? '✅ প্রকাশিত' : '📝 খসড়া'}
+                  <span className={`inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-lg shrink-0 ${sheet.status === 'published' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'}`}>
+                    {sheet.status === 'published' ? '✓ প্রকাশিত' : '✎ খসড়া'}
                   </span>
                 </div>
               </Link>

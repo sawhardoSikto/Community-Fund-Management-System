@@ -79,15 +79,40 @@ export default function PaymentForm({ user, onSuccess }) {
         <label className="block text-xs font-semibold text-slate-400 mb-1.5">পেমেন্ট পদ্ধতি</label>
         <div className="grid grid-cols-2 gap-2">
           {[
-            { value: 'bkash', label: '🟣 বিকাশ' },
-            { value: 'nagad', label: '🟠 নগদ' },
-            { value: 'cash', label: '💵 নগদ অর্থ' },
-            { value: 'card', label: '💳 কার্ড' },
+            {
+              value: 'bkash',
+              label: 'বিকাশ',
+              icon: <span className="w-4 h-4 rounded bg-[#E2136E] text-white flex items-center justify-center text-[9px] font-black shrink-0">b</span>
+            },
+            {
+              value: 'nagad',
+              label: 'নগদ',
+              icon: <span className="w-4 h-4 rounded bg-[#F04923] text-white flex items-center justify-center text-[9px] font-black shrink-0">n</span>
+            },
+            {
+              value: 'cash',
+              label: 'নগদ অর্থ',
+              icon: (
+                <svg className="w-4 h-4 text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              )
+            },
+            {
+              value: 'card',
+              label: 'কার্ড',
+              icon: (
+                <svg className="w-4 h-4 text-blue-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                </svg>
+              )
+            },
           ].map(method => (
             <button key={method.value} type="button"
               onClick={() => setForm(f => ({ ...f, paymentMethod: method.value, transactionNumber: '' }))}
-              className={`py-2 rounded-xl text-xs font-semibold transition-all ${form.paymentMethod === method.value ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/20' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}>
-              {method.label}
+              className={`flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition-all border ${form.paymentMethod === method.value ? 'bg-amber-500 text-white border-amber-500 shadow-lg shadow-amber-500/20' : 'bg-slate-800 border-white/5 text-slate-300 hover:bg-slate-700 hover:text-white'}`}>
+              {method.icon}
+              <span>{method.label}</span>
             </button>
           ))}
         </div>

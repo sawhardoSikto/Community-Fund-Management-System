@@ -112,6 +112,27 @@ export default  function AccountantDashboard() {
 
   const [processing, setProcessing] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [manualDueInfo, setManualDueInfo] = useState([]);
+
+  useEffect(() => {
+    if (!manualPayment.userId) {
+      setManualDueInfo([]);
+      return;
+    }
+    const fetchManualDues = async () => {
+      try {
+        const res = await api.get(`/payments/dues/${manualPayment.userId}`);
+        const dues = res.data.data || [];
+        const relevantDues = dues.filter((d) =>
+          d.year < manualPayment.year || (d.year === manualPayment.year && d.month < manualPayment.month)
+        );
+        setManualDueInfo(relevantDues);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchManualDues();
+  }, [manualPayment.userId, manualPayment.month, manualPayment.year]);
 
   const showToast = (msg, success = true) => {
     setToast({ show: true, msg, success });
@@ -525,32 +546,9 @@ const handleCreateProject = async (e) => {
                         disabled={processing === payment.id}
                         className="flex-1 sm:flex-none px-4 py-2 bg-emerald-500/10 hover:bg-emerald-500 text-emerald-400 hover:text-white border border-emerald-500/20 hover:border-emerald-500 rounded-xl text-xs font-bold transition-all disabled:opacity-50"
                       >
-                        {processing === payment.id ? (
-                          <span className="loading loading-spinner loading-xs" />
-                        ) : (
-                          "✓ অনুমোদন"
-                        )}
-                      </button>
-                      <button
-                        onClick={() =>
-                          handlePaymentStatus(payment.id, "rejected")
-                        }
-                        disabled={processing === payment.id}
-                        className="flex-1 sm:flex-none px-4 py-2 bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white border border-red-500/20 hover:border-red-500 rounded-xl text-xs font-bold transition-all disabled:opacity-50"
-                      >
-                        ✗ বাতিল
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ── Manual Payment Tab ── */}
+            {/* ── Manual Payment Tab ── */}
         {tab === "manual" && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="max-w-md mx-auto">
             {/* Manual Payment */}
             <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
               <h2 className="text-base font-bold text-white mb-4">
@@ -627,10 +625,34 @@ const handleCreateProject = async (e) => {
                   </label>
                   <div className="grid grid-cols-2 gap-2">
                     {[
-                      { value: "bkash", label: "🟣 বিকাশ" },
-                      { value: "nagad", label: "🟠 নগদ" },
-                      { value: "cash", label: "💵 নগদ অর্থ" },
-                      { value: "card", label: "💳 কার্ড" },
+                      {
+                        value: "bkash",
+                        label: "বিকাশ",
+                        icon: <span className="w-4 h-4 rounded bg-[#E2136E] text-white flex items-center justify-center text-[9px] font-black shrink-0">b</span>
+                      },
+                      {
+                        value: "nagad",
+                        label: "নগদ",
+                        icon: <span className="w-4 h-4 rounded bg-[#F04923] text-white flex items-center justify-center text-[9px] font-black shrink-0">n</span>
+                      },
+                      {
+                        value: "cash",
+                        label: "নগদ অর্থ",
+                        icon: (
+                          <svg className="w-4 h-4 text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                          </svg>
+                        )
+                      },
+                      {
+                        value: "card",
+                        label: "কার্ড",
+                        icon: (
+                          <svg className="w-4 h-4 text-blue-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                          </svg>
+                        )
+                      },
                     ].map((method) => (
                       <button
                         key={method.value}
@@ -642,9 +664,10 @@ const handleCreateProject = async (e) => {
                             transactionNumber: "",
                           }))
                         }
-                        className={`py-2 rounded-xl text-xs font-semibold transition-all ${manualPayment.paymentMethod === method.value ? "bg-amber-500 text-white" : "bg-slate-800 text-slate-400 hover:bg-slate-700"}`}
+                        className={`flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition-all border ${manualPayment.paymentMethod === method.value ? "bg-amber-500 text-white border-amber-500 shadow-lg shadow-amber-500/20" : "bg-slate-800 border-white/5 text-slate-300 hover:bg-slate-700 hover:text-white"}`}
                       >
-                        {method.label}
+                        {method.icon}
+                        <span>{method.label}</span>
                       </button>
                     ))}
                   </div>
@@ -689,6 +712,28 @@ const handleCreateProject = async (e) => {
                   />
                 </div>
 
+                {manualPayment.userId && (
+                  <div className="bg-amber-500/5 border border-amber-500/10 rounded-xl p-3 space-y-2">
+                    {manualDueInfo.length > 0 ? (
+                      <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-2.5 space-y-1">
+                        <p className="text-xs font-bold text-red-400">
+                          ⚠️ {manualDueInfo.length} মাস বকেয়া আছে
+                        </p>
+                        <p className="text-xs text-slate-400">
+                          <span className="text-amber-400 font-bold">
+                            {(allUsers.find(u => u.id === parseInt(manualPayment.userId))?.monthlyAmount || 200)} × {manualDueInfo.length} due + {(allUsers.find(u => u.id === parseInt(manualPayment.userId))?.monthlyAmount || 200)} current = {(manualDueInfo.length + 1) * (allUsers.find(u => u.id === parseInt(manualPayment.userId))?.monthlyAmount || 200)} ৳
+                          </span>
+                        </p>
+                      </div>
+                    ) : (
+                      <p className="text-xs text-slate-400">
+                        পরিমাণ: <span className="text-amber-400 font-bold">{(allUsers.find(u => u.id === parseInt(manualPayment.userId))?.monthlyAmount || 200)} current = {(allUsers.find(u => u.id === parseInt(manualPayment.userId))?.monthlyAmount || 200)} ৳</span>
+                      </p>
+                    )}
+                    <p className="text-xs text-slate-500 mt-0.5">ম্যানুয়ালি পেমেন্ট নেওয়ার পর এই ফর্ম পূরণ করুন</p>
+                  </div>
+                )}
+
                 <button
                   type="submit"
                   disabled={submitting}
@@ -701,218 +746,12 @@ const handleCreateProject = async (e) => {
                 </button>
               </form>
             </div>
-
-            {/* Opening Balance */}
-            <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
-              <h2 className="text-base font-bold text-white mb-4">
-                সদস্যের পুরনো ব্যালেন্স
-              </h2>
-              <form
-                onSubmit={async (e) => {
-                  e.preventDefault();
-                  setSubmitting(true);
-                  try {
-                    const fd = new FormData(e.target);
-                        {parseCoveredMonths(p.coveredMonths).length > 0 && (
-                          <p className="text-xs text-sky-400 mt-0.5">
-                            📌 {formatPaymentBreakdown(p)}
-                          </p>
-                        )}
-                    await api.post("/payments/opening-balance", {
-                      userId: parseInt(fd.get("userId")),
-                      totalPaid: parseFloat(fd.get("totalPaid")),
-                      upToMonth: parseInt(fd.get("upToMonth")),
-                      upToYear: parseInt(fd.get("upToYear")),
-                    });
-                    showToast("পুরনো ব্যালেন্স সেট হয়েছে!");
-                    e.target.reset();
-                  } catch (err) {
-                    showToast(
-                      err.response?.data?.message || "ব্যর্থ হয়েছে",
-                      false,
-                    );
-                  } finally {
-                    setSubmitting(false);
-                  }
-                }}
-                className="space-y-3"
-              >
-                <div>
-                  <label className="block text-xs font-semibold text-slate-400 mb-1.5">
-                    সদস্য
-                  </label>
-                  <select
-                    name="userId"
-                    required
-                    className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-amber-400/50 transition-all"
-                  >
-  <option value="">সদস্য নির্বাচন করুন</option>
-{allUsers.map(u => (
-  <option key={u.id} value={u.id}>
-    {u.name} ({u.role})
-  </option>
-))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-400 mb-1.5">
-                    মোট পরিশোধিত (৳)
-                  </label>
-                  <input
-                    type="number"
-                    name="totalPaid"
-                    required
-                    placeholder="0"
-                    className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-amber-400/50 transition-all"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-400 mb-1.5">
-                      পর্যন্ত মাস
-                    </label>
-                    <select
-                      name="upToMonth"
-                      required
-                      className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-amber-400/50 transition-all"
-                    >
-                      {MONTH_NAMES.map((m, i) => (
-                        <option key={i} value={i + 1}>
-                          {m}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-400 mb-1.5">
-                      বছর
-                    </label>
-                    <input
-                      type="number"
-                      name="upToYear"
-                      defaultValue={new Date().getFullYear()}
-                      className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-amber-400/50 transition-all"
-                    />
-                  </div>
-                </div>
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="w-full flex items-center justify-center gap-2 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all disabled:opacity-60"
-                >
-                  {submitting && (
-                    <span className="loading loading-spinner loading-xs" />
-                  )}
-                  ব্যালেন্স সেট করুন
-                </button>
-              </form>
-            </div>
           </div>
         )}
 
         {/* ── Projects Tab ── */}
         {tab === "projects" && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Create Project */}
-            <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
-              <h2 className="text-base font-bold text-white mb-4">
-                নতুন প্রজেক্ট
-              </h2>
-              <form onSubmit={handleCreateProject} className="space-y-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-400 mb-1.5">
-                    প্রজেক্টের নাম
-                  </label>
-                  <input
-                    type="text"
-                    value={projectForm.name}
-                    onChange={(e) =>
-                      setProjectForm((f) => ({ ...f, name: e.target.value }))
-                    }
-                    placeholder="যেমন: রাতুল ইনভেস্টমেন্ট"
-                    required
-                    className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-amber-400/50 transition-all"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-400 mb-1.5">
-                    বিবরণ
-                  </label>
-                  <textarea
-                    value={projectForm.description}
-                    onChange={(e) =>
-                      setProjectForm((f) => ({
-                        ...f,
-                        description: e.target.value,
-                      }))
-                    }
-                    placeholder="প্রজেক্টের বিবরণ"
-                    rows={2}
-                    className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-amber-400/50 transition-all resize-none"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-400 mb-1.5">
-                      শুরুর তারিখ
-                    </label>
-                    <input
-                      type="date"
-                      value={projectForm.startDate}
-                      onChange={(e) =>
-                        setProjectForm((f) => ({
-                          ...f,
-                          startDate: e.target.value,
-                        }))
-                      }
-                      className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-amber-400/50 transition-all"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-400 mb-1.5">
-                      শেষের তারিখ
-                    </label>
-                    <input
-                      type="date"
-                      value={projectForm.endDate}
-                      onChange={(e) =>
-                        setProjectForm((f) => ({
-                          ...f,
-                          endDate: e.target.value,
-                        }))
-                      }
-                      className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-amber-400/50 transition-all"
-                    />
-                  </div>
-                  <div>
-  <label className="block text-xs font-semibold text-slate-400 mb-1.5">
-    পুরনো বিনিয়োগ (৳)
-  </label>
-  <input
-    type="number"
-    value={projectForm.openingInvested}
-    onChange={e => setProjectForm(f => ({ ...f, openingInvested: e.target.value }))}
-    placeholder="আগে থেকে যা invest আছে (না থাকলে 0)"
-    className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-amber-400/50 transition-all"
-  />
-  <p className="text-xs text-slate-500 mt-1">
-    ওয়েবসাইটের আগে যদি এই project এ invest করা থাকে
-  </p>
-</div>
-                </div>
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white font-bold rounded-xl transition-all disabled:opacity-60"
-                >
-                  {submitting && (
-                    <span className="loading loading-spinner loading-xs" />
-                  )}
-                  প্রজেক্ট তৈরি করুন
-                </button>
-              </form>
-            </div>
-
+          <div className="max-w-md mx-auto">
             {/* Add Transaction */}
             <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
               <h2 className="text-base font-bold text-white mb-4">

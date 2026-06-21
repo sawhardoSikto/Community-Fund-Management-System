@@ -240,13 +240,20 @@ async createManualPayment(dto: ManualPaymentDto, addedBy: number) {
     `Payment for ${dto.month}/${dto.year} already exists for this user`
   );
 
+  const dueMonths = await this.getDueMonths(dto.userId, dto.month, dto.year);
+  const coveredMonths = [
+    ...dueMonths,
+    { month: dto.month, year: dto.year },
+  ];
+  const totalAmount = user.monthlyAmount * coveredMonths.length;
+
   const capture = await this.getCaptureMonthAndYear(dto.month, dto.year);
 
   const payment = this.paymentRepo.create({
     userId: dto.userId,
     month: dto.month,
     year: dto.year,
-    amount: user.monthlyAmount,
+    amount: totalAmount,
     paymentMethod: dto.paymentMethod,
     transactionNumber: dto.transactionNumber,
     status: PaymentStatus.APPROVED, // ✅ auto approved
@@ -254,15 +261,23 @@ async createManualPayment(dto: ManualPaymentDto, addedBy: number) {
     approvedAt: new Date(),
     capturedInMonth: capture.month,
     capturedInYear: capture.year,
-    note: dto.note || 'Manually added by admin/accountant',
+    coveredMonths: JSON.stringify(coveredMonths),
+    note: dueMonths.length > 0
+      ? `${dto.note ? `${dto.note}. ` : ''}Due months covered: ${dueMonths.map(d => `${d.month}/${d.year}`).join(', ')}`
+      : dto.note || 'Manually added by admin/accountant',
   });
   await this.paymentRepo.save(payment);
   await this.notificationsService.create(
-  dto.userId,
-  `আপনার ${dto.month}/${dto.year} মাসের পেমেন্ট যুক্ত করা হয়েছে।`,
-);
+    dto.userId,
+    `আপনার ${dto.month}/${dto.year} মাসের পেমেন্ট যুক্ত করা হয়েছে (${coveredMonths.length} মাস)।`,
+  );
 
-  return { message: 'Payment added successfully', data: payment };
+  return {
+    message: `Payment added successfully (${coveredMonths.length} months)`,
+    dueMonths: dueMonths.length,
+    totalAmount,
+    data: payment
+  };
 }
 
   // Due check এর জন্য — কোন user এই মাসে pay করেছে

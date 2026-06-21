@@ -128,8 +128,8 @@ export default function SecretaryDashboard() {
                     <p className="text-xs text-slate-400">হাতে: {Number(sheet.cashInHand).toFixed(0)} ৳</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className={`text-xs font-bold px-2.5 py-1 rounded-lg ${sheet.status === 'published' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'}`}>
-                      {sheet.status === 'published' ? '✅ প্রকাশিত' : '📝 খসড়া'}
+                    <span className={`inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-lg ${sheet.status === 'published' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'}`}>
+                      {sheet.status === 'published' ? '✓ প্রকাশিত' : '✎ খসড়া'}
                     </span>
                     <Link href={`/sheets/${sheet.id}`} className="px-2.5 py-1 bg-slate-700 hover:bg-slate-600 text-white text-xs rounded-lg transition-colors">দেখুন</Link>
                   </div>
@@ -177,8 +177,8 @@ export default function SecretaryDashboard() {
                       </div>
                       <div className="text-right">
                         <p className="text-sm font-bold text-white">{Number(p.amount).toFixed(0)} ৳</p>
-                        <span className={`text-xs font-semibold ${p.status === 'approved' ? 'text-emerald-400' : p.status === 'pending' ? 'text-amber-400' : 'text-red-400'}`}>
-                          {p.status === 'approved' ? '✅' : p.status === 'pending' ? '⏳' : '❌'}
+                        <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-lg border ${p.status === 'approved' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : p.status === 'pending' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'}`}>
+                          {p.status === 'approved' ? 'পরিশোধিত' : p.status === 'pending' ? 'অপেক্ষমাণ' : 'বাতিল'}
                         </span>
                       </div>
                     </div>
@@ -270,8 +270,8 @@ export default function SecretaryDashboard() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className={`text-xs font-bold px-2.5 py-1 rounded-lg ${sheet.status === 'published' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'}`}>
-                    {sheet.status === 'published' ? '✅ প্রকাশিত' : '📝 খসড়া'}
+                  <span className={`inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-lg ${sheet.status === 'published' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'}`}>
+                    {sheet.status === 'published' ? '✓ প্রকাশিত' : '✎ খসড়া'}
                   </span>
                   <Link href={`/sheets/${sheet.id}`} className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-white text-xs font-semibold rounded-lg transition-colors">
                     দেখুন
