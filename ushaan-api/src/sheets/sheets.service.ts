@@ -180,13 +180,13 @@ for (const user of users) {
       sheet.month, sheet.year
     );
 
-    // সব members এর payment status
+    // সব users এর payment status
     const allUsers = await this.usersService.findAll();
-    const members = allUsers.filter((u) => u.role === 'member');
+    const users = allUsers;
 
 // Member payment status এ due months দেখাও
 const memberPaymentStatus = await Promise.all(
-  members.map(async (member) => {
+  users.map(async (member) => {
     const paid = payments.find(p => p.userId === member.id);
 
     // এই member এর due months খোঁজো (এই sheet এর মাসের আগে)
@@ -197,6 +197,7 @@ const memberPaymentStatus = await Promise.all(
     return {
       id: member.id,
       name: member.name,
+      role: member.role,
       monthlyAmount: member.monthlyAmount,
       status: paid ? 'paid' : 'due',
       payment: paid || null,

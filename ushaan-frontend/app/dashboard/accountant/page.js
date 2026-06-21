@@ -15,6 +15,25 @@ const PAYMENT_METHOD_LABELS = {
   other: "🔵 অন্যান্য",
 };
 
+const parseCoveredMonths = (coveredMonths) => {
+  if (!coveredMonths) return [];
+
+  try {
+    const parsed = typeof coveredMonths === 'string'
+      ? JSON.parse(coveredMonths)
+      : coveredMonths;
+
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+};
+
+const formatCoveredMonths = (coveredMonths) =>
+  parseCoveredMonths(coveredMonths)
+    .map((item) => `${MONTH_NAMES[item.month - 1]} ${item.year}`)
+    .join(', ');
+
 
 
 
@@ -443,6 +462,11 @@ const handleCreateProject = async (e) => {
                           {PAYMENT_METHOD_LABELS[payment.paymentMethod] ||
                             payment.paymentMethod}
                         </p>
+                        {parseCoveredMonths(payment.coveredMonths).length > 0 && (
+                          <p className="text-xs text-sky-400 mt-0.5">
+                            📌 কভার করেছে: {formatCoveredMonths(payment.coveredMonths)}
+                          </p>
+                        )}
                         {payment.transactionNumber && (
                           <p className="text-xs text-amber-400 mt-0.5 font-medium">
                             📱 {payment.transactionNumber}
@@ -511,13 +535,11 @@ const handleCreateProject = async (e) => {
                     className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-amber-400/50 transition-all"
                   >
                     <option value="">সদস্য নির্বাচন করুন</option>
-                    {allUsers
-                      .filter((u) => u.role === "member")
-                      .map((u) => (
-                        <option key={u.id} value={u.id}>
-                          {u.name} ({u.monthlyAmount} ৳)
-                        </option>
-                      ))}
+                    {allUsers.map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.name} ({u.role} · {u.monthlyAmount} ৳)
+                      </option>
+                    ))}
                   </select>
                 </div>
 
@@ -653,6 +675,11 @@ const handleCreateProject = async (e) => {
                   setSubmitting(true);
                   try {
                     const fd = new FormData(e.target);
+                        {parseCoveredMonths(p.coveredMonths).length > 0 && (
+                          <p className="text-xs text-sky-400 mt-0.5">
+                            📌 কভার করেছে: {formatCoveredMonths(p.coveredMonths)}
+                          </p>
+                        )}
                     await api.post("/payments/opening-balance", {
                       userId: parseInt(fd.get("userId")),
                       totalPaid: parseFloat(fd.get("totalPaid")),

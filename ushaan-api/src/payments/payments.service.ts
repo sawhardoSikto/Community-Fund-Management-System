@@ -32,6 +32,11 @@ async createPayment(userId: number, dto: CreatePaymentDto) {
 
   // ১. Due months খোঁজো
   const dueMonths = await this.getDueMonths(userId, dto.month, dto.year);
+  const coveredMonths = [
+    ...dueMonths,
+    { month: dto.month, year: dto.year },
+  ];
+  const totalAmount = user.monthlyAmount * coveredMonths.length;
 
   // ২. Current month already paid?
   const existing = await this.paymentRepo.findOne({
@@ -43,51 +48,27 @@ async createPayment(userId: number, dto: CreatePaymentDto) {
   if (existing) throw new BadRequestException(
     `Payment for ${dto.month}/${dto.year} already submitted`
   );
-const created: Payment[] = [];
-
-  // ৩. Due months এর payment create করো
-  for (const due of dueMonths) {
-    const dueExisting = await this.paymentRepo.findOne({
-      where: [
-        { userId, month: due.month, year: due.year, status: PaymentStatus.APPROVED },
-        { userId, month: due.month, year: due.year, status: PaymentStatus.PENDING },
-      ],
-    });
-    if (!dueExisting) {
-      const duePayment = this.paymentRepo.create({
-        userId,
-        month: due.month,
-        year: due.year,
-        amount: user.monthlyAmount,
-        paymentMethod: dto.paymentMethod,
-        transactionNumber: dto.transactionNumber,
-        note: `Due payment (paid with ${dto.month}/${dto.year})`,
-        status: PaymentStatus.PENDING,
-      });
-      await this.paymentRepo.save(duePayment);
-      created.push(duePayment);
-    }
-  }
-
-  // ৪. Current month payment create করো
+  // ৩. Single bundled payment create করো
   const payment = this.paymentRepo.create({
     userId,
     month: dto.month,
     year: dto.year,
-    amount: user.monthlyAmount,
+    amount: totalAmount,
     paymentMethod: dto.paymentMethod,
     transactionNumber: dto.transactionNumber,
-    note: dto.note,
+    note: dueMonths.length > 0
+      ? `${dto.note ? `${dto.note}. ` : ''}Due months covered: ${dueMonths.map(d => `${d.month}/${d.year}`).join(', ')}`
+      : dto.note,
     status: PaymentStatus.PENDING,
+    coveredMonths: JSON.stringify(coveredMonths),
   });
   await this.paymentRepo.save(payment);
-  created.push(payment);
 
   return {
-    message: `Payment submitted (${created.length} months)`,
+    message: `Payment submitted (${coveredMonths.length} months)`,
     dueMonths: dueMonths.length,
-    totalAmount: user.monthlyAmount * created.length,
-    data: created,
+    totalAmount,
+    data: payment,
   };
 }
 
@@ -108,6 +89,10 @@ private async getDueMonths(
   const joinYear = joinDate.getFullYear();
 
   const dueMonths: { month: number; year: number }[] = [];
+  const payments = await this.paymentRepo.find({
+    where: { userId },
+    order: { year: 'ASC', month: 'ASC' },
+  });
 
   let checkMonth = joinMonth;
   let checkYear = joinYear;
@@ -116,22 +101,9 @@ private async getDueMonths(
     checkYear < currentYear ||
     (checkYear === currentYear && checkMonth < currentMonth)
   ) {
-    const paid = await this.paymentRepo.findOne({
-      where: [
-        {
-          userId,
-          month: checkMonth,
-          year: checkYear,
-          status: PaymentStatus.APPROVED,
-        },
-        {
-          userId,
-          month: checkMonth,
-          year: checkYear,
-          status: PaymentStatus.PENDING,
-        },
-      ],
-    });
+    const paid = payments.find((payment) =>
+      this.paymentCoversMonth(payment, checkMonth, checkYear)
+    );
 
     if (!paid) {
       dueMonths.push({
@@ -306,9 +278,8 @@ async createManualPayment(dto: ManualPaymentDto, addedBy: number) {
       checkYear < currentYear ||
       (checkYear === currentYear && checkMonth <= currentMonth)
     ) {
-      const paid = payments.find(
-        p => p.month === checkMonth && p.year === checkYear
-          && p.status === PaymentStatus.APPROVED
+      const paid = payments.find((p) =>
+        this.paymentCoversMonth(p, checkMonth, checkYear)
       );
 
       if (!paid) {
@@ -403,14 +374,18 @@ async getMemberDuesUpToMonth(userId: number, month: number, year: number) {
   const dues: { month: number; year: number }[] = [];
   let checkMonth = joinMonth;
   let checkYear = joinYear;
+  const payments = await this.paymentRepo.find({
+    where: { userId },
+    order: { year: 'ASC', month: 'ASC' },
+  });
 
   while (
     checkYear < year ||
     (checkYear === year && checkMonth < month)
   ) {
-    const paid = await this.paymentRepo.findOne({
-      where: { userId, month: checkMonth, year: checkYear, status: PaymentStatus.APPROVED },
-    });
+    const paid = payments.find((p) =>
+      this.paymentCoversMonth(p, checkMonth, checkYear)
+    );
 
     if (!paid) {
       dues.push({ month: checkMonth, year: checkYear });
@@ -421,5 +396,26 @@ async getMemberDuesUpToMonth(userId: number, month: number, year: number) {
   }
 
   return dues;
+}
+
+private paymentCoversMonth(payment: Payment, month: number, year: number) {
+  if (payment.status !== PaymentStatus.APPROVED && payment.status !== PaymentStatus.PENDING) {
+    return false;
+  }
+
+  if (payment.month === month && payment.year === year) {
+    return true;
+  }
+
+  if (!payment.coveredMonths) {
+    return false;
+  }
+
+  try {
+    const coveredMonths = JSON.parse(payment.coveredMonths) as Array<{ month: number; year: number }>;
+    return coveredMonths.some((covered) => covered.month === month && covered.year === year);
+  } catch {
+    return false;
+  }
 }
 }

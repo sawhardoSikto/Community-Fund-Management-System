@@ -19,51 +19,54 @@ export enum PaymentMethod {
 @Entity()
 export class Payment {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @Column()
-  userId: number;
+  userId!: number;
 
   @Column()
-  month: number; // 1-12
+  month!: number; // 1-12
 
   @Column()
-  year: number;
+  year!: number;
 
   @Column({ type: 'decimal', precision: 10, scale: 2 })
-  amount: number;
+  amount!: number;
 
   @Column({ nullable: true })
-  bkashNumber: string;
+  bkashNumber!: string;
 
   @Column({
     type: 'enum',
     enum: PaymentStatus,
     default: PaymentStatus.PENDING,
   })
-  status: PaymentStatus;
+  status!: PaymentStatus;
 
   @Column({ nullable: true })
-  approvedBy: number; // accountant id
+  approvedBy!: number; // accountant id
 
   @Column({ nullable: true })
-  note: string;
+  note!: string;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })
-  user: User;
+  user!: User;
 
   @Column({
     type: 'enum',
     enum: PaymentMethod,
     default: PaymentMethod.BKASH,
   })
-  paymentMethod: PaymentMethod; // ✅ নতুন
+  paymentMethod!: PaymentMethod; // ✅ নতুন
 
   @Column({ nullable: true })
-  transactionNumber: string; // ✅ bKash/Nagad number বা transaction ID
+  transactionNumber!: string; // ✅ bKash/Nagad number বা transaction ID
+
+  @Column({ type: 'text', nullable: true })
+  coveredMonths!: string | null; // JSON array of covered months [{month, year}, ...]
 
 }

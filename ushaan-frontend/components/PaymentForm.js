@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import api from '@/lib/api';
 import { MONTH_NAMES } from '@/lib/constants';
 
@@ -14,6 +14,24 @@ export default function PaymentForm({ user, onSuccess }) {
   });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [dueInfo, setDueInfo] = useState([]);
+
+  useEffect(() => {
+    const fetchDueInfo = async () => {
+      try {
+        const res = await api.get('/payments/my/dues');
+        const dues = res.data.data || [];
+        const relevantDues = dues.filter((d) =>
+          d.year < form.year || (d.year === form.year && d.month < form.month)
+        );
+        setDueInfo(relevantDues);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchDueInfo();
+  }, [form.month, form.year]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -97,10 +115,21 @@ export default function PaymentForm({ user, onSuccess }) {
           className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-amber-400/50 transition-all" />
       </div>
 
-      <div className="bg-amber-500/5 border border-amber-500/10 rounded-xl p-3">
-        <p className="text-xs text-slate-400">
-          পরিমাণ: <span className="text-amber-400 font-bold">{user?.monthlyAmount || 200} ৳</span>
-        </p>
+      <div className="bg-amber-500/5 border border-amber-500/10 rounded-xl p-3 space-y-2">
+        {dueInfo.length > 0 ? (
+          <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-2.5 space-y-1">
+            <p className="text-xs font-bold text-red-400">
+              ⚠️ {dueInfo.length} মাস বকেয়া আছে
+            </p>
+            <p className="text-xs text-slate-400">
+              মোট দিতে হবে: <span className="text-amber-400 font-bold">{(dueInfo.length + 1) * (user?.monthlyAmount || 200)} ৳</span>
+            </p>
+          </div>
+        ) : (
+          <p className="text-xs text-slate-400">
+            পরিমাণ: <span className="text-amber-400 font-bold">{user?.monthlyAmount || 200} ৳</span>
+          </p>
+        )}
         <p className="text-xs text-slate-500 mt-0.5">পেমেন্ট করার পর এই ফর্ম পূরণ করুন</p>
       </div>
 

@@ -124,14 +124,14 @@ const totalExpense =
 
 </div>
   <h2 className="text-xl font-bold mt-8 mb-4">
-  সদস্য চাঁদা অবস্থা
+  সকল ইউজারের পেমেন্ট অবস্থা
 </h2>
 
 <table className="w-full border border-black border-collapse mb-8">
   <thead>
     <tr>
       <th className="border border-black p-2 text-left">
-        সদস্যের নাম
+        ইউজারের নাম
       </th>
 
       <th className="border border-black p-2 text-center">
@@ -148,7 +148,12 @@ const totalExpense =
     {sheet.memberPayments?.map((member) => (
       <tr key={member.id}>
         <td className="border border-black p-2">
-          {member.name}
+          <div className="flex items-center justify-between gap-2">
+            <span>{member.name}</span>
+            <span className="text-[10px] px-2 py-0.5 rounded-full border border-black/20 uppercase">
+              {member.role}
+            </span>
+          </div>
         </td>
 
         <td className="border border-black p-2 text-center">
