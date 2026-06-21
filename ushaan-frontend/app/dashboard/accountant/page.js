@@ -132,6 +132,30 @@ export default  function AccountantDashboard() {
     }
   }, []);
 
+  useEffect(() => {
+    if (!user) return;
+
+    // Poll silently in the background every 15 seconds
+    const interval = setInterval(() => {
+      fetchSilent();
+    }, 15000);
+
+    return () => clearInterval(interval);
+  }, [user]);
+
+  const fetchSilent = async () => {
+    try {
+      const [pendingRes, overallRes] = await Promise.all([
+        api.get('/payments/pending'),
+        api.get('/sheets/overall-status'),
+      ]);
+      setPendingPayments(pendingRes.data.data || []);
+      setOverallStatus(overallRes.data.data);
+    } catch (err) {
+      console.error("Silent background fetch failed:", err);
+    }
+  };
+
 const fetchAll = async () => {
   setLoading(true);
   try {

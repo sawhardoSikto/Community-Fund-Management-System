@@ -24,6 +24,12 @@ export class Salary {
   @Column({ nullable: true })
   sheetId: number;
 
+  @Column({ type: 'int', nullable: true })
+  capturedInMonth: number | null;
+
+  @Column({ type: 'int', nullable: true })
+  capturedInYear: number | null;
+
   @CreateDateColumn()
   createdAt: Date;
 

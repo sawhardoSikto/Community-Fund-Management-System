@@ -33,6 +33,12 @@ export class Expense {
   @Column({ type: 'date' })
   date: Date;
 
+  @Column({ type: 'int', nullable: true })
+  capturedInMonth: number | null;
+
+  @Column({ type: 'int', nullable: true })
+  capturedInYear: number | null;
+
   @Column()
   addedBy: number;
 

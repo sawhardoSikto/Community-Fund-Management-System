@@ -3,9 +3,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Expense } from './entities/expense.entity';
 import { ExpensesService } from './expenses.service';
 import { ExpensesController } from './expenses.controller';
+import { MonthlySheet } from 'src/sheets/entities/monthly-sheet.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Expense])],
+  imports: [TypeOrmModule.forFeature([Expense, MonthlySheet])],
   controllers: [ExpensesController],
   providers: [ExpensesService],
   exports: [ExpensesService],

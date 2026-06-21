@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Project, ProjectStatus } from './entities/project.entity';
@@ -10,18 +10,53 @@ import { SheetsService } from '../sheets/sheets.service';
 import { SettingsService } from 'src/settings/settings.service';
 import { UsersService } from '../users/users.service';
 import { NotificationsService } from 'src/notifications/notifications.service';
-
+import { MonthlySheet, SheetStatus } from 'src/sheets/entities/monthly-sheet.entity';
 
 @Injectable()
-export class ProjectsService {
+export class ProjectsService implements OnModuleInit {
   constructor(
     @InjectRepository(Project)
     private projectRepo: Repository<Project>,
     @InjectRepository(ProjectTransaction)
     private transactionRepo: Repository<ProjectTransaction>,
+    @InjectRepository(MonthlySheet)
+    private sheetRepo: Repository<MonthlySheet>,
     private usersService: UsersService,
     private notificationsService: NotificationsService,
   ) {}
+
+  async onModuleInit() {
+    try {
+      await this.transactionRepo.query(
+        `UPDATE project_transaction SET "capturedInMonth" = EXTRACT(MONTH FROM date), "capturedInYear" = EXTRACT(YEAR FROM date) WHERE "capturedInMonth" IS NULL`
+      );
+    } catch (err) {
+      console.error('Failed to migrate existing project transactions capturedInMonth/capturedInYear', err);
+    }
+  }
+
+  async getCaptureMonthAndYear(targetMonth: number, targetYear: number): Promise<{ month: number; year: number }> {
+    const targetSheet = await this.sheetRepo.findOne({
+      where: { month: targetMonth, year: targetYear, status: SheetStatus.PUBLISHED }
+    });
+    if (!targetSheet) {
+      return { month: targetMonth, year: targetYear };
+    }
+    const latestPublishedSheet = await this.sheetRepo.findOne({
+      where: { status: SheetStatus.PUBLISHED },
+      order: { year: 'DESC', month: 'DESC' }
+    });
+    if (!latestPublishedSheet) {
+      return { month: targetMonth, year: targetYear };
+    }
+    let nextMonth = latestPublishedSheet.month + 1;
+    let nextYear = latestPublishedSheet.year;
+    if (nextMonth > 12) {
+      nextMonth = 1;
+      nextYear += 1;
+    }
+    return { month: nextMonth, year: nextYear };
+  }
 
   // সব project দেখো
   async findAll() {
@@ -79,12 +114,20 @@ for (const user of users) {
     const projectData = await this.findOne(projectId);
     const project = projectData.data;
 
+    const txDate = new Date(dto.date);
+    const targetMonth = txDate.getMonth() + 1;
+    const targetYear = txDate.getFullYear();
+
+    const capture = await this.getCaptureMonthAndYear(targetMonth, targetYear);
+
     const transaction = this.transactionRepo.create({
       projectId,
       type: dto.type,
       amount: dto.amount,
       description: dto.description,
-      date: new Date(dto.date),
+      date: txDate,
+      capturedInMonth: capture.month,
+      capturedInYear: capture.year,
     });
     if (dto.type === TransactionType.PROFIT) {
   const users = await this.usersService.findAll();
@@ -141,34 +184,19 @@ for (const user of users) {
   }
 
   // Sheet generate এর জন্য — একটা মাসের project income
-async getProjectIncomeByMonth(month: number, year: number) {
-  const startDate = new Date(year, month - 1, 1);
-  const endDate = new Date(year, month, 0);
+  async getProjectIncomeByMonth(month: number, year: number) {
+    return this.transactionRepo.find({
+      where: { capturedInMonth: month, capturedInYear: year, type: TransactionType.PROFIT },
+      relations: { project: true },
+    });
+  }
 
-  return this.transactionRepo
-    .createQueryBuilder('tx')
-    .leftJoinAndSelect('tx.project', 'project')
-    .where('tx.date >= :startDate', { startDate })
-    .andWhere('tx.date <= :endDate', { endDate })
-    .andWhere('tx.type = :type', {
-      type: TransactionType.PROFIT,
-    })
-    .getMany();
-}
-async getCapitalReturnByMonth(month: number, year: number) {
-  const startDate = new Date(year, month - 1, 1);
-  const endDate = new Date(year, month, 0);
-
-  return this.transactionRepo
-    .createQueryBuilder('tx')
-    .leftJoinAndSelect('tx.project', 'project')
-    .where('tx.date >= :startDate', { startDate })
-    .andWhere('tx.date <= :endDate', { endDate })
-    .andWhere('tx.type = :type', {
-      type: TransactionType.CAPITAL_RETURN,
-    })
-    .getMany();
-}
+  async getCapitalReturnByMonth(month: number, year: number) {
+    return this.transactionRepo.find({
+      where: { capturedInMonth: month, capturedInYear: year, type: TransactionType.CAPITAL_RETURN },
+      relations: { project: true },
+    });
+  }
 
   // Overall fund status এর জন্য
   async getOverallInvestedAmount() {
@@ -198,15 +226,9 @@ async getCapitalReturnByMonth(month: number, year: number) {
 }
 // এই মাসের project expense
 async getProjectExpenseByMonth(month: number, year: number) {
-  const startDate = new Date(year, month - 1, 1);
-  const endDate = new Date(year, month, 0);
-
-  return this.transactionRepo
-    .createQueryBuilder('tx')
-    .leftJoinAndSelect('tx.project', 'project')
-    .where('tx.date >= :startDate', { startDate })
-    .andWhere('tx.date <= :endDate', { endDate })
-    .andWhere('tx.type = :type', { type: TransactionType.EXPENSE })
-    .getMany();
+  return this.transactionRepo.find({
+    where: { capturedInMonth: month, capturedInYear: year, type: TransactionType.EXPENSE },
+    relations: { project: true },
+  });
 }
 }

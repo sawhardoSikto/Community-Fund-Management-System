@@ -30,6 +30,12 @@ export class ProjectTransaction {
   @Column({ type: 'date' })
   date: Date;
 
+  @Column({ type: 'int', nullable: true })
+  capturedInMonth: number | null;
+
+  @Column({ type: 'int', nullable: true })
+  capturedInYear: number | null;
+
   @CreateDateColumn()
   createdAt: Date;
 

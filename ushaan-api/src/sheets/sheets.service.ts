@@ -296,13 +296,6 @@ const totalGeneralExpense = await this.expensesService.getTotalExpenseByMonth(
 async getOverallStatus() {
   const settings = await this.settingsService.getSettings();
 
-  // ✅ Project থেকে stillOutside নাও (openingInvested সহ)
-  const totalInvested = await this.projectsService.getOverallInvestedAmount();
-
-  // ✅ settings এর openingTotalInvested আর লাগবে না
-  // কারণ project এ openingInvested set হচ্ছে
-  const totalInvestedFinal = totalInvested;
-
   const allSheets = await this.sheetRepo.find({
     where: { status: SheetStatus.PUBLISHED },
     order: { year: 'DESC', month: 'DESC' },
@@ -310,19 +303,21 @@ async getOverallStatus() {
 
   if (allSheets.length === 0) {
     const cashInHand = Number(settings.openingCashInHand);
+    const totalInvested = Number(settings.openingTotalInvested);
     return {
       message: 'Overall fund status',
       data: {
         cashInHand: cashInHand.toFixed(2),
-        totalInvested: totalInvestedFinal.toFixed(2),
+        totalInvested: totalInvested.toFixed(2),
         totalProfit: Number(settings.openingTotalProfit).toFixed(2),
-        totalAsset: (cashInHand + totalInvestedFinal).toFixed(2),
+        totalAsset: (cashInHand + totalInvested).toFixed(2),
       },
     };
   }
 
   const latestSheet = allSheets[0];
   const cashInHand = Number(latestSheet.cashInHand);
+  const totalInvested = Number(latestSheet.totalInvested);
 
   const websiteProjectIncome = allSheets.reduce(
     (sum, s) => sum + Number(s.totalProjectIncome), 0
@@ -333,9 +328,9 @@ async getOverallStatus() {
     message: 'Overall fund status',
     data: {
       cashInHand: cashInHand.toFixed(2),
-      totalInvested: totalInvestedFinal.toFixed(2),
+      totalInvested: totalInvested.toFixed(2),
       totalProfit: totalProfit.toFixed(2),
-      totalAsset: (cashInHand + totalInvestedFinal).toFixed(2),
+      totalAsset: Number(latestSheet.totalAsset).toFixed(2),
     },
   };
 }
