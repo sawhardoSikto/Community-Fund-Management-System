@@ -72,9 +72,9 @@ export class Payment {
   @Column({ nullable: true, type: 'timestamp' })
   approvedAt!: Date | null;
 
-  @Column({ nullable: true })
+  @Column({ type: 'int', nullable: true })
   capturedInMonth!: number | null;
 
-  @Column({ nullable: true })
+  @Column({ type: 'int', nullable: true })
   capturedInYear!: number | null;
 }
