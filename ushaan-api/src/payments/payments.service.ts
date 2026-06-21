@@ -83,6 +83,26 @@ async createPayment(userId: number, dto: CreatePaymentDto) {
   };
 }
 
+async getDueStartMonthAndYear(
+  userId: number,
+  joinDate: Date,
+): Promise<{ month: number; year: number }> {
+  const opening = await this.openingBalanceRepo.findOne({ where: { userId } });
+  if (opening) {
+    let nextMonth = Number(opening.upToMonth) + 1;
+    let nextYear = Number(opening.upToYear);
+    if (nextMonth > 12) {
+      nextMonth = 1;
+      nextYear += 1;
+    }
+    return { month: nextMonth, year: nextYear };
+  }
+  return {
+    month: joinDate.getMonth() + 1,
+    year: joinDate.getFullYear(),
+  };
+}
+
 // Due months calculate করো
 private async getDueMonths(
   userId: number,
@@ -95,18 +115,15 @@ private async getDueMonths(
     throw new NotFoundException('User not found');
   }
 
-  const joinDate = new Date(user.createdAt);
-  const joinMonth = joinDate.getMonth() + 1;
-  const joinYear = joinDate.getFullYear();
-
+  const start = await this.getDueStartMonthAndYear(userId, new Date(user.createdAt));
   const dueMonths: { month: number; year: number }[] = [];
   const payments = await this.paymentRepo.find({
     where: { userId },
     order: { year: 'ASC', month: 'ASC' },
   });
 
-  let checkMonth = joinMonth;
-  let checkYear = joinYear;
+  let checkMonth = start.month;
+  let checkYear = start.year;
 
   while (
     checkYear < currentYear ||
@@ -303,13 +320,10 @@ async createManualPayment(dto: ManualPaymentDto, addedBy: number) {
     const user = await this.usersService.findById(userId);
     if (!user) throw new NotFoundException('User not found');
 
-    const joinDate = new Date(user.createdAt);
-    const joinMonth = joinDate.getMonth() + 1;
-    const joinYear = joinDate.getFullYear();
-
+    const start = await this.getDueStartMonthAndYear(userId, new Date(user.createdAt));
     const dueList: { month: number; year: number; amount: number }[] = [];;
-    let checkYear = joinYear;
-    let checkMonth = joinMonth;
+    let checkMonth = start.month;
+    let checkYear = start.year;
 
     while (
       checkYear < currentYear ||
@@ -404,13 +418,10 @@ async getMemberDuesUpToMonth(userId: number, month: number, year: number) {
   const user = await this.usersService.findById(userId);
   if (!user) return [];
 
-  const joinDate = new Date(user.createdAt);
-  const joinMonth = joinDate.getMonth() + 1;
-  const joinYear = joinDate.getFullYear();
-
+  const start = await this.getDueStartMonthAndYear(userId, new Date(user.createdAt));
   const dues: { month: number; year: number }[] = [];
-  let checkMonth = joinMonth;
-  let checkYear = joinYear;
+  let checkMonth = start.month;
+  let checkYear = start.year;
   const payments = await this.paymentRepo.find({
     where: { userId },
     order: { year: 'ASC', month: 'ASC' },

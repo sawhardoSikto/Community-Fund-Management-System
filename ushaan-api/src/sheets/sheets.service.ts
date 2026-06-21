@@ -194,12 +194,9 @@ const totalGeneralExpense = await this.expensesService.getTotalExpenseByMonth(
         const unpaidDues: { month: number; year: number }[] = [];
 
         // Trace from member join date to this sheet's month/year (exclusive)
-        const joinDate = new Date(member.createdAt);
-        const joinMonth = joinDate.getMonth() + 1;
-        const joinYear = joinDate.getFullYear();
-
-        let checkMonth = joinMonth;
-        let checkYear = joinYear;
+        const start = await this.paymentsService.getDueStartMonthAndYear(member.id, new Date(member.createdAt));
+        let checkMonth = start.month;
+        let checkYear = start.year;
 
         while (checkYear < sheet.year || (checkYear === sheet.year && checkMonth < sheet.month)) {
           const coveringPayment = memberApprovedPayments.find(p =>
