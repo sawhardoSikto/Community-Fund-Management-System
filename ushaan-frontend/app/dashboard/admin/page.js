@@ -54,19 +54,17 @@ export default function AdminDashboard() {
   const fetchAll = async () => {
     setLoading(true);
     try {
-      const [usersRes, projectsRes, overallRes, sheetsRes, pendingRes, settingsRes] = await Promise.all([
+      const [usersRes, projectsRes, overallRes, sheetsRes, settingsRes] = await Promise.all([
         api.get('/users'),
         api.get('/projects'),
         api.get('/sheets/overall-status'),
         api.get('/sheets'),
-        api.get('/payments/pending'),
         api.get('/settings'),
       ]);
       setAllUsers(usersRes.data || []);
       setProjects(projectsRes.data.data || []);
       setOverallStatus(overallRes.data.data);
       setSheets(sheetsRes.data.data || []);
-      setPendingPayments(pendingRes.data.data || []);
 
       // ✅ Settings সঠিকভাবে set করো
       const settings = settingsRes.data;
@@ -168,7 +166,7 @@ export default function AdminDashboard() {
   const TABS = [
     { key: 'overview', label: '📊 সারসংক্ষেপ' },
     { key: 'members', label: '👥 সদস্য', count: allUsers.length },
-    { key: 'payments', label: '💳 পেমেন্ট', count: pendingPayments.length },
+    { key: 'payments', label: '💳 পেমেন্ট' },
     { key: 'my-payment', label: '💰 আমার পেমেন্ট' },
     { key: 'projects', label: '📁 প্রজেক্ট' },
     { key: 'settings', label: '⚙️ সেটিংস' },
@@ -271,15 +269,14 @@ export default function AdminDashboard() {
         )}
 
         {/* Quick Stats */}
-        <div className="grid grid-cols-3 gap-3 mb-6">
+        <div className="grid grid-cols-2 gap-3 mb-6">
           {[
             { label: 'মোট সদস্য', value: allUsers.length, icon: '👥' },
             { label: 'প্রজেক্ট', value: projects.length, icon: '📁' },
-            { label: 'অনুমোদন বাকি', value: pendingPayments.length, icon: '⏳', alert: pendingPayments.length > 0 },
           ].map((s, i) => (
-            <div key={i} className={`bg-slate-900/50 border rounded-2xl p-4 text-center ${s.alert ? 'border-red-500/20' : 'border-white/5'}`}>
+            <div key={i} className="bg-slate-900/50 border rounded-2xl border-white/5 p-4 text-center">
               <p className="text-2xl mb-1">{s.icon}</p>
-              <p className={`text-2xl font-black ${s.alert ? 'text-red-400' : 'text-white'}`}>{s.value}</p>
+              <p className="text-2xl font-black text-white">{s.value}</p>
               <p className="text-xs text-slate-400 mt-0.5">{s.label}</p>
             </div>
           ))}
@@ -409,39 +406,7 @@ export default function AdminDashboard() {
         {/* Payments */}
         {tab === 'payments' && (
           <div className="space-y-5">
-            {pendingPayments.length > 0 && (
-              <div className="bg-slate-900/50 border border-red-500/10 rounded-2xl p-5">
-                <h2 className="text-base font-bold text-white mb-4">অনুমোদন অপেক্ষায় ({pendingPayments.length})</h2>
-                <div className="space-y-3">
-                  {pendingPayments.map(payment => (
-                    <div key={payment.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-800/50 rounded-xl p-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-400 font-black text-sm shrink-0">
-                          {payment.user?.name?.[0]?.toUpperCase()}
-                        </div>
-                        <div>
-                          <p className="text-sm font-bold text-white">{payment.user?.name}</p>
-                          <p className="text-xs text-slate-400">{MONTH_NAMES[payment.month - 1]} {payment.year} · {Number(payment.amount).toFixed(0)} ৳</p>
-                          <p className="text-xs text-slate-500">{payment.paymentMethod}</p>
-                          {payment.transactionNumber && <p className="text-xs text-amber-400 font-medium">📱 {payment.transactionNumber}</p>}
-                          {payment.note && <p className="text-xs text-slate-500 italic">"{payment.note}"</p>}
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <button onClick={() => handlePaymentStatus(payment.id, 'approved')} disabled={processing === payment.id}
-                          className="flex-1 sm:flex-none px-4 py-2 bg-emerald-500/10 hover:bg-emerald-500 text-emerald-400 hover:text-white border border-emerald-500/20 rounded-xl text-xs font-bold transition-all disabled:opacity-50">
-                          ✓ অনুমোদন
-                        </button>
-                        <button onClick={() => handlePaymentStatus(payment.id, 'rejected')} disabled={processing === payment.id}
-                          className="flex-1 sm:flex-none px-4 py-2 bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white border border-red-500/20 rounded-xl text-xs font-bold transition-all disabled:opacity-50">
-                          ✗ বাতিল
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            
             <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-4">
                 <h2 className="text-base font-bold text-white flex-1">সব পেমেন্ট</h2>

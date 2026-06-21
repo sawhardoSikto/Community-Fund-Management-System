@@ -36,7 +36,7 @@ export class SheetsService {
   );
 
   // ১. Member payments
-  const payments = await this.paymentsService.getApprovedPaymentsByMonth(
+  const payments = await this.paymentsService.getApprovedPaymentsCapturedInMonth(
     dto.month, dto.year
   );
   const totalMemberIncome = payments.reduce(
@@ -159,7 +159,7 @@ const totalGeneralExpense = await this.expensesService.getTotalExpenseByMonth(
     if (!sheet) throw new NotFoundException('Sheet not found');
 
     // Full details load করো
-    const payments = await this.paymentsService.getApprovedPaymentsByMonth(
+    const payments = await this.paymentsService.getApprovedPaymentsCapturedInMonth(
       sheet.month, sheet.year
     );
     const [projectIncomes, projectExpenses, capitalReturns] = await Promise.all([
@@ -184,33 +184,95 @@ const totalGeneralExpense = await this.expensesService.getTotalExpenseByMonth(
     const allUsers = await this.usersService.findAll();
     const users = allUsers;
 
-// Member payment status এ due months দেখাও
-const memberPaymentStatus = await Promise.all(
-  users.map(async (member) => {
-    const paid = payments.find(p => p.userId === member.id);
+    // Member payment status এ due months দেখাও
+    const memberPaymentStatus = await Promise.all(
+      users.map(async (member) => {
+        // Find all approved payments for this user
+        const memberApprovedPayments = await this.paymentsService.getApprovedPaymentsForUser(member.id);
 
-    // এই member এর due months খোঁজো (এই sheet এর মাসের আগে)
-    const memberDues = await this.paymentsService.getMemberDuesUpToMonth(
-      member.id, sheet.month, sheet.year
+        const paidDues: { month: number; year: number }[] = [];
+        const unpaidDues: { month: number; year: number }[] = [];
+
+        // Trace from member join date to this sheet's month/year (exclusive)
+        const joinDate = new Date(member.createdAt);
+        const joinMonth = joinDate.getMonth() + 1;
+        const joinYear = joinDate.getFullYear();
+
+        let checkMonth = joinMonth;
+        let checkYear = joinYear;
+
+        while (checkYear < sheet.year || (checkYear === sheet.year && checkMonth < sheet.month)) {
+          const coveringPayment = memberApprovedPayments.find(p => 
+            this.paymentsService.paymentCoversMonth(p, checkMonth, checkYear)
+          );
+
+          if (coveringPayment) {
+            // Check where it was captured
+            const capYear = coveringPayment.capturedInYear ?? coveringPayment.year;
+            const capMonth = coveringPayment.capturedInMonth ?? coveringPayment.month;
+            const isCapturedBeforeOrThis = 
+              capYear < sheet.year || 
+              (capYear === sheet.year && capMonth <= sheet.month);
+
+            if (isCapturedBeforeOrThis) {
+              if (capMonth === sheet.month && capYear === sheet.year) {
+                paidDues.push({ month: checkMonth, year: checkYear });
+              }
+            } else {
+              // Captured in the future (after this sheet)
+              unpaidDues.push({ month: checkMonth, year: checkYear });
+            }
+          } else {
+            unpaidDues.push({ month: checkMonth, year: checkYear });
+          }
+
+          checkMonth++;
+          if (checkMonth > 12) {
+            checkMonth = 1;
+            checkYear++;
+          }
+        }
+
+        // Check if the current month is paid and captured in this sheet
+        const currentPayment = memberApprovedPayments.find(p =>
+          this.paymentsService.paymentCoversMonth(p, sheet.month, sheet.year) &&
+          p.capturedInMonth === sheet.month &&
+          p.capturedInYear === sheet.year
+        );
+
+        const paidCurrent = !!currentPayment;
+        const paid = paidCurrent; // To maintain compatibility with existing frontend code
+
+        // Construct displayAmount
+        let displayAmount = '';
+        if (paidCurrent) {
+          if (paidDues.length > 0) {
+            displayAmount = `${member.monthlyAmount} × ${paidDues.length} due + ${member.monthlyAmount} current = ${(paidDues.length + 1) * member.monthlyAmount} ৳`;
+          } else {
+            displayAmount = `${member.monthlyAmount} current = ${member.monthlyAmount} ৳`;
+          }
+        } else {
+          if (paidDues.length > 0) {
+            displayAmount = `${member.monthlyAmount} × ${paidDues.length} due paid + ${member.monthlyAmount} current due = ${paidDues.length * member.monthlyAmount} ৳`;
+          } else {
+            displayAmount = `${member.monthlyAmount} ৳ due`;
+          }
+        }
+
+        return {
+          id: member.id,
+          name: member.name,
+          role: member.role,
+          monthlyAmount: member.monthlyAmount,
+          status: paid ? 'paid' : 'due',
+          payment: currentPayment || null,
+          dueMonths: unpaidDues,
+          paidDues: paidDues,
+          totalDue: unpaidDues.length * member.monthlyAmount,
+          displayAmount,
+        };
+      })
     );
-
-    return {
-      id: member.id,
-      name: member.name,
-      role: member.role,
-      monthlyAmount: member.monthlyAmount,
-      status: paid ? 'paid' : 'due',
-      payment: paid || null,
-      dueMonths: memberDues, // ✅ due months
-      totalDue: memberDues.length * member.monthlyAmount,
-      displayAmount: paid
-        ? memberDues.length > 0
-          ? `${member.monthlyAmount} × ${memberDues.length} due + ${member.monthlyAmount} current = ${(memberDues.length + 1) * member.monthlyAmount} ৳`
-          : `${member.monthlyAmount} current = ${member.monthlyAmount} ৳`
-        : `${member.monthlyAmount} ৳ due`,
-    };
-  })
-);
 
     return {
       message: 'Sheet details fetched',

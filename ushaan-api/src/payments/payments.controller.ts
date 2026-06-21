@@ -49,7 +49,7 @@ export class PaymentsController {
 
   // ✅ Accountant — payment approve/reject করো
   @Patch(':id/status')
-  @Roles('accountant', 'admin')
+  @Roles('accountant')
   updateStatus(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdatePaymentDto,

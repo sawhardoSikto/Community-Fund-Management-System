@@ -139,67 +139,95 @@ useEffect(() => {
                 {ROLE_LABELS[user.role]}
               </span>
               <div className="relative">
-  <button
-    onClick={() => {
-      if (showNotifications) {
-        setShowNotifications(false);
-        return;
-      }
+                <button
+                  onClick={async () => {
+                    if (showNotifications) {
+                      setShowNotifications(false);
+                      return;
+                    }
 
-      setShowNotifications(true);
-    }}
-    className="relative p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
-  >
-    <span className="text-lg">🔔</span>
+                    setShowNotifications(true);
+                    try {
+                      await api.patch('/notifications/read-all');
+                      setNotifications((prev) =>
+                        prev.map((n) => ({ ...n, isRead: true }))
+                      );
+                    } catch (err) {
+                      console.error(err);
+                    }
+                  }}
+                  className="relative p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
+                >
+                  <span className="text-lg">🔔</span>
 
-    {unreadCount > 0 && (
-      <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center font-bold">
-        {unreadCount}
-      </span>
-    )}
-  </button>
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center font-bold">
+                      {unreadCount}
+                    </span>
+                  )}
+                </button>
 
-  {showNotifications && (
-    <div className="absolute right-0 mt-2 w-80 bg-slate-800 border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-50">
-      <div className="px-4 py-3 border-b border-white/10">
-        <h3 className="font-bold text-white">
-          Notifications
-        </h3>
-      </div>
+                {showNotifications && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-40 bg-transparent"
+                      onClick={() => setShowNotifications(false)}
+                    />
+                    <div className="fixed inset-x-4 top-16 md:absolute md:right-0 md:left-auto md:inset-x-auto md:top-auto mt-2 w-auto md:w-80 bg-slate-800 border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-50">
+                      <div className="px-4 py-3 border-b border-white/10 flex items-center justify-between">
+                        <h3 className="font-bold text-white">Notifications</h3>
+                        {notifications.length > 0 && (
+                          <button
+                            onClick={clearAllNotifications}
+                            className="text-xs text-amber-400 hover:text-amber-300 font-semibold transition-colors"
+                          >
+                            সব মুছুন
+                          </button>
+                        )}
+                      </div>
 
-      <div className="max-h-96 overflow-y-auto">
-        {notifications.length === 0 ? (
-          <div className="p-4 text-sm text-slate-400">
-            কোনো নোটিফিকেশন নেই
-          </div>
-        ) : (
-          notifications.map((n) => (
-            <div
-              key={n.id}
-              className={`p-4 border-b border-white/5 cursor-pointer hover:bg-white/5 ${
-                !n.isRead
-                  ? 'bg-amber-500/5'
-                  : ''
-              }`}
-              onClick={clearAllNotifications}
-            >
-              <p className="text-sm text-white">
-                {n.message}
-              </p>
+                      <div className="max-h-96 overflow-y-auto">
+                        {notifications.length === 0 ? (
+                          <div className="p-4 text-sm text-slate-400">
+                            কোনো নোটিফিকেশন নেই
+                          </div>
+                        ) : (
+                          notifications.map((n) => (
+                            <div
+                              key={n.id}
+                              className={`p-4 border-b border-white/5 cursor-pointer hover:bg-white/5 ${
+                                !n.isRead ? "bg-amber-500/5" : ""
+                              }`}
+                              onClick={async () => {
+                                if (!n.isRead) {
+                                  try {
+                                    await api.patch(`/notifications/${n.id}/read`);
+                                    setNotifications((prev) =>
+                                      prev.map((item) =>
+                                        item.id === n.id
+                                          ? { ...item, isRead: true }
+                                          : item
+                                      )
+                                    );
+                                  } catch (err) {
+                                    console.error(err);
+                                  }
+                                }
+                              }}
+                            >
+                              <p className="text-sm text-white">{n.message}</p>
 
-              <p className="text-xs text-slate-400 mt-1">
-                {new Date(
-                  n.createdAt
-                ).toLocaleString()
-                }
-              </p>
-            </div>
-          ))
-        )}
-      </div>
-    </div>
-  )}
-</div>
+                              <p className="text-xs text-slate-400 mt-1">
+                                {new Date(n.createdAt).toLocaleString()}
+                              </p>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
 
               {/* User Dropdown */}
               <div className="dropdown dropdown-end">

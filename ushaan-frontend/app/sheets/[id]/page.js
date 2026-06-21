@@ -154,6 +154,11 @@ const totalExpense =
               {member.role}
             </span>
           </div>
+          {member.displayAmount && (
+            <p className="text-[10px] text-slate-500 mt-1 font-mono">
+              {member.displayAmount}
+            </p>
+          )}
         </td>
 
         <td className="border border-black p-2 text-center">
@@ -311,25 +316,40 @@ const totalExpense =
       </span>
     </div>
 
-    {/* Due months দেখাও */}
-    {mp.dueMonths?.length > 0 && mp.status === 'paid' && (
+    {/* Due/Paid months দেখাও */}
+    {((mp.dueMonths?.length > 0) || (mp.paidDues?.length > 0)) && (
       <div className="mt-2 pl-4 space-y-1">
-        {mp.dueMonths.map((d, j) => (
-          <div key={j} className="flex justify-between">
+        {/* Render Paid Dues */}
+        {mp.paidDues?.map((d, j) => (
+          <div key={`paid-${j}`} className="flex justify-between">
+            <span className="text-xs text-emerald-400">
+              {MONTH_NAMES[d.month - 1]} {d.year} (বকেয়া পরিশোধ)
+            </span>
+            <span className="text-xs font-bold text-emerald-400">+{mp.monthlyAmount} ৳</span>
+          </div>
+        ))}
+
+        {/* Render Unpaid Dues */}
+        {mp.dueMonths?.map((d, j) => (
+          <div key={`unpaid-${j}`} className="flex justify-between">
             <span className="text-xs text-red-400">
               {MONTH_NAMES[d.month - 1]} {d.year} (বকেয়া)
             </span>
             <span className="text-xs font-bold text-red-400">{mp.monthlyAmount} ৳</span>
           </div>
         ))}
+
         <div className="flex justify-between border-t border-white/5 pt-1">
-          <span className="text-xs text-slate-400">এই মাস</span>
-          <span className="text-xs font-bold text-emerald-400">{mp.monthlyAmount} ৳</span>
+          <span className="text-xs text-slate-400">এই মাস ({MONTH_NAMES[sheet.month - 1]})</span>
+          <span className={`text-xs font-bold ${mp.status === 'paid' ? 'text-emerald-400' : 'text-red-400'}`}>
+            {mp.status === 'paid' ? `+${mp.monthlyAmount} ৳` : `${mp.monthlyAmount} ৳ due`}
+          </span>
         </div>
-        <div className="flex justify-between">
-          <span className="text-xs font-bold text-white">মোট</span>
+
+        <div className="flex justify-between border-t border-dotted border-white/10 pt-1">
+          <span className="text-xs font-bold text-white">মোট পরিশোধ (এই শিটে)</span>
           <span className="text-xs font-black text-amber-400">
-            {(mp.dueMonths.length + 1) * mp.monthlyAmount} ৳
+            {((mp.paidDues?.length || 0) + (mp.status === 'paid' ? 1 : 0)) * mp.monthlyAmount} ৳
           </span>
         </div>
       </div>

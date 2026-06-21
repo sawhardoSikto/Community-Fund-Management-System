@@ -69,4 +69,12 @@ export class Payment {
   @Column({ type: 'text', nullable: true })
   coveredMonths!: string | null; // JSON array of covered months [{month, year}, ...]
 
+  @Column({ nullable: true, type: 'timestamp' })
+  approvedAt!: Date | null;
+
+  @Column({ nullable: true })
+  capturedInMonth!: number | null;
+
+  @Column({ nullable: true })
+  capturedInYear!: number | null;
 }

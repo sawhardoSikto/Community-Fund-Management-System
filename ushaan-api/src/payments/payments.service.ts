@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Payment, PaymentStatus } from './entities/payment.entity';
@@ -13,7 +13,7 @@ import { MonthlySheet, SheetStatus } from 'src/sheets/entities/monthly-sheet.ent
 import { SettingsService } from 'src/settings/settings.service';
 import { NotificationsService } from '../notifications/notifications.service';
 @Injectable()
-export class PaymentsService {
+export class PaymentsService implements OnModuleInit {
 constructor(
   @InjectRepository(Payment)
   private paymentRepo: Repository<Payment>,
@@ -24,6 +24,17 @@ constructor(
   private usersService: UsersService,
   private notificationsService: NotificationsService,
 ) {}
+
+  async onModuleInit() {
+    try {
+      // Migrate existing approved payments to set capturedInMonth, capturedInYear, and approvedAt if they are null
+      await this.paymentRepo.query(
+        `UPDATE payment SET "capturedInMonth" = month, "capturedInYear" = year, "approvedAt" = "createdAt" WHERE status = 'approved' AND "capturedInMonth" IS NULL`
+      );
+    } catch (err) {
+      console.error('Failed to migrate existing payments capturedInMonth/capturedInYear', err);
+    }
+  }
 
   // Member — payment submit করো
 async createPayment(userId: number, dto: CreatePaymentDto) {
@@ -166,6 +177,12 @@ private async getDueMonths(
 
   payment.status = dto.status;
   payment.approvedBy = accountantId;
+  if (dto.status === PaymentStatus.APPROVED) {
+    payment.approvedAt = new Date();
+    const capture = await this.getCaptureMonthAndYear(payment.month, payment.year);
+    payment.capturedInMonth = capture.month;
+    payment.capturedInYear = capture.year;
+  }
   if (dto.note) payment.note = dto.note;
   await this.paymentRepo.save(payment);
   if (dto.status === PaymentStatus.APPROVED) {
@@ -223,15 +240,20 @@ async createManualPayment(dto: ManualPaymentDto, addedBy: number) {
     `Payment for ${dto.month}/${dto.year} already exists for this user`
   );
 
+  const capture = await this.getCaptureMonthAndYear(dto.month, dto.year);
+
   const payment = this.paymentRepo.create({
     userId: dto.userId,
     month: dto.month,
     year: dto.year,
     amount: user.monthlyAmount,
     paymentMethod: dto.paymentMethod,
-      transactionNumber: dto.transactionNumber,
+    transactionNumber: dto.transactionNumber,
     status: PaymentStatus.APPROVED, // ✅ auto approved
     approvedBy: addedBy,
+    approvedAt: new Date(),
+    capturedInMonth: capture.month,
+    capturedInYear: capture.year,
     note: dto.note || 'Manually added by admin/accountant',
   });
   await this.paymentRepo.save(payment);
@@ -398,7 +420,7 @@ async getMemberDuesUpToMonth(userId: number, month: number, year: number) {
   return dues;
 }
 
-private paymentCoversMonth(payment: Payment, month: number, year: number) {
+paymentCoversMonth(payment: Payment, month: number, year: number) {
   if (payment.status !== PaymentStatus.APPROVED && payment.status !== PaymentStatus.PENDING) {
     return false;
   }
@@ -417,5 +439,52 @@ private paymentCoversMonth(payment: Payment, month: number, year: number) {
   } catch {
     return false;
   }
+}
+
+async getApprovedPaymentsForUser(userId: number) {
+  return this.paymentRepo.find({
+    where: { userId, status: PaymentStatus.APPROVED },
+    order: { year: 'ASC', month: 'ASC' },
+  });
+}
+
+async getApprovedPaymentsCapturedInMonth(month: number, year: number) {
+  return this.paymentRepo.find({
+    where: { capturedInMonth: month, capturedInYear: year, status: PaymentStatus.APPROVED },
+    relations: { user: true },
+  });
+}
+
+async getCaptureMonthAndYear(targetMonth: number, targetYear: number): Promise<{ month: number; year: number }> {
+  // 1. Check if the sheet for targetMonth/targetYear is published
+  const targetSheet = await this.sheetRepo.findOne({
+    where: { month: targetMonth, year: targetYear, status: SheetStatus.PUBLISHED }
+  });
+  
+  if (!targetSheet) {
+    // Not published yet, so it can be captured in its own target month
+    return { month: targetMonth, year: targetYear };
+  }
+  
+  // 2. It is published. Find the latest published sheet overall
+  const latestPublishedSheet = await this.sheetRepo.findOne({
+    where: { status: SheetStatus.PUBLISHED },
+    order: { year: 'DESC', month: 'DESC' }
+  });
+  
+  if (!latestPublishedSheet) {
+    // Fallback
+    return { month: targetMonth, year: targetYear };
+  }
+  
+  // The next month after the latest published sheet
+  let nextMonth = latestPublishedSheet.month + 1;
+  let nextYear = latestPublishedSheet.year;
+  if (nextMonth > 12) {
+    nextMonth = 1;
+    nextYear += 1;
+  }
+  
+  return { month: nextMonth, year: nextYear };
 }
 }
