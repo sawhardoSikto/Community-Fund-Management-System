@@ -7,10 +7,11 @@ import { UsersModule } from 'src/users/users.module';
 import { MemberOpeningBalance } from './entities/member-opening-balance.entity'; // ✅ MemberOpeningBalance entity
 import { MonthlySheet } from 'src/sheets/entities/monthly-sheet.entity';
 import { NotificationsModule } from 'src/notifications/notifications.module';
+import { PaymentReminderService } from './payment-reminder.service';
 @Module({
   imports: [TypeOrmModule.forFeature([Payment, MemberOpeningBalance, MonthlySheet]), UsersModule, NotificationsModule], // ✅ শুধু Payment, আর usersModule
   controllers: [PaymentsController],
-  providers: [PaymentsService],
+  providers: [PaymentsService, PaymentReminderService],
   exports: [PaymentsService], // ✅ export আছে
 })
 export class PaymentsModule {} // ✅ export class আছে

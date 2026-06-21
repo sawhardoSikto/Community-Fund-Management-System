@@ -25,6 +25,7 @@ export default function MemberDashboard() {
   const [submitting, setSubmitting] = useState(false);
   const [toast, setToast] = useState({ show: false, msg: '', success: true });
   const [dueInfo, setDueInfo] = useState(null);
+  const monthlyAmount = user?.monthlyAmount || 200;
 
 
   const showToast = (msg, success = true) => {
@@ -250,6 +251,11 @@ const checkDues = async () => {
       <p className="text-xs font-bold text-red-400 mb-1.5">
         ⚠️ {dueInfo.length} মাস বকেয়া আছে!
       </p>
+      <p className="text-xs text-slate-400 mb-1.5">
+        <span className="text-amber-400 font-bold">
+          {monthlyAmount} × {dueInfo.length} due + {monthlyAmount} current = {(dueInfo.length + 1) * monthlyAmount} ৳
+        </span>
+      </p>
       <div className="space-y-1">
         {dueInfo.map((d, i) => (
           <div key={i} className="flex justify-between">
@@ -269,7 +275,7 @@ const checkDues = async () => {
       <div className="flex justify-between mt-2 pt-2 border-t border-red-500/20">
         <span className="text-xs font-bold text-white">মোট দিতে হবে</span>
         <span className="text-sm font-black text-amber-400">
-          {(dueInfo.length + 1) * (user?.monthlyAmount || 200)} ৳
+          {(dueInfo.length + 1) * monthlyAmount} ৳
         </span>
       </div>
     </div>
@@ -277,7 +283,7 @@ const checkDues = async () => {
 
   {(!dueInfo || dueInfo.length === 0) && (
     <p className="text-xs text-slate-400">
-      পরিমাণ: <span className="text-amber-400 font-bold">{user?.monthlyAmount || 200} ৳</span>
+      পরিমাণ: <span className="text-amber-400 font-bold">{monthlyAmount} current = {monthlyAmount} ৳</span>
     </p>
   )}
   <p className="text-xs text-slate-500">পেমেন্ট করার পর এই ফর্ম পূরণ করুন</p>

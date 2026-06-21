@@ -117,14 +117,6 @@ const totalGeneralExpense = await this.expensesService.getTotalExpenseByMonth(
     totalCapitalReturn, // ✅
   });
   await this.sheetRepo.save(sheet);
-  const users = await this.usersService.findAll();
-
-for (const user of users) {
-  await this.notificationsService.create(
-    user.id,
-    `${sheet.month}/${sheet.year} মাসের শীট প্রকাশ করা হয়েছে।`,
-  );
-}
 
   return { message: 'Sheet generated (draft)', data: sheet };
 }
@@ -141,6 +133,14 @@ for (const user of users) {
     sheet.publishedBy = accountantId;
     sheet.publishedAt = new Date();
     await this.sheetRepo.save(sheet);
+
+    const users = await this.usersService.findAll();
+    for (const user of users) {
+      await this.notificationsService.createIfNotExists(
+        user.id,
+        `${sheet.month}/${sheet.year} মাসের শীট প্রকাশ করা হয়েছে।`,
+      );
+    }
 
     return { message: 'Sheet published successfully', data: sheet };
   }
@@ -205,9 +205,9 @@ const memberPaymentStatus = await Promise.all(
       totalDue: memberDues.length * member.monthlyAmount,
       displayAmount: paid
         ? memberDues.length > 0
-          ? `${memberDues.length}×${member.monthlyAmount}(বকেয়া) + ${member.monthlyAmount}(এই মাস)`
-          : `${member.monthlyAmount} ৳`
-        : `${member.monthlyAmount} ৳ (বকেয়া)`,
+          ? `${member.monthlyAmount} × ${memberDues.length} due + ${member.monthlyAmount} current = ${(memberDues.length + 1) * member.monthlyAmount} ৳`
+          : `${member.monthlyAmount} current = ${member.monthlyAmount} ৳`
+        : `${member.monthlyAmount} ৳ due`,
     };
   })
 );
@@ -285,6 +285,10 @@ async remove(id: number) {
 
   if (!sheet) {
     throw new NotFoundException('Sheet not found');
+  }
+
+  if (sheet.status === SheetStatus.PUBLISHED) {
+    throw new BadRequestException('Published sheet cannot be deleted');
   }
 
   await this.sheetRepo.delete(id);

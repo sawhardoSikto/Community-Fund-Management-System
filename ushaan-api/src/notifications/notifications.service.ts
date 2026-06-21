@@ -25,6 +25,21 @@ export class NotificationsService {
     );
   }
 
+  async createIfNotExists(
+    userId: number,
+    message: string,
+  ) {
+    const existing = await this.notificationRepo.findOne({
+      where: { userId, message },
+    });
+
+    if (existing) {
+      return existing;
+    }
+
+    return this.create(userId, message);
+  }
+
   async getMyNotifications(
     userId: number,
   ) {

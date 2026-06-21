@@ -15,6 +15,7 @@ export default function PaymentForm({ user, onSuccess }) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [dueInfo, setDueInfo] = useState([]);
+  const monthlyAmount = user?.monthlyAmount || 200;
 
   useEffect(() => {
     const fetchDueInfo = async () => {
@@ -122,12 +123,14 @@ export default function PaymentForm({ user, onSuccess }) {
               ⚠️ {dueInfo.length} মাস বকেয়া আছে
             </p>
             <p className="text-xs text-slate-400">
-              মোট দিতে হবে: <span className="text-amber-400 font-bold">{(dueInfo.length + 1) * (user?.monthlyAmount || 200)} ৳</span>
+              <span className="text-amber-400 font-bold">
+                {monthlyAmount} × {dueInfo.length} due + {monthlyAmount} current = {(dueInfo.length + 1) * monthlyAmount} ৳
+              </span>
             </p>
           </div>
         ) : (
           <p className="text-xs text-slate-400">
-            পরিমাণ: <span className="text-amber-400 font-bold">{user?.monthlyAmount || 200} ৳</span>
+            পরিমাণ: <span className="text-amber-400 font-bold">{monthlyAmount} current = {monthlyAmount} ৳</span>
           </p>
         )}
         <p className="text-xs text-slate-500 mt-0.5">পেমেন্ট করার পর এই ফর্ম পূরণ করুন</p>

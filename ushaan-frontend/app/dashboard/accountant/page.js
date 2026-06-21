@@ -34,6 +34,20 @@ const formatCoveredMonths = (coveredMonths) =>
     .map((item) => `${MONTH_NAMES[item.month - 1]} ${item.year}`)
     .join(', ');
 
+const formatPaymentBreakdown = (payment) => {
+  const coveredMonths = parseCoveredMonths(payment.coveredMonths);
+  const monthlyAmount = payment.user?.monthlyAmount || (payment.amount && coveredMonths.length > 0
+    ? Math.round(Number(payment.amount) / coveredMonths.length)
+    : Number(payment.amount || 0));
+
+  if (coveredMonths.length <= 1) {
+    return `${monthlyAmount} current = ${Number(payment.amount || monthlyAmount).toFixed(0)} ৳`;
+  }
+
+  const dueCount = coveredMonths.length - 1;
+  return `${monthlyAmount} × ${dueCount} due + ${monthlyAmount} current = ${Number(payment.amount || monthlyAmount * coveredMonths.length).toFixed(0)} ৳`;
+};
+
 
 
 
@@ -464,7 +478,7 @@ const handleCreateProject = async (e) => {
                         </p>
                         {parseCoveredMonths(payment.coveredMonths).length > 0 && (
                           <p className="text-xs text-sky-400 mt-0.5">
-                            📌 কভার করেছে: {formatCoveredMonths(payment.coveredMonths)}
+                            📌 {formatPaymentBreakdown(payment)}
                           </p>
                         )}
                         {payment.transactionNumber && (
@@ -677,7 +691,7 @@ const handleCreateProject = async (e) => {
                     const fd = new FormData(e.target);
                         {parseCoveredMonths(p.coveredMonths).length > 0 && (
                           <p className="text-xs text-sky-400 mt-0.5">
-                            📌 কভার করেছে: {formatCoveredMonths(p.coveredMonths)}
+                            📌 {formatPaymentBreakdown(p)}
                           </p>
                         )}
                     await api.post("/payments/opening-balance", {
@@ -1413,29 +1427,6 @@ const handleCreateProject = async (e) => {
                         >
                           দেখুন
                         </Link>
-                        {sheet.status === 'published' && (
-  <button
-    onClick={async () => {
-      if (!confirm(`${MONTH_NAMES[sheet.month - 1]} ${sheet.year} শিট regenerate করবেন?`)) return;
-      try {
-        // ১. পুরনো sheet delete করো
-        await api.delete(`/sheets/${sheet.id}`);
-        // ২. নতুন করে generate করো
-        await api.post('/sheets/generate', { month: sheet.month, year: sheet.year });
-        // ৩. Publish করো
-        const newSheet = await api.get(`/sheets/by-month?month=${sheet.month}&year=${sheet.year}`);
-        await api.patch(`/sheets/${newSheet.data.data.id}/publish`);
-        showToast('শিট regenerate হয়েছে!');
-        fetchAll();
-      } catch (err) {
-        showToast(err.response?.data?.message || 'ব্যর্থ হয়েছে', false);
-      }
-    }}
-    className="px-3 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 text-xs font-semibold rounded-lg transition-colors"
-  >
-    🔄 Regenerate
-  </button>
-)}
                         {sheet.status === "draft" && (
                           <button
                             onClick={() => handlePublishSheet(sheet.id)}
