@@ -546,7 +546,30 @@ const handleCreateProject = async (e) => {
                         disabled={processing === payment.id}
                         className="flex-1 sm:flex-none px-4 py-2 bg-emerald-500/10 hover:bg-emerald-500 text-emerald-400 hover:text-white border border-emerald-500/20 hover:border-emerald-500 rounded-xl text-xs font-bold transition-all disabled:opacity-50"
                       >
-            {/* ── Manual Payment Tab ── */}
+                        {processing === payment.id ? (
+                          <span className="loading loading-spinner loading-xs" />
+                        ) : (
+                          "✓ অনুমোদন"
+                        )}
+                      </button>
+                      <button
+                        onClick={() =>
+                          handlePaymentStatus(payment.id, "rejected")
+                        }
+                        disabled={processing === payment.id}
+                        className="flex-1 sm:flex-none px-4 py-2 bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white border border-red-500/20 hover:border-red-500 rounded-xl text-xs font-bold transition-all disabled:opacity-50"
+                      >
+                        ✗ বাতিল
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── Manual Payment Tab ── */}
         {tab === "manual" && (
           <div className="max-w-md mx-auto">
             {/* Manual Payment */}
@@ -1304,7 +1327,7 @@ const handleCreateProject = async (e) => {
                           </button>
                         )}
                       </div>
-                    </div> 
+                    </div>
                   ))}
                 </div>
               )}

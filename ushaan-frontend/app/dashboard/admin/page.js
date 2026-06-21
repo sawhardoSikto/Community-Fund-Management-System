@@ -566,7 +566,20 @@ export default function AdminDashboard() {
                         { label: 'ফেরত', value: `${Number(project.summary.capitalReturn).toFixed(0)} ৳`, color: 'text-blue-400' },
                         { label: 'বাইরে', value: `${Number(project.summary.stillOutside).toFixed(0)} ৳`, color: 'text-amber-400' },
                       ].map((s, i) => (
-                           {/* Settings */}
+                        <div key={i} className="bg-slate-800/50 rounded-xl p-3 text-center">
+                          <p className={`text-sm font-black ${s.color}`}>{s.value}</p>
+                          <p className="text-xs text-slate-500 mt-0.5">{s.label}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Settings */}
         {tab === 'settings' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="space-y-5">
