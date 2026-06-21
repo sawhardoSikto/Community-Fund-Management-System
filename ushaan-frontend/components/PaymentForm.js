@@ -20,7 +20,7 @@ export default function PaymentForm({ user, onSuccess }) {
   useEffect(() => {
     const fetchDueInfo = async () => {
       try {
-        const res = await api.get('/payments/my/dues');
+        const res = await api.get(`/payments/my/dues?month=${form.month}&year=${form.year}`);
         const dues = res.data.data || [];
         const relevantDues = dues.filter((d) =>
           d.year < form.year || (d.year === form.year && d.month < form.month)

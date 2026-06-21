@@ -47,7 +47,7 @@ useEffect(() => {
 }, [paymentForm.month, paymentForm.year]);
 const checkDues = async () => {
   try {
-    const res = await api.get('/payments/my/dues');
+    const res = await api.get(`/payments/my/dues?month=${paymentForm.month}&year=${paymentForm.year}`);
     const dues = res.data.data || [];
     // current month এর আগের due গুলো filter করো
     const relevantDues = dues.filter(d =>

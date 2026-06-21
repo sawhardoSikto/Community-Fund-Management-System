@@ -28,9 +28,9 @@ import { NotificationsModule } from './notifications/notifications.module';
         username: configService.get('DB_USERNAME'),
         password: configService.get('DB_PASSWORD'),
         database: configService.get('DB_NAME'),
-        ssl:{
-          rejectUnauthorized: false
-        },
+        ssl: configService.get('DB_HOST') === 'localhost' || configService.get('DB_HOST') === '127.0.0.1'
+          ? false
+          : { rejectUnauthorized: false },
         autoLoadEntities: true,
         synchronize: true,
       }),

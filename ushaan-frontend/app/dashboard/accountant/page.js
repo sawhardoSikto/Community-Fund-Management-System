@@ -121,7 +121,7 @@ export default  function AccountantDashboard() {
     }
     const fetchManualDues = async () => {
       try {
-        const res = await api.get(`/payments/dues/${manualPayment.userId}`);
+        const res = await api.get(`/payments/dues/${manualPayment.userId}?month=${manualPayment.month}&year=${manualPayment.year}`);
         const dues = res.data.data || [];
         const relevantDues = dues.filter((d) =>
           d.year < manualPayment.year || (d.year === manualPayment.year && d.month < manualPayment.month)

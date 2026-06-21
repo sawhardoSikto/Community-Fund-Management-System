@@ -306,15 +306,15 @@ async createManualPayment(dto: ManualPaymentDto, addedBy: number) {
   }
 
   // Member এর due list বানাও
-  async getMemberDueHistory(userId: number) {
+  async getMemberDueHistory(userId: number, month?: number, year?: number) {
     const payments = await this.paymentRepo.find({
       where: { userId },
       order: { year: 'ASC', month: 'ASC' },
     });
 
     const now = new Date();
-    const currentMonth = now.getMonth() + 1;
-    const currentYear = now.getFullYear();
+    const currentMonth = month ? Number(month) : now.getMonth() + 1;
+    const currentYear = year ? Number(year) : now.getFullYear();
 
     // user এর join month থেকে এখন পর্যন্ত check করো
     const user = await this.usersService.findById(userId);
