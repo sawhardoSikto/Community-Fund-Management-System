@@ -83,8 +83,8 @@ export default function SecretaryDashboard() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-black text-white">সাধারণ সম্পাদক প্যানেল</h1>
-            <p className="text-slate-400 text-sm mt-0.5">স্বাগতম, {user?.name}</p>
+            <h1 className="text-2xl font-black text-white">স্বাগতম, {user?.name}! 👋</h1>
+            <p className="text-slate-400 text-sm mt-0.5">সাধারণ সম্পাদক প্যানেল</p>
           </div>
           <span className="px-3 py-1.5 bg-purple-500/10 border border-purple-500/20 text-purple-400 text-xs font-bold rounded-xl">সাধারণ সম্পাদক</span>
         </div>
@@ -140,16 +140,16 @@ export default function SecretaryDashboard() {
             <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
               <h2 className="text-base font-bold text-white mb-4">প্রজেক্ট সারসংক্ষেপ</h2>
               {projects.map(project => (
-                <Link key={project.id} href={`/projects/${project.id}`}
-                  className="flex items-center justify-between px-4 py-3 bg-slate-800/50 rounded-xl mb-2 hover:bg-slate-800 transition-colors group">
+                <div key={project.id}
+                  className="flex items-center justify-between px-4 py-3 bg-slate-800/50 rounded-xl mb-2 transition-colors">
                   <div>
-                    <p className="text-sm font-bold text-white group-hover:text-amber-400 transition-colors">{project.name}</p>
+                    <p className="text-sm font-bold text-white">{project.name}</p>
                     <p className="text-xs text-slate-400">বিনিয়োগ: {Number(project.totalInvested).toFixed(0)} ৳</p>
                   </div>
                   <span className={`text-xs font-semibold px-2 py-0.5 rounded-lg ${project.status === 'active' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-slate-700 text-slate-400'}`}>
                     {project.status === 'active' ? '● সক্রিয়' : '✓ সম্পন্ন'}
                   </span>
-                </Link>
+                </div>
               ))}
             </div>
           </div>
@@ -223,11 +223,11 @@ export default function SecretaryDashboard() {
             {projects.length === 0 ? (
               <div className="text-center py-12 text-slate-500">কোনো প্রজেক্ট নেই</div>
             ) : projects.map(project => (
-              <Link key={project.id} href={`/projects/${project.id}`}
-                className="block bg-slate-900/50 border border-white/5 hover:border-amber-500/20 rounded-2xl p-5 transition-colors group">
+              <div key={project.id}
+                className="block bg-slate-900/50 border border-white/5 rounded-2xl p-5 transition-colors">
                 <div className="flex items-center justify-between mb-3">
                   <div>
-                    <h3 className="text-base font-bold text-white group-hover:text-amber-400 transition-colors">{project.name}</h3>
+                    <h3 className="text-base font-bold text-white">{project.name}</h3>
                     {project.description && <p className="text-xs text-slate-400 mt-0.5">{project.description}</p>}
                   </div>
                   <span className={`text-xs font-bold px-2.5 py-1 rounded-lg ${project.status === 'active' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-slate-700 text-slate-400'}`}>
@@ -249,7 +249,7 @@ export default function SecretaryDashboard() {
                     ))}
                   </div>
                 )}
-              </Link>
+              </div>
             ))}
           </div>
         )}

@@ -58,6 +58,30 @@ export default function AdminDashboard() {
     } finally { setSubmitting(false); }
   };
 
+  const handleDeleteProject = async (id) => {
+    if (!confirm('আপনি কি নিশ্চিত যে এই প্রজেক্টটি ডিলিট করতে চান?')) return;
+    try {
+      await api.delete(`/projects/${id}`);
+      showToast('প্রজেক্টটি ডিলিট করা হয়েছে।');
+      fetchAll();
+    } catch (err) {
+      showToast(err.response?.data?.message || 'ডিলিট করতে ব্যর্থ হয়েছে', false);
+    }
+  };
+
+  const handleToggleProjectStatus = async (project) => {
+    const newStatus = project.status === 'active' ? 'completed' : 'active';
+    const actionText = newStatus === 'completed' ? 'সম্পন্ন' : 'সক্রিয়';
+    if (!confirm(`আপনি কি এই প্রজেক্টটি ${actionText} করতে চান?`)) return;
+    try {
+      await api.patch(`/projects/${project.id}`, { status: newStatus });
+      showToast(`প্রজেক্টটি ${actionText} করা হয়েছে।`);
+      fetchAll();
+    } catch (err) {
+      showToast(err.response?.data?.message || 'স্ট্যাটাস আপডেট করতে ব্যর্থ হয়েছে', false);
+    }
+  };
+
   const handleOpeningBalanceSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
@@ -282,8 +306,8 @@ export default function AdminDashboard() {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-black text-white">সভাপতি প্যানেল</h1>
-            <p className="text-slate-400 text-sm mt-0.5">স্বাগতম, {user?.name}</p>
+            <h1 className="text-2xl font-black text-white">স্বাগতম, {user?.name}! 👋</h1>
+            <p className="text-slate-400 text-sm mt-0.5">সভাপতি প্যানেল</p>
           </div>
           <span className="px-3 py-1.5 bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-bold rounded-xl">👑 সভাপতি</span>
         </div>
@@ -554,9 +578,27 @@ export default function AdminDashboard() {
                       <h3 className="text-base font-bold text-white">{project.name}</h3>
                       {project.description && <p className="text-xs text-slate-400 mt-0.5">{project.description}</p>}
                     </div>
-                    <span className={`text-xs font-bold px-2.5 py-1 rounded-lg ${project.status === 'active' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-slate-700 text-slate-400'}`}>
-                      {project.status === 'active' ? '● সক্রিয়' : '✓ সম্পন্ন'}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-xs font-bold px-2.5 py-1 rounded-lg ${project.status === 'active' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-slate-700 text-slate-400'}`}>
+                        {project.status === 'active' ? '● সক্রিয়' : '✓ সম্পন্ন'}
+                      </span>
+                      <button
+                        onClick={() => handleToggleProjectStatus(project)}
+                        className={`text-xs font-bold px-2.5 py-1 rounded-lg border transition-all cursor-pointer ${
+                          project.status === 'active'
+                            ? 'bg-slate-800 text-slate-300 border-white/5 hover:bg-amber-500/10 hover:text-amber-400 hover:border-amber-500/20'
+                            : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500 hover:text-white'
+                        }`}
+                      >
+                        {project.status === 'active' ? '✓ সম্পন্ন করুন' : '● সক্রিয় করুন'}
+                      </button>
+                      <button
+                        onClick={() => handleDeleteProject(project.id)}
+                        className="text-xs font-bold px-2.5 py-1 rounded-lg bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500 hover:text-white transition-all cursor-pointer"
+                      >
+                        🗑️ ডিলিট
+                      </button>
+                    </div>
                   </div>
                   {project.summary && (
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">

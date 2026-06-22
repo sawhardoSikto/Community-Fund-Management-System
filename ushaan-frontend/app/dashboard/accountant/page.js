@@ -453,12 +453,8 @@ const handleCreateProject = async (e) => {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-black text-white">
-              হিসাবরক্ষক প্যানেল
-            </h1>
-            <p className="text-slate-400 text-sm mt-0.5">
-              স্বাগতম, {user?.name}
-            </p>
+            <h1 className="text-2xl font-black text-white">স্বাগতম, {user?.name}! 👋</h1>
+            <p className="text-slate-400 text-sm mt-0.5">হিসাবরক্ষক প্যানেল</p>
           </div>
           <span className="px-3 py-1.5 bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-bold rounded-xl">
             হিসাবরক্ষক

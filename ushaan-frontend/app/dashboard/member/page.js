@@ -47,23 +47,41 @@ export default function MemberDashboard() {
       }
       setUser(userData);
       fetchAll();
+      fetchNextUnpaid();
     } catch { router.push('/login'); }
   }, []);
-useEffect(() => {
-  checkDues();
-}, [paymentForm.month, paymentForm.year]);
-const checkDues = async () => {
-  try {
-    const res = await api.get(`/payments/my/dues?month=${paymentForm.month}&year=${paymentForm.year}`);
-    const dues = res.data.data || [];
-    // current month এর আগের due গুলো filter করো
-    const relevantDues = dues.filter(d =>
-      d.year < paymentForm.year ||
-      (d.year === paymentForm.year && d.month < paymentForm.month)
-    );
-    setDueInfo(relevantDues);
-  } catch (err) { console.error(err); }
-};
+
+  const fetchNextUnpaid = async () => {
+    try {
+      const res = await api.get('/payments/my/next-unpaid');
+      if (res.data && res.data.month && res.data.year) {
+        setPaymentForm(f => ({
+          ...f,
+          month: res.data.month,
+          year: res.data.year,
+        }));
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    checkDues();
+  }, [paymentForm.month, paymentForm.year]);
+
+  const checkDues = async () => {
+    try {
+      const res = await api.get(`/payments/my/dues?month=${paymentForm.month}&year=${paymentForm.year}`);
+      const dues = res.data.data || [];
+      // current month এর আগের due গুলো filter করো
+      const relevantDues = dues.filter(d =>
+        d.year < paymentForm.year ||
+        (d.year === paymentForm.year && d.month < paymentForm.month)
+      );
+      setDueInfo(relevantDues);
+    } catch (err) { console.error(err); }
+  };
 
 
   const fetchAll = async () => {
@@ -91,7 +109,28 @@ const checkDues = async () => {
     try {
       await api.post('/payments', paymentForm);
       showToast('পেমেন্ট জমা হয়েছে! অনুমোদনের অপেক্ষায়।');
-      setPaymentForm(f => ({ ...f, transactionNumber: '', note: '' }));
+      
+      // Fetch next unpaid to default the form for the next payment
+      let nextMonth = paymentForm.month;
+      let nextYear = paymentForm.year;
+      try {
+        const res = await api.get('/payments/my/next-unpaid');
+        if (res.data && res.data.month && res.data.year) {
+          nextMonth = res.data.month;
+          nextYear = res.data.year;
+        }
+      } catch (err) {
+        console.error(err);
+      }
+
+      setPaymentForm(f => ({
+        ...f,
+        month: nextMonth,
+        year: nextYear,
+        transactionNumber: '',
+        note: '',
+      }));
+
       fetchAll();
     } catch (err) {
       showToast(err.response?.data?.message || 'পেমেন্ট ব্যর্থ হয়েছে', false);
@@ -417,10 +456,10 @@ const checkDues = async () => {
               ) : (
                 <div className="space-y-3">
                   {projects.slice(0, 3).map(project => (
-                    <Link key={project.id} href={`/projects/${project.id}`}
-                      className="flex items-center justify-between px-4 py-3 bg-slate-800/50 rounded-xl hover:bg-slate-800 transition-colors group">
+                    <div key={project.id}
+                      className="flex items-center justify-between px-4 py-3 bg-slate-800/50 rounded-xl transition-colors">
                       <div>
-                        <p className="text-sm font-semibold text-white group-hover:text-amber-400 transition-colors">{project.name}</p>
+                        <p className="text-sm font-semibold text-white">{project.name}</p>
                         <p className="text-xs text-slate-500 mt-0.5">বিনিয়োগ: {Number(project.totalInvested).toFixed(0)} ৳</p>
                       </div>
                       <div className="text-right">
@@ -431,7 +470,7 @@ const checkDues = async () => {
                           <p className="text-xs text-amber-400 mt-1">মুনাফা: {Number(project.summary.totalProfit).toFixed(0)} ৳</p>
                         )}
                       </div>
-                    </Link>
+                    </div>
                   ))}
                 </div>
               )}

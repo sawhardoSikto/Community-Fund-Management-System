@@ -231,13 +231,10 @@ const totalGeneralExpense = await this.expensesService.getTotalExpenseByMonth(
           }
         }
 
-        // Check if the current month is paid and captured on or before this sheet
-        const currentPayment = memberApprovedPayments.find(p => {
-          const capYear = p.capturedInYear ?? p.year;
-          const capMonth = p.capturedInMonth ?? p.month;
-          return this.paymentsService.paymentCoversMonth(p, sheet.month, sheet.year) &&
-            (capYear < sheet.year || (capYear === sheet.year && capMonth <= sheet.month));
-        });
+        // Check if the current month is paid
+        const currentPayment = memberApprovedPayments.find(p =>
+          this.paymentsService.paymentCoversMonth(p, sheet.month, sheet.year)
+        );
 
         const paidCurrent = !!currentPayment;
         const paid = paidCurrent; // To maintain compatibility with existing frontend code
@@ -250,8 +247,14 @@ const totalGeneralExpense = await this.expensesService.getTotalExpenseByMonth(
         // Construct displayAmount
         let displayAmount = '';
         if (paidCurrent) {
-          const isCapturedEarlier = currentPayment.capturedInMonth !== sheet.month || currentPayment.capturedInYear !== sheet.year;
-          if (isCapturedEarlier) {
+          const capYear = currentPayment.capturedInYear ?? currentPayment.year;
+          const capMonth = currentPayment.capturedInMonth ?? currentPayment.month;
+          const isCapturedLater = capYear > sheet.year || (capYear === sheet.year && capMonth > sheet.month);
+          const isCapturedEarlier = capYear < sheet.year || (capYear === sheet.year && capMonth < sheet.month);
+          
+          if (isCapturedLater) {
+            displayAmount = `বকেয়া পরিশোধিত (${capMonth}/${capYear} শিটে)`;
+          } else if (isCapturedEarlier) {
             displayAmount = 'অগ্রিম পরিশোধিত';
           } else if (paidDues.length > 0) {
             displayAmount = `${member.monthlyAmount} × ${paidDues.length} due + ${member.monthlyAmount} current = ${(paidDues.length + 1) * member.monthlyAmount} ৳`;

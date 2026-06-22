@@ -89,11 +89,11 @@ function ProjectCard({ project }) {
   const isProfit = netProfit >= 0;
 
   return (
-    <Link href={`/projects/${project.id}`}
-      className="block bg-slate-900/50 border border-white/5 hover:border-amber-500/20 rounded-2xl p-5 transition-all group">
+    <div
+      className="block bg-slate-900/50 border border-white/5 rounded-2xl p-5 transition-all">
       <div className="flex items-start justify-between mb-4">
         <div>
-          <h3 className="text-base font-bold text-white group-hover:text-amber-400 transition-colors">{project.name}</h3>
+          <h3 className="text-base font-bold text-white transition-colors">{project.name}</h3>
           {project.description && <p className="text-xs text-slate-400 mt-0.5">{project.description}</p>}
           <div className="flex gap-2 mt-1">
             {project.startDate && <span className="text-xs text-slate-500">শুরু: {new Date(project.startDate).toLocaleDateString('bn-BD')}</span>}
@@ -128,6 +128,6 @@ function ProjectCard({ project }) {
           ))}
         </div>
       )}
-    </Link>
+    </div>
   );
 }

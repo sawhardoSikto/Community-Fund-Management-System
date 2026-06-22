@@ -20,8 +20,8 @@ export class ManualPaymentDto {
   year: number;
 
   @IsString()
-  @IsNotEmpty()
-  bkashNumber: string;
+  @IsOptional()
+  bkashNumber?: string;
 
   @IsString()
   @IsOptional()

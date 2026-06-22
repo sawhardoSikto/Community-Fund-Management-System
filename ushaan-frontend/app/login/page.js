@@ -43,10 +43,7 @@ export default function LoginPage() {
       const token = res.data.token;
       localStorage.setItem('token', token);
 
-      const userRes = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/auth/current-user`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const user = userRes.data;
+      const user = res.data.data;
       localStorage.setItem('user', JSON.stringify(user));
       window.dispatchEvent(new Event('userChanged'));
 

@@ -18,6 +18,24 @@ export default function PaymentForm({ user, onSuccess }) {
   const monthlyAmount = user?.monthlyAmount || 200;
 
   useEffect(() => {
+    const fetchNextUnpaid = async () => {
+      try {
+        const res = await api.get('/payments/my/next-unpaid');
+        if (res.data && res.data.month && res.data.year) {
+          setForm(f => ({
+            ...f,
+            month: res.data.month,
+            year: res.data.year,
+          }));
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchNextUnpaid();
+  }, []);
+
+  useEffect(() => {
     const fetchDueInfo = async () => {
       try {
         const res = await api.get(`/payments/my/dues?month=${form.month}&year=${form.year}`);
@@ -40,7 +58,28 @@ export default function PaymentForm({ user, onSuccess }) {
     setError('');
     try {
       await api.post('/payments', form);
-      setForm(f => ({ ...f, transactionNumber: '', note: '' }));
+      
+      // Fetch next unpaid to default the form for the next payment
+      let nextMonth = form.month;
+      let nextYear = form.year;
+      try {
+        const res = await api.get('/payments/my/next-unpaid');
+        if (res.data && res.data.month && res.data.year) {
+          nextMonth = res.data.month;
+          nextYear = res.data.year;
+        }
+      } catch (err) {
+        console.error(err);
+      }
+
+      setForm(f => ({
+        ...f,
+        month: nextMonth,
+        year: nextYear,
+        transactionNumber: '',
+        note: '',
+      }));
+
       onSuccess?.('পেমেন্ট জমা হয়েছে! অনুমোদনের অপেক্ষায়।');
     } catch (err) {
       setError(err.response?.data?.message || 'পেমেন্ট ব্যর্থ হয়েছে');
