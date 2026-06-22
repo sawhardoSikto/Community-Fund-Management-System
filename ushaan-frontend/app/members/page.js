@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import api from '@/lib/api';
 import { ROLE_LABELS } from '@/lib/constants';
+import UserAvatar from '@/components/UserAvatar';
 
 export default function MembersPage() {
   const [users, setUsers] = useState([]);
@@ -91,11 +92,7 @@ export default function MembersPage() {
             {filtered.map(u => (
               <div key={u.id} className="flex items-center justify-between bg-slate-900/50 border border-white/5 rounded-2xl p-4 hover:border-white/10 transition-colors">
                 <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 rounded-xl overflow-hidden bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white font-black shrink-0">
-                    {u.photoUrl
-                      ? <img src={`${process.env.NEXT_PUBLIC_API_URL}${u.photoUrl}`} alt={u.name} className="w-full h-full object-cover" />
-                      : u.name?.[0]?.toUpperCase()}
-                  </div>
+                  <UserAvatar user={u} className="w-11 h-11 rounded-xl overflow-hidden shrink-0 text-base" />
                   <div>
                     <div className="flex items-center gap-2">
                       <p className="text-sm font-bold text-white">{u.name}</p>

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import api from '@/lib/api';
 import { MONTH_NAMES, ROLE_LABELS } from '@/lib/constants';
+import UserAvatar from '@/components/UserAvatar';
 import PaymentForm from '@/components/PaymentForm';
 
 export default function SecretaryDashboard() {
@@ -140,8 +141,8 @@ export default function SecretaryDashboard() {
             <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
               <h2 className="text-base font-bold text-white mb-4">প্রজেক্ট সারসংক্ষেপ</h2>
               {projects.map(project => (
-                <div key={project.id}
-                  className="flex items-center justify-between px-4 py-3 bg-slate-800/50 rounded-xl mb-2 transition-colors">
+                <Link key={project.id} href={`/projects/${project.id}`}
+                  className="flex items-center justify-between px-4 py-3 bg-slate-800/50 hover:bg-slate-800/80 border border-white/0 hover:border-white/5 rounded-xl mb-2 transition-all">
                   <div>
                     <p className="text-sm font-bold text-white">{project.name}</p>
                     <p className="text-xs text-slate-400">বিনিয়োগ: {Number(project.totalInvested).toFixed(0)} ৳</p>
@@ -149,7 +150,7 @@ export default function SecretaryDashboard() {
                   <span className={`text-xs font-semibold px-2 py-0.5 rounded-lg ${project.status === 'active' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-slate-700 text-slate-400'}`}>
                     {project.status === 'active' ? '● সক্রিয়' : '✓ সম্পন্ন'}
                   </span>
-                </div>
+                </Link>
               ))}
             </div>
           </div>
@@ -197,11 +198,7 @@ export default function SecretaryDashboard() {
               {allUsers.map(u => (
                 <div key={u.id} className="flex items-center justify-between px-4 py-3 bg-slate-800/50 rounded-xl">
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl overflow-hidden bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white text-sm font-black shrink-0">
-                      {u.photoUrl
-                        ? <img src={`${process.env.NEXT_PUBLIC_API_URL}${u.photoUrl}`} alt={u.name} className="w-full h-full object-cover" />
-                        : u.name?.[0]?.toUpperCase()}
-                    </div>
+                    <UserAvatar user={u} className="w-9 h-9 rounded-xl overflow-hidden shrink-0 text-sm" gradient="from-amber-400 to-orange-500" />
                     <div>
                       <p className="text-sm font-bold text-white">{u.name}</p>
                       <p className="text-xs text-slate-400">{u.phone || u.email}</p>
@@ -223,11 +220,11 @@ export default function SecretaryDashboard() {
             {projects.length === 0 ? (
               <div className="text-center py-12 text-slate-500">কোনো প্রজেক্ট নেই</div>
             ) : projects.map(project => (
-              <div key={project.id}
-                className="block bg-slate-900/50 border border-white/5 rounded-2xl p-5 transition-colors">
+              <Link key={project.id} href={`/projects/${project.id}`}
+                className="block bg-slate-900/50 border border-white/5 hover:border-white/10 hover:bg-slate-900/80 rounded-2xl p-5 transition-all group">
                 <div className="flex items-center justify-between mb-3">
                   <div>
-                    <h3 className="text-base font-bold text-white">{project.name}</h3>
+                    <h3 className="text-base font-bold text-white group-hover:text-amber-400 transition-colors">{project.name}</h3>
                     {project.description && <p className="text-xs text-slate-400 mt-0.5">{project.description}</p>}
                   </div>
                   <span className={`text-xs font-bold px-2.5 py-1 rounded-lg ${project.status === 'active' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-slate-700 text-slate-400'}`}>
@@ -249,7 +246,7 @@ export default function SecretaryDashboard() {
                     ))}
                   </div>
                 )}
-              </div>
+              </Link>
             ))}
           </div>
         )}

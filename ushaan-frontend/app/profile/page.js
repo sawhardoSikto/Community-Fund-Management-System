@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
 import { ROLE_LABELS } from '@/lib/constants';
+import UserAvatar from '@/components/UserAvatar';
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -89,11 +90,7 @@ export default function ProfilePage() {
         <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-6 mb-6">
           <div className="flex items-start justify-between mb-6">
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-2xl overflow-hidden bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white text-2xl font-black shrink-0">
-                {profile?.photoUrl
-                  ? <img src={`${process.env.NEXT_PUBLIC_API_URL}${profile.photoUrl}`} alt={profile.name} className="w-full h-full object-cover" />
-                  : profile?.name?.[0]?.toUpperCase()}
-              </div>
+              <UserAvatar user={profile} className="w-16 h-16 rounded-2xl overflow-hidden shrink-0 text-xl" />
               <div>
                 <h1 className="text-xl font-black text-white">{profile?.name}</h1>
                 <p className="text-slate-400 text-sm">{profile?.email}</p>

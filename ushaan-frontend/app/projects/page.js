@@ -89,11 +89,11 @@ function ProjectCard({ project }) {
   const isProfit = netProfit >= 0;
 
   return (
-    <div
-      className="block bg-slate-900/50 border border-white/5 rounded-2xl p-5 transition-all">
+    <Link href={`/projects/${project.id}`}
+      className="block bg-slate-900/50 border border-white/5 hover:border-amber-500/20 rounded-2xl p-5 transition-all group">
       <div className="flex items-start justify-between mb-4">
         <div>
-          <h3 className="text-base font-bold text-white transition-colors">{project.name}</h3>
+          <h3 className="text-base font-bold text-white group-hover:text-amber-400 transition-colors">{project.name}</h3>
           {project.description && <p className="text-xs text-slate-400 mt-0.5">{project.description}</p>}
           <div className="flex gap-2 mt-1">
             {project.startDate && <span className="text-xs text-slate-500">শুরু: {new Date(project.startDate).toLocaleDateString('bn-BD')}</span>}
@@ -116,10 +116,10 @@ function ProjectCard({ project }) {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {[
             { label: 'পুরনো বিনিয়োগ', value: `${Number(s.openingInvested).toFixed(0)} ৳`, color: 'text-slate-300', bg: 'border-slate-500/20' },
-  { label: 'নতুন বিনিয়োগ', value: `${Number(s.newExpense).toFixed(0)} ৳`, color: 'text-red-400', bg: 'border-red-500/20' },
-  { label: 'মোট মুনাফা', value: `${Number(s.totalProfit).toFixed(0)} ৳`, color: 'text-emerald-400', bg: 'border-emerald-500/20' },
-  { label: 'মূলধন ফেরত', value: `${Number(s.capitalReturn).toFixed(0)} ৳`, color: 'text-blue-400', bg: 'border-blue-500/20' },
-  { label: 'এখনো বাইরে', value: `${Number(s.stillOutside).toFixed(0)} ৳`, color: 'text-amber-400', bg: 'border-amber-500/20' },
+            { label: 'নতুন বিনিয়োগ', value: `${Number(s.newExpense).toFixed(0)} ৳`, color: 'text-red-400', bg: 'border-red-500/20' },
+            { label: 'মোট মুনাফা', value: `${Number(s.totalProfit).toFixed(0)} ৳`, color: 'text-emerald-400', bg: 'border-emerald-500/20' },
+            { label: 'মূলধন ফেরত', value: `${Number(s.capitalReturn).toFixed(0)} ৳`, color: 'text-blue-400', bg: 'border-blue-500/20' },
+            { label: 'এখনো বাইরে', value: `${Number(s.stillOutside).toFixed(0)} ৳`, color: 'text-amber-400', bg: 'border-amber-500/20' },
           ].map((item, i) => (
             <div key={i} className={`bg-slate-800/50 rounded-xl p-3 text-center border ${item.bg}`}>
               <p className={`text-sm font-black ${item.color}`}>{item.value}</p>
@@ -128,6 +128,6 @@ function ProjectCard({ project }) {
           ))}
         </div>
       )}
-    </div>
+    </Link>
   );
 }

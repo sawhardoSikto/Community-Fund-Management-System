@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import api from '@/lib/api';
 import { MONTH_NAMES, ROLE_LABELS } from '@/lib/constants';
+import UserAvatar from '@/components/UserAvatar';
 import PaymentForm from '@/components/PaymentForm';
 
 export default function AdminDashboard() {
@@ -384,7 +385,8 @@ export default function AdminDashboard() {
               {projects.length === 0 ? <p className="text-slate-500 text-sm py-6 text-center">কোনো প্রজেক্ট নেই</p> : (
                 <div className="space-y-2">
                   {projects.map(project => (
-                    <div key={project.id} className="px-4 py-3 bg-slate-800/50 rounded-xl">
+                    <Link key={project.id} href={`/projects/${project.id}`}
+                      className="block px-4 py-3 bg-slate-800/50 hover:bg-slate-800/80 border border-white/0 hover:border-white/5 rounded-xl transition-all">
                       <div className="flex items-center justify-between mb-1">
                         <p className="text-sm font-bold text-white">{project.name}</p>
                         <span className={`text-xs font-semibold px-2 py-0.5 rounded-lg ${project.status === 'active' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-slate-700 text-slate-400'}`}>
@@ -395,7 +397,7 @@ export default function AdminDashboard() {
                         <span className="text-xs text-red-400">বিনিয়োগ: {Number(project.totalInvested).toFixed(0)} ৳</span>
                         {project.summary && <span className="text-xs text-emerald-400">মুনাফা: {Number(project.summary.totalProfit).toFixed(0)} ৳</span>}
                       </div>
-                    </div>
+                    </Link>
                   ))}
                 </div>
               )}
@@ -412,9 +414,7 @@ export default function AdminDashboard() {
                 {staffs.map(u => (
                   <div key={u.id} className="flex items-center justify-between px-4 py-3 bg-slate-800/50 rounded-xl">
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-xl overflow-hidden bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white text-sm font-black shrink-0">
-                        {u.photoUrl ? <img src={`${process.env.NEXT_PUBLIC_API_URL}${u.photoUrl}`} alt={u.name} className="w-full h-full object-cover" /> : u.name?.[0]?.toUpperCase()}
-                      </div>
+                      <UserAvatar user={u} className="w-9 h-9 rounded-xl overflow-hidden shrink-0 text-sm" gradient="from-amber-400 to-orange-500" />
                       <div>
                         <p className="text-sm font-bold text-white">{u.name}</p>
                         <p className="text-xs text-slate-400">{u.email}</p>
@@ -437,9 +437,7 @@ export default function AdminDashboard() {
                 {members.map(u => (
                   <div key={u.id} className="flex items-center justify-between px-4 py-3 bg-slate-800/50 rounded-xl">
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-xl overflow-hidden bg-gradient-to-br from-slate-600 to-slate-700 flex items-center justify-center text-white text-sm font-black shrink-0">
-                        {u.photoUrl ? <img src={`${process.env.NEXT_PUBLIC_API_URL}${u.photoUrl}`} alt={u.name} className="w-full h-full object-cover" /> : u.name?.[0]?.toUpperCase()}
-                      </div>
+                      <UserAvatar user={u} className="w-9 h-9 rounded-xl overflow-hidden shrink-0 text-sm" gradient="from-slate-600 to-slate-700" />
                       <div>
                         <p className="text-sm font-bold text-white">{u.name}</p>
                         <div className="flex items-center gap-2">
@@ -572,13 +570,16 @@ export default function AdminDashboard() {
               {projects.length === 0 ? (
                 <p className="text-center text-slate-500 py-12 bg-slate-900/50 border border-white/5 rounded-2xl">কোনো প্রজেক্ট নেই</p>
               ) : projects.map(project => (
-                <div key={project.id} className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
-                  <div className="flex items-center justify-between mb-3">
-                    <div>
-                      <h3 className="text-base font-bold text-white">{project.name}</h3>
+                <div key={project.id} className="bg-slate-900/50 border border-white/5 rounded-2xl p-5 hover:border-white/10 transition-all">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                    <Link href={`/projects/${project.id}`} className="group flex-1">
+                      <h3 className="text-base font-bold text-white group-hover:text-amber-400 transition-colors flex items-center gap-1.5">
+                        {project.name}
+                        <span className="text-xs font-normal text-amber-500/80 group-hover:text-amber-400">→ বিস্তারিত দেখুন</span>
+                      </h3>
                       {project.description && <p className="text-xs text-slate-400 mt-0.5">{project.description}</p>}
-                    </div>
-                    <div className="flex items-center gap-2">
+                    </Link>
+                    <div className="flex items-center gap-2 self-start sm:self-center shrink-0">
                       <span className={`text-xs font-bold px-2.5 py-1 rounded-lg ${project.status === 'active' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-slate-700 text-slate-400'}`}>
                         {project.status === 'active' ? '● সক্রিয়' : '✓ সম্পন্ন'}
                       </span>
@@ -601,7 +602,7 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                   {project.summary && (
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
+                    <Link href={`/projects/${project.id}`} className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3 block hover:opacity-90 transition-opacity">
                       {[
                         { label: 'বিনিয়োগ', value: `${Number(project.summary.totalExpense).toFixed(0)} ৳`, color: 'text-red-400' },
                         { label: 'মুনাফা', value: `${Number(project.summary.totalProfit).toFixed(0)} ৳`, color: 'text-emerald-400' },
@@ -613,7 +614,7 @@ export default function AdminDashboard() {
                           <p className="text-xs text-slate-500 mt-0.5">{s.label}</p>
                         </div>
                       ))}
-                    </div>
+                    </Link>
                   )}
                 </div>
               ))}

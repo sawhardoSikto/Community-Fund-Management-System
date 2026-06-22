@@ -456,8 +456,8 @@ export default function MemberDashboard() {
               ) : (
                 <div className="space-y-3">
                   {projects.slice(0, 3).map(project => (
-                    <div key={project.id}
-                      className="flex items-center justify-between px-4 py-3 bg-slate-800/50 rounded-xl transition-colors">
+                    <Link key={project.id} href={`/projects/${project.id}`}
+                      className="flex items-center justify-between px-4 py-3 bg-slate-800/50 hover:bg-slate-800/80 border border-white/0 hover:border-white/5 rounded-xl transition-all">
                       <div>
                         <p className="text-sm font-semibold text-white">{project.name}</p>
                         <p className="text-xs text-slate-500 mt-0.5">বিনিয়োগ: {Number(project.totalInvested).toFixed(0)} ৳</p>
@@ -470,7 +470,7 @@ export default function MemberDashboard() {
                           <p className="text-xs text-amber-400 mt-1">মুনাফা: {Number(project.summary.totalProfit).toFixed(0)} ৳</p>
                         )}
                       </div>
-                    </div>
+                    </Link>
                   ))}
                 </div>
               )}

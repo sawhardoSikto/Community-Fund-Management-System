@@ -66,7 +66,7 @@ export default function LoginPage() {
 
 {/* Logo */}
 <div className="text-center mb-8">
-  <div className="inline-flex flex-col items-center gap-3 mb-6">
+  <Link href="/" className="inline-flex flex-col items-center gap-3 mb-6 hover:opacity-90 transition-opacity">
     {/* Logo */}
     <div className="relative">
       <img
@@ -85,14 +85,13 @@ export default function LoginPage() {
     </div>
 
     <h1 className="text-3xl font-black text-white tracking-tight">ঊষাণ</h1>
-   
+  </Link>
 
-    {/* ✅ Animated Welcome Text */}
-    <div className="overflow-hidden h-7">
-     <p className="text-amber-400 text-sm font-semibold animate-slide-up">
-  ✨ Welcome to Ushaan Family ✨
-</p>
-    </div>
+  {/* ✅ Animated Welcome Text */}
+  <div className="overflow-hidden h-7">
+    <p className="text-amber-400 text-sm font-semibold animate-slide-up">
+      ✨ Welcome to Ushaan Family ✨
+    </p>
   </div>
 </div>
 
@@ -181,6 +180,21 @@ export default function LoginPage() {
             নিবন্ধন করুন
           </Link>
         </p>
+
+        {/* Footer */}
+        <div className="mt-12 text-center text-xs text-slate-500">
+          <p>
+            Developed by{' '}
+            <a
+              href="https://siktobiswas.netlify.app/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-amber-500 hover:text-amber-400 font-semibold transition-colors hover:underline"
+            >
+              Sikto Biswas
+            </a>
+          </p>
+        </div>
       </div>
     </div>
   );

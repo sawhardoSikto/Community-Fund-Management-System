@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ROLE_LABELS } from "@/lib/constants";
 import api from '@/lib/api';
+import UserAvatar from '@/components/UserAvatar';
 
 export default function Navbar() {
   const router = useRouter();
@@ -156,12 +157,24 @@ useEffect(() => {
                       console.error(err);
                     }
                   }}
-                  className="relative p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
+                  className="relative p-2 rounded-xl text-slate-400 hover:text-amber-400 hover:bg-amber-500/10 border border-transparent hover:border-amber-500/20 transition-all group"
                 >
-                  <span className="text-lg">🔔</span>
+                  <svg
+                    className={`w-5.5 h-5.5 transition-transform group-hover:scale-110 ${unreadCount > 0 ? 'animate-bounce' : ''}`}
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"
+                    />
+                  </svg>
 
                   {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center font-bold">
+                    <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] px-1 bg-red-500 text-white text-[9px] rounded-full flex items-center justify-center font-bold animate-pulse shadow-lg shadow-red-500/30">
                       {unreadCount}
                     </span>
                   )}
@@ -236,17 +249,7 @@ useEffect(() => {
                   className="flex items-center gap-2 pl-1 pr-2 py-1 rounded-xl hover:bg-white/5 transition-colors"
                 >
                   
-                  <div className="w-8 h-8 rounded-lg overflow-hidden bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white text-sm font-black shrink-0">
-                    {user.photoUrl ? (
-                      <img
-                        src={`${process.env.NEXT_PUBLIC_API_URL}${user.photoUrl}`}
-                        alt={user.name}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      user.name?.[0]?.toUpperCase()
-                    )}
-                  </div>
+                  <UserAvatar user={user} className="w-8 h-8 rounded-lg overflow-hidden shrink-0" />
                   <span className="hidden sm:block text-sm font-medium text-white max-w-[100px] truncate">
                     {user.name}
                   </span>
