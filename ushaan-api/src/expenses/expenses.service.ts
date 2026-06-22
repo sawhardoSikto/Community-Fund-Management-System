@@ -100,6 +100,14 @@ export class ExpensesService implements OnModuleInit {
     return expenses.reduce((sum, e) => sum + Number(e.amount), 0);
   }
 
+  async getExpensesByMonthCaptured(month: number, year: number): Promise<Expense[]> {
+    return this.expenseRepo.find({
+      where: { capturedInMonth: month, capturedInYear: year },
+      relations: { user: true },
+      order: { date: 'DESC' },
+    });
+  }
+
   // Reset
   async resetAll() {
     await this.expenseRepo.query('DELETE FROM expense');

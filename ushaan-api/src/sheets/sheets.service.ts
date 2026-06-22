@@ -180,6 +180,10 @@ const totalGeneralExpense = await this.expensesService.getTotalExpenseByMonth(
       sheet.month, sheet.year
     );
 
+    const expenses = await this.expensesService.getExpensesByMonthCaptured(
+      sheet.month, sheet.year
+    );
+
     // সব users এর payment status
     const allUsers = await this.usersService.findAll();
     const users = allUsers;
@@ -227,20 +231,29 @@ const totalGeneralExpense = await this.expensesService.getTotalExpenseByMonth(
           }
         }
 
-        // Check if the current month is paid and captured in this sheet
-        const currentPayment = memberApprovedPayments.find(p =>
-          this.paymentsService.paymentCoversMonth(p, sheet.month, sheet.year) &&
-          p.capturedInMonth === sheet.month &&
-          p.capturedInYear === sheet.year
-        );
+        // Check if the current month is paid and captured on or before this sheet
+        const currentPayment = memberApprovedPayments.find(p => {
+          const capYear = p.capturedInYear ?? p.year;
+          const capMonth = p.capturedInMonth ?? p.month;
+          return this.paymentsService.paymentCoversMonth(p, sheet.month, sheet.year) &&
+            (capYear < sheet.year || (capYear === sheet.year && capMonth <= sheet.month));
+        });
 
         const paidCurrent = !!currentPayment;
         const paid = paidCurrent; // To maintain compatibility with existing frontend code
 
+        const paymentsInThisSheet = memberApprovedPayments.filter(p =>
+          p.capturedInMonth === sheet.month && p.capturedInYear === sheet.year
+        );
+        const paidInThisSheetAmount = paymentsInThisSheet.reduce((sum, p) => sum + Number(p.amount), 0);
+
         // Construct displayAmount
         let displayAmount = '';
         if (paidCurrent) {
-          if (paidDues.length > 0) {
+          const isCapturedEarlier = currentPayment.capturedInMonth !== sheet.month || currentPayment.capturedInYear !== sheet.year;
+          if (isCapturedEarlier) {
+            displayAmount = 'অগ্রিম পরিশোধিত';
+          } else if (paidDues.length > 0) {
             displayAmount = `${member.monthlyAmount} × ${paidDues.length} due + ${member.monthlyAmount} current = ${(paidDues.length + 1) * member.monthlyAmount} ৳`;
           } else {
             displayAmount = `${member.monthlyAmount} current = ${member.monthlyAmount} ৳`;
@@ -264,6 +277,7 @@ const totalGeneralExpense = await this.expensesService.getTotalExpenseByMonth(
           paidDues: paidDues,
           totalDue: unpaidDues.length * member.monthlyAmount,
           displayAmount,
+          paidInThisSheetAmount,
         };
       })
     );
@@ -275,6 +289,7 @@ const totalGeneralExpense = await this.expensesService.getTotalExpenseByMonth(
         memberPayments: memberPaymentStatus,
         projectTransactions,
         salaries,
+        expenses,
       },
     };
   }

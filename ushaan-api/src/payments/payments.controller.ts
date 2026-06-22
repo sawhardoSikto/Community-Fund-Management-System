@@ -45,6 +45,19 @@ export class PaymentsController {
     return this.paymentsService.getMemberDueHistory(userId, month, year);
   }
 
+  // ✅ Next unpaid month checking for self
+  @Get('my/next-unpaid')
+  getMyNextUnpaid(@Request() req) {
+    return this.paymentsService.getNextUnpaidMonthAndYear(req.user.id);
+  }
+
+  // ✅ Admin/Accountant — member's next unpaid month checking
+  @Get('next-unpaid/:userId')
+  @Roles('admin', 'accountant', 'general_secretary')
+  getMemberNextUnpaid(@Param('userId', ParseIntPipe) userId: number) {
+    return this.paymentsService.getNextUnpaidMonthAndYear(userId);
+  }
+
   // ✅ Accountant — pending payments দেখো
   @Get('pending')
   @Roles('accountant', 'admin')

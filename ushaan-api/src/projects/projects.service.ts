@@ -174,6 +174,8 @@ for (const user of users) {
     return {
       ...project,
       summary: {
+        openingInvested: Number(project.openingInvested || 0),
+        newExpense: totalExpense,
         totalExpense,
         totalProfit,
         capitalReturn,

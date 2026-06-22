@@ -196,7 +196,7 @@ private async getDueMonths(
   payment.approvedBy = accountantId;
   if (dto.status === PaymentStatus.APPROVED) {
     payment.approvedAt = new Date();
-    const capture = await this.getCaptureMonthAndYear(payment.month, payment.year);
+    const capture = await this.getCaptureMonthAndYear();
     payment.capturedInMonth = capture.month;
     payment.capturedInYear = capture.year;
   }
@@ -264,7 +264,7 @@ async createManualPayment(dto: ManualPaymentDto, addedBy: number) {
   ];
   const totalAmount = user.monthlyAmount * coveredMonths.length;
 
-  const capture = await this.getCaptureMonthAndYear(dto.month, dto.year);
+  const capture = await this.getCaptureMonthAndYear();
 
   const payment = this.paymentRepo.create({
     userId: dto.userId,
@@ -481,29 +481,17 @@ async getApprovedPaymentsCapturedInMonth(month: number, year: number) {
   });
 }
 
-async getCaptureMonthAndYear(targetMonth: number, targetYear: number): Promise<{ month: number; year: number }> {
-  // 1. Check if the sheet for targetMonth/targetYear is published
-  const targetSheet = await this.sheetRepo.findOne({
-    where: { month: targetMonth, year: targetYear, status: SheetStatus.PUBLISHED }
-  });
-  
-  if (!targetSheet) {
-    // Not published yet, so it can be captured in its own target month
-    return { month: targetMonth, year: targetYear };
-  }
-  
-  // 2. It is published. Find the latest published sheet overall
+async getCaptureMonthAndYear(): Promise<{ month: number; year: number }> {
   const latestPublishedSheet = await this.sheetRepo.findOne({
     where: { status: SheetStatus.PUBLISHED },
     order: { year: 'DESC', month: 'DESC' }
   });
   
   if (!latestPublishedSheet) {
-    // Fallback
-    return { month: targetMonth, year: targetYear };
+    const now = new Date();
+    return { month: now.getMonth() + 1, year: now.getFullYear() };
   }
   
-  // The next month after the latest published sheet
   let nextMonth = latestPublishedSheet.month + 1;
   let nextYear = latestPublishedSheet.year;
   if (nextMonth > 12) {
@@ -512,5 +500,35 @@ async getCaptureMonthAndYear(targetMonth: number, targetYear: number): Promise<{
   }
   
   return { month: nextMonth, year: nextYear };
+}
+
+async getNextUnpaidMonthAndYear(userId: number): Promise<{ month: number; year: number }> {
+  const user = await this.usersService.findById(userId);
+  if (!user) throw new NotFoundException('User not found');
+
+  const start = await this.getDueStartMonthAndYear(userId, new Date(user.createdAt));
+  const payments = await this.paymentRepo.find({
+    where: { userId },
+    order: { year: 'ASC', month: 'ASC' },
+  });
+
+  let checkMonth = start.month;
+  let checkYear = start.year;
+
+  while (true) {
+    const paid = payments.find((p) =>
+      this.paymentCoversMonth(p, checkMonth, checkYear)
+    );
+
+    if (!paid) {
+      return { month: checkMonth, year: checkYear };
+    }
+
+    checkMonth++;
+    if (checkMonth > 12) {
+      checkMonth = 1;
+      checkYear++;
+    }
+  }
 }
 }

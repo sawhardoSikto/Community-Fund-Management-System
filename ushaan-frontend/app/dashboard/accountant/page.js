@@ -113,26 +113,63 @@ export default  function AccountantDashboard() {
   const [processing, setProcessing] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [manualDueInfo, setManualDueInfo] = useState([]);
+  const [manualPaymentType, setManualPaymentType] = useState("dues"); // dues or future
+  const [nextUnpaid, setNextUnpaid] = useState(null);
+  const [futureMonthsCount, setFutureMonthsCount] = useState(1);
+  const [loadingNextUnpaid, setLoadingNextUnpaid] = useState(false);
+
+  const getFutureCoveredMonths = () => {
+    if (!nextUnpaid) return [];
+    const list = [];
+    let currMonth = nextUnpaid.month;
+    let currYear = nextUnpaid.year;
+    for (let i = 0; i < futureMonthsCount; i++) {
+      list.push({ month: currMonth, year: currYear });
+      currMonth++;
+      if (currMonth > 12) {
+        currMonth = 1;
+        currYear++;
+      }
+    }
+    return list;
+  };
 
   useEffect(() => {
     if (!manualPayment.userId) {
       setManualDueInfo([]);
+      setNextUnpaid(null);
       return;
     }
-    const fetchManualDues = async () => {
-      try {
-        const res = await api.get(`/payments/dues/${manualPayment.userId}?month=${manualPayment.month}&year=${manualPayment.year}`);
-        const dues = res.data.data || [];
-        const relevantDues = dues.filter((d) =>
-          d.year < manualPayment.year || (d.year === manualPayment.year && d.month < manualPayment.month)
-        );
-        setManualDueInfo(relevantDues);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-    fetchManualDues();
-  }, [manualPayment.userId, manualPayment.month, manualPayment.year]);
+    
+    if (manualPaymentType === 'dues') {
+      const fetchManualDues = async () => {
+        try {
+          const res = await api.get(`/payments/dues/${manualPayment.userId}?month=${manualPayment.month}&year=${manualPayment.year}`);
+          const dues = res.data.data || [];
+          const relevantDues = dues.filter((d) =>
+            d.year < manualPayment.year || (d.year === manualPayment.year && d.month < manualPayment.month)
+          );
+          setManualDueInfo(relevantDues);
+        } catch (err) {
+          console.error(err);
+        }
+      };
+      fetchManualDues();
+    } else if (manualPaymentType === 'future') {
+      const fetchNextUnpaid = async () => {
+        setLoadingNextUnpaid(true);
+        try {
+          const res = await api.get(`/payments/next-unpaid/${manualPayment.userId}`);
+          setNextUnpaid(res.data || null);
+        } catch (err) {
+          console.error(err);
+        } finally {
+          setLoadingNextUnpaid(false);
+        }
+      };
+      fetchNextUnpaid();
+    }
+  }, [manualPayment.userId, manualPayment.month, manualPayment.year, manualPaymentType]);
 
   const showToast = (msg, success = true) => {
     setToast({ show: true, msg, success });
@@ -235,7 +272,19 @@ const handlePaymentStatus = async (id, status) => {
     e.preventDefault();
     setSubmitting(true);
     try {
-      await api.post("/payments/manual", manualPayment);
+      let payload = { ...manualPayment };
+      if (manualPaymentType === 'future') {
+        const list = getFutureCoveredMonths();
+        if (list.length === 0) {
+          showToast("কোনো বকেয়া/চলতি মাস পাওয়া যায়নি", false);
+          setSubmitting(false);
+          return;
+        }
+        const lastMonthObj = list[list.length - 1];
+        payload.month = lastMonthObj.month;
+        payload.year = lastMonthObj.year;
+      }
+      await api.post("/payments/manual", payload);
       showToast("পেমেন্ট যোগ করা হয়েছে");
       setManualPayment((f) => ({
         ...f,
@@ -243,6 +292,7 @@ const handlePaymentStatus = async (id, status) => {
         transactionNumber: "",
         note: "",
       }));
+      setNextUnpaid(null);
       fetchAll();
     } catch (err) {
       showToast(err.response?.data?.message || "ব্যর্থ হয়েছে", false);
@@ -602,45 +652,102 @@ const handleCreateProject = async (e) => {
                   </select>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-400 mb-1.5">
-                      মাস
-                    </label>
-                    <select
-                      value={manualPayment.month}
-                      onChange={(e) =>
-                        setManualPayment((f) => ({
-                          ...f,
-                          month: parseInt(e.target.value),
-                        }))
-                      }
-                      className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-amber-400/50 transition-all"
-                    >
-                      {MONTH_NAMES.map((m, i) => (
-                        <option key={i} value={i + 1}>
-                          {m}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-400 mb-1.5">
-                      বছর
-                    </label>
-                    <input
-                      type="number"
-                      value={manualPayment.year}
-                      onChange={(e) =>
-                        setManualPayment((f) => ({
-                          ...f,
-                          year: parseInt(e.target.value),
-                        }))
-                      }
-                      className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-amber-400/50 transition-all"
-                    />
+                {/* পেমেন্ট ধরণ */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-400 mb-1.5">
+                    পেমেন্ট ধরণ
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { value: "dues", label: "বকেয়া ও চলতি পেমেন্ট" },
+                      { value: "future", label: "অগ্রিম পেমেন্ট" }
+                    ].map((type) => (
+                      <button
+                        key={type.value}
+                        type="button"
+                        onClick={() => setManualPaymentType(type.value)}
+                        className={`py-2 px-3 rounded-xl text-xs font-bold transition-all border ${manualPaymentType === type.value ? "bg-amber-500 text-white border-amber-500 shadow-lg shadow-amber-500/20" : "bg-slate-800 border-white/5 text-slate-300 hover:bg-slate-700 hover:text-white"}`}
+                      >
+                        {type.label}
+                      </button>
+                    ))}
                   </div>
                 </div>
+
+                {manualPaymentType === "dues" ? (
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-400 mb-1.5">
+                        মাস
+                      </label>
+                      <select
+                        value={manualPayment.month}
+                        onChange={(e) =>
+                          setManualPayment((f) => ({
+                            ...f,
+                            month: parseInt(e.target.value),
+                          }))
+                        }
+                        className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-amber-400/50 transition-all"
+                      >
+                        {MONTH_NAMES.map((m, i) => (
+                          <option key={i} value={i + 1}>
+                            {m}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-400 mb-1.5">
+                        বছর
+                      </label>
+                      <input
+                        type="number"
+                        value={manualPayment.year}
+                        onChange={(e) =>
+                          setManualPayment((f) => ({
+                            ...f,
+                            year: parseInt(e.target.value),
+                          }))
+                        }
+                        className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-amber-400/50 transition-all"
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-slate-800/50 border border-white/5 rounded-xl p-3.5 space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-slate-400 font-semibold">অগ্রিম শুরুর মাস:</span>
+                      <span className="text-sm text-amber-400 font-black">
+                        {loadingNextUnpaid ? (
+                          "লোডিং..."
+                        ) : nextUnpaid ? (
+                          `${MONTH_NAMES[nextUnpaid.month - 1]} ${nextUnpaid.year}`
+                        ) : (
+                          "সদস্য সিলেক্ট করুন"
+                        )}
+                      </span>
+                    </div>
+                    {nextUnpaid && (
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-400 mb-1.5">
+                          অগ্রিম মাসের সংখ্যা
+                        </label>
+                        <select
+                          value={futureMonthsCount}
+                          onChange={(e) => setFutureMonthsCount(parseInt(e.target.value))}
+                          className="w-full px-3 py-2 bg-slate-900 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-amber-400/50 transition-all"
+                        >
+                          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((num) => (
+                            <option key={num} value={num}>
+                              {num} মাস
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 <div>
                   <label className="block text-xs font-semibold text-slate-400 mb-1.5">
@@ -737,21 +844,40 @@ const handleCreateProject = async (e) => {
 
                 {manualPayment.userId && (
                   <div className="bg-amber-500/5 border border-amber-500/10 rounded-xl p-3 space-y-2">
-                    {manualDueInfo.length > 0 ? (
-                      <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-2.5 space-y-1">
-                        <p className="text-xs font-bold text-red-400">
-                          ⚠️ {manualDueInfo.length} মাস বকেয়া আছে
-                        </p>
+                    {manualPaymentType === 'dues' ? (
+                      manualDueInfo.length > 0 ? (
+                        <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-2.5 space-y-1">
+                          <p className="text-xs font-bold text-red-400">
+                            ⚠️ {manualDueInfo.length} মাস বকেয়া আছে
+                          </p>
+                          <p className="text-xs text-slate-400">
+                            <span className="text-amber-400 font-bold">
+                              {(allUsers.find(u => u.id === parseInt(manualPayment.userId))?.monthlyAmount || 200)} × {manualDueInfo.length} due + {(allUsers.find(u => u.id === parseInt(manualPayment.userId))?.monthlyAmount || 200)} current = {(manualDueInfo.length + 1) * (allUsers.find(u => u.id === parseInt(manualPayment.userId))?.monthlyAmount || 200)} ৳
+                            </span>
+                          </p>
+                        </div>
+                      ) : (
                         <p className="text-xs text-slate-400">
-                          <span className="text-amber-400 font-bold">
-                            {(allUsers.find(u => u.id === parseInt(manualPayment.userId))?.monthlyAmount || 200)} × {manualDueInfo.length} due + {(allUsers.find(u => u.id === parseInt(manualPayment.userId))?.monthlyAmount || 200)} current = {(manualDueInfo.length + 1) * (allUsers.find(u => u.id === parseInt(manualPayment.userId))?.monthlyAmount || 200)} ৳
-                          </span>
+                          পরিমাণ: <span className="text-amber-400 font-bold">{(allUsers.find(u => u.id === parseInt(manualPayment.userId))?.monthlyAmount || 200)} current = {(allUsers.find(u => u.id === parseInt(manualPayment.userId))?.monthlyAmount || 200)} ৳</span>
                         </p>
-                      </div>
+                      )
                     ) : (
-                      <p className="text-xs text-slate-400">
-                        পরিমাণ: <span className="text-amber-400 font-bold">{(allUsers.find(u => u.id === parseInt(manualPayment.userId))?.monthlyAmount || 200)} current = {(allUsers.find(u => u.id === parseInt(manualPayment.userId))?.monthlyAmount || 200)} ৳</span>
-                      </p>
+                      nextUnpaid ? (
+                        <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-2.5 space-y-1">
+                          <p className="text-xs font-bold text-emerald-400">
+                            ✓ অগ্রিম পেমেন্ট বিবরণ ({futureMonthsCount} মাস)
+                          </p>
+                          <p className="text-xs text-slate-300">
+                            মাসের তালিকা: <span className="text-amber-400 font-semibold">{getFutureCoveredMonths().map(m => `${MONTH_NAMES[m.month - 1]} ${m.year}`).join(', ')}</span>
+                          </p>
+                          <p className="text-xs text-white font-bold border-t border-emerald-500/20 pt-1.5 mt-1.5 flex justify-between">
+                            <span>মোট পরিমাণ:</span>
+                            <span className="text-amber-400">{(allUsers.find(u => u.id === parseInt(manualPayment.userId))?.monthlyAmount || 200) * futureMonthsCount} ৳</span>
+                          </p>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-slate-400">শুরুর মাস লোড হচ্ছে...</p>
+                      )
                     )}
                     <p className="text-xs text-slate-500 mt-0.5">ম্যানুয়ালি পেমেন্ট নেওয়ার পর এই ফর্ম পূরণ করুন</p>
                   </div>

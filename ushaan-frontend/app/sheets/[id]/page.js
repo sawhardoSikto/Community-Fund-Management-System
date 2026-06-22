@@ -316,19 +316,9 @@ const totalExpense =
       </span>
     </div>
 
-    {/* Due/Paid months দেখাও */}
-    {((mp.dueMonths?.length > 0) || (mp.paidDues?.length > 0)) && (
+    {/* Due months দেখাও */}
+    {(mp.dueMonths?.length > 0 || mp.status === 'paid' || mp.paidInThisSheetAmount > 0) && (
       <div className="mt-2 pl-4 space-y-1">
-        {/* Render Paid Dues */}
-        {mp.paidDues?.map((d, j) => (
-          <div key={`paid-${j}`} className="flex justify-between">
-            <span className="text-xs text-emerald-400">
-              {MONTH_NAMES[d.month - 1]} {d.year} (বকেয়া পরিশোধ)
-            </span>
-            <span className="text-xs font-bold text-emerald-400">+{mp.monthlyAmount} ৳</span>
-          </div>
-        ))}
-
         {/* Render Unpaid Dues */}
         {mp.dueMonths?.map((d, j) => (
           <div key={`unpaid-${j}`} className="flex justify-between">
@@ -349,7 +339,7 @@ const totalExpense =
         <div className="flex justify-between border-t border-dotted border-white/10 pt-1">
           <span className="text-xs font-bold text-white">মোট পরিশোধ (এই শিটে)</span>
           <span className="text-xs font-black text-amber-400">
-            {((mp.paidDues?.length || 0) + (mp.status === 'paid' ? 1 : 0)) * mp.monthlyAmount} ৳
+            {mp.paidInThisSheetAmount !== undefined ? mp.paidInThisSheetAmount : (((mp.paidDues?.length || 0) + (mp.status === 'paid' ? 1 : 0)) * mp.monthlyAmount)} ৳
           </span>
         </div>
       </div>
@@ -365,20 +355,29 @@ const totalExpense =
             <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
               <h2 className="text-base font-bold text-white mb-4">📁 প্রজেক্ট লেনদেন</h2>
               <div className="space-y-2 mb-3">
-                {sheet.projectTransactions.map((tx, i) => (
-                  <div key={i} className="flex items-center justify-between px-3 py-2 bg-slate-800/50 rounded-xl">
-                    <div>
-                      <p className="text-sm text-white">{tx.project?.name}</p>
-                      <p className="text-xs text-slate-400">{tx.description}</p>
+                {sheet.projectTransactions.map((tx, i) => {
+                  const txDate = new Date(tx.date);
+                  const txMonth = txDate.getMonth() + 1;
+                  const txYear = txDate.getFullYear();
+                  const isDiff = txMonth !== sheet.month || txYear !== sheet.year;
+                  return (
+                    <div key={i} className="flex items-center justify-between px-3 py-2 bg-slate-800/50 rounded-xl">
+                      <div>
+                        <p className="text-sm text-white">{tx.project?.name}</p>
+                        <p className="text-xs text-slate-400">
+                          {tx.description}
+                          {isDiff && <span className="text-[10px] text-amber-400 ml-1.5 font-bold">({MONTH_NAMES[txMonth - 1]} {txYear} এর)</span>}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className={`text-sm font-bold ${tx.type === 'expense' ? 'text-red-400' : 'text-emerald-400'}`}>
+                          {tx.type === 'expense' ? '-' : '+'}{Number(tx.amount).toFixed(0)} ৳
+                        </p>
+                        <p className="text-xs text-slate-500">{tx.type === 'expense' ? 'ব্যয়' : tx.type === 'profit' ? 'মুনাফা' : 'ফেরত'}</p>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <p className={`text-sm font-bold ${tx.type === 'expense' ? 'text-red-400' : 'text-emerald-400'}`}>
-                        {tx.type === 'expense' ? '-' : '+'}{Number(tx.amount).toFixed(0)} ৳
-                      </p>
-                      <p className="text-xs text-slate-500">{tx.type === 'expense' ? 'ব্যয়' : tx.type === 'profit' ? 'মুনাফা' : 'ফেরত'}</p>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
@@ -388,15 +387,21 @@ const totalExpense =
             <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
               <h2 className="text-base font-bold text-white mb-4">👔 বেতন</h2>
               <div className="space-y-2 mb-3">
-                {sheet.salaries.map((s, i) => (
-                  <div key={i} className="flex items-center justify-between px-3 py-2 bg-slate-800/50 rounded-xl">
-                    <div>
-                      <p className="text-sm text-white">{s.user?.name}</p>
-                      <p className="text-xs text-slate-400">{s.role}</p>
+                {sheet.salaries.map((s, i) => {
+                  const isDiff = s.month !== sheet.month || s.year !== sheet.year;
+                  return (
+                    <div key={i} className="flex items-center justify-between px-3 py-2 bg-slate-800/50 rounded-xl">
+                      <div>
+                        <p className="text-sm text-white">
+                          {s.user?.name}
+                          {isDiff && <span className="text-[10px] text-amber-400 ml-1.5 font-bold">({MONTH_NAMES[s.month - 1]} {s.year} এর)</span>}
+                        </p>
+                        <p className="text-xs text-slate-400">{s.role}</p>
+                      </div>
+                      <p className="text-sm font-bold text-red-400">-{Number(s.amount).toFixed(0)} ৳</p>
                     </div>
-                    <p className="text-sm font-bold text-red-400">-{Number(s.amount).toFixed(0)} ৳</p>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
               <div className="flex justify-between px-3 py-2 bg-red-500/5 border border-red-500/10 rounded-xl">
                 <span className="text-sm font-bold text-white">মোট বেতন</span>
@@ -404,16 +409,37 @@ const totalExpense =
               </div>
             </div>
           )}
+
           {/* General Expenses */}
-{sheet.totalGeneralExpense > 0 && (
-  <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
-    <h2 className="text-base font-bold text-white mb-4">💸 সাধারণ খরচ</h2>
-    <div className="flex justify-between px-3 py-2 bg-red-500/5 border border-red-500/10 rounded-xl">
-      <span className="text-sm font-bold text-white">মোট সাধারণ খরচ</span>
-      <span className="text-sm font-black text-red-400">-{Number(sheet.totalGeneralExpense).toFixed(0)} ৳</span>
-    </div>
-  </div>
-)}
+          {sheet.expenses?.length > 0 && (
+            <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
+              <h2 className="text-base font-bold text-white mb-4">💸 সাধারণ খরচ তালিকা</h2>
+              <div className="space-y-2 mb-3">
+                {sheet.expenses.map((e, i) => {
+                  const expDate = new Date(e.date);
+                  const expMonth = expDate.getMonth() + 1;
+                  const expYear = expDate.getFullYear();
+                  const isDiff = expMonth !== sheet.month || expYear !== sheet.year;
+                  return (
+                    <div key={i} className="flex items-center justify-between px-3 py-2 bg-slate-800/50 rounded-xl">
+                      <div>
+                        <p className="text-sm text-white">
+                          {e.title}
+                          {isDiff && <span className="text-[10px] text-amber-400 ml-1.5 font-bold">({MONTH_NAMES[expMonth - 1]} {expYear} এর)</span>}
+                        </p>
+                        <p className="text-xs text-slate-400">{e.description || e.category}</p>
+                      </div>
+                      <p className="text-sm font-bold text-red-400">-{Number(e.amount).toFixed(0)} ৳</p>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="flex justify-between px-3 py-2 bg-red-500/5 border border-red-500/10 rounded-xl">
+                <span className="text-sm font-bold text-white">মোট সাধারণ খরচ</span>
+                <span className="text-sm font-black text-red-400">-{Number(sheet.totalGeneralExpense).toFixed(0)} ৳</span>
+              </div>
+            </div>
+          )}
 
           {/* Monthly Summary */}
           <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">

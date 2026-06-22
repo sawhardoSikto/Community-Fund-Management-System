@@ -38,6 +38,13 @@ export default function MemberDashboard() {
       const u = localStorage.getItem('user');
       const userData = u && u !== 'undefined' ? JSON.parse(u) : null;
       if (!userData) return router.push('/login');
+      if (userData.role !== 'member') {
+        if (userData.role === 'admin') router.push('/dashboard/admin');
+        else if (userData.role === 'accountant') router.push('/dashboard/accountant');
+        else if (userData.role === 'general_secretary') router.push('/dashboard/secretary');
+        else router.push('/login');
+        return;
+      }
       setUser(userData);
       fetchAll();
     } catch { router.push('/login'); }
@@ -97,16 +104,25 @@ const checkDues = async () => {
     </div>
   );
 
+  const paymentCoversMonth = (p, month, year) => {
+    if (p.month === month && p.year === year) return true;
+    if (!p.coveredMonths) return false;
+    try {
+      const covered = typeof p.coveredMonths === 'string'
+        ? JSON.parse(p.coveredMonths)
+        : p.coveredMonths;
+      return Array.isArray(covered) && covered.some(c => c.month === month && c.year === year);
+    } catch {
+      return false;
+    }
+  };
+
   // ✅ selected month এর payment check
   const selectedMonthPaid = myPayments.find(
-    p => p.month === paymentForm.month &&
-         p.year === paymentForm.year &&
-         p.status === 'approved'
+    p => p.status === 'approved' && paymentCoversMonth(p, paymentForm.month, paymentForm.year)
   );
   const selectedMonthPending = myPayments.find(
-    p => p.month === paymentForm.month &&
-         p.year === paymentForm.year &&
-         p.status === 'pending'
+    p => p.status === 'pending' && paymentCoversMonth(p, paymentForm.month, paymentForm.year)
   );
 
   return (
