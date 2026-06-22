@@ -105,6 +105,7 @@ for (const user of users) {
   // Project delete করো
   async remove(id: number) {
     await this.findOne(id);
+    await this.transactionRepo.delete({ projectId: id });
     await this.projectRepo.delete(id);
     return { message: 'Project deleted', id };
   }

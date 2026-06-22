@@ -307,34 +307,41 @@ const totalGeneralExpense = await this.expensesService.getTotalExpenseByMonth(
   // Overall Fund Status
 async getOverallStatus() {
   const settings = await this.settingsService.getSettings();
+  const openingCashInHand = Number(settings.openingCashInHand || 0);
+  const openingTotalProfit = Number(settings.openingTotalProfit || 0);
 
-  const allSheets = await this.sheetRepo.find({
-    where: { status: SheetStatus.PUBLISHED },
-    order: { year: 'DESC', month: 'DESC' },
-  });
+  // ১. Approved member payments
+  const paymentsRes = await this.paymentsService.getAllPayments();
+  const approvedPayments = (paymentsRes?.data || []).filter(p => p.status === 'approved');
+  const totalMemberIncome = approvedPayments.reduce((sum, p) => sum + Number(p.amount), 0);
 
-  if (allSheets.length === 0) {
-    const cashInHand = Number(settings.openingCashInHand);
-    const totalInvested = Number(settings.openingTotalInvested);
-    return {
-      message: 'Overall fund status',
-      data: {
-        cashInHand: cashInHand.toFixed(2),
-        totalInvested: totalInvested.toFixed(2),
-        totalProfit: Number(settings.openingTotalProfit).toFixed(2),
-        totalAsset: (cashInHand + totalInvested).toFixed(2),
-      },
-    };
-  }
+  // ২. Project statistics
+  const projectsRes = await this.projectsService.findAll();
+  const projects = projectsRes?.data || [];
+  const totalProjectProfit = projects.reduce((sum, p) => sum + Number(p.summary.totalProfit || 0), 0);
+  const totalCapitalReturn = projects.reduce((sum, p) => sum + Number(p.summary.capitalReturn || 0), 0);
+  const totalProjectExpense = projects.reduce((sum, p) => sum + Number(p.summary.totalExpense || 0), 0);
+  const totalInvested = projects.reduce((sum, p) => sum + Number(p.summary.stillOutside || 0), 0);
 
-  const latestSheet = allSheets[0];
-  const cashInHand = Number(latestSheet.cashInHand);
-  const totalInvested = Number(latestSheet.totalInvested);
+  // ৩. Salaries
+  const salariesRes = await this.salariesService.findAll();
+  const totalSalary = (salariesRes?.data || []).reduce((sum, s) => sum + Number(s.amount), 0);
 
-  const websiteProjectIncome = allSheets.reduce(
-    (sum, s) => sum + Number(s.totalProjectIncome), 0
-  );
-  const totalProfit = Number(settings.openingTotalProfit) + websiteProjectIncome;
+  // ৪. General Expenses
+  const expenses = await this.expensesService.findAll();
+  const totalGeneralExpense = (expenses || []).reduce((sum, e) => sum + Number(e.amount), 0);
+
+  // ৫. Real-time calculations
+  const cashInHand = openingCashInHand
+    + totalMemberIncome
+    + totalProjectProfit
+    + totalCapitalReturn
+    - totalSalary
+    - totalProjectExpense
+    - totalGeneralExpense;
+
+  const totalProfit = openingTotalProfit + totalProjectProfit;
+  const totalAsset = cashInHand + totalInvested;
 
   return {
     message: 'Overall fund status',
@@ -342,7 +349,7 @@ async getOverallStatus() {
       cashInHand: cashInHand.toFixed(2),
       totalInvested: totalInvested.toFixed(2),
       totalProfit: totalProfit.toFixed(2),
-      totalAsset: Number(latestSheet.totalAsset).toFixed(2),
+      totalAsset: totalAsset.toFixed(2),
     },
   };
 }
