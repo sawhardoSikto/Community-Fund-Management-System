@@ -624,8 +624,8 @@ export default function AdminDashboard() {
 
         {/* Settings */}
         {tab === 'settings' && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="space-y-5">
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Opening Balance Form */}
               <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
                 <h2 className="text-base font-bold text-white mb-1">প্রারম্ভিক ব্যালেন্স (হাতে নগদ/বিনিয়োগ)</h2>
@@ -690,75 +690,82 @@ export default function AdminDashboard() {
                 </form>
               </div>
 
-              {/* ✅ Danger Zone */}
-              <div className="bg-red-500/5 border border-red-500/10 rounded-2xl p-5">
-                <h2 className="text-base font-bold text-red-400 mb-1">⚠️ বিপজ্জনক অঞ্চল</h2>
-                <p className="text-xs text-slate-400 mb-4">এই অ্যাকশনগুলো পূর্বাবস্থায় ফেরানো যাবে না।</p>
-                <div className="space-y-2">
-                  {[
-                    { label: 'সব শিট মুছুন', endpoint: '/sheets/reset' },
-                    { label: 'সব বেতন মুছুন', endpoint: '/salaries/reset' },
-                    { label: 'সব পেমেন্ট মুছুন', endpoint: '/payments/reset' },
-                    { label: 'সব ওপেনিং ব্যালেন্স মুছুন', endpoint: '/payments/opening-balances/reset' },
-                    { label: 'সেটিংস রিসেট করুন', endpoint: '/settings/reset' },
-                    { label: 'সব সাধারণ খরচ মুছুন', endpoint: '/expenses/reset/all' },
-                  ].map((item, i) => (
-                    <button key={i} onClick={() => handleReset(item.label, item.endpoint)}
-                      className="w-full flex items-center justify-between px-4 py-3 bg-red-500/5 hover:bg-red-500/10 border border-red-500/10 hover:border-red-500/20 rounded-xl text-sm font-semibold text-red-400 transition-all">
-                      <span>{item.label}</span>
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                      </svg>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Member pre-launch Opening Balance Form */}
-            <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5 h-fit">
-              <h2 className="text-base font-bold text-white mb-1">সদস্যের প্রাক-লঞ্চ পেমেন্ট (Opening Balance)</h2>
-              <p className="text-xs text-slate-400 mb-4">ওয়েবসাইট চালুর আগে কোনো সদস্য কত টাকা জমা দিয়েছিলেন</p>
-              <form onSubmit={handleOpeningBalanceSubmit} className="space-y-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-400 mb-1.5">সদস্য</label>
-                  <select name="userId" required
-                    className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-amber-400/50 transition-all">
-                    <option value="">সদস্য নির্বাচন করুন</option>
-                    {allUsers.map(u => (
-                      <option key={u.id} value={u.id}>
-                        {u.name} ({u.role})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-400 mb-1.5">মোট পরিশোধিত পরিমাণ (৳)</label>
-                  <input type="number" name="totalPaid" required placeholder="যেমন: ৪০০০"
-                    className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-amber-400/50 transition-all" />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
+              {/* Member pre-launch Opening Balance Form */}
+              <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5 h-fit">
+                <h2 className="text-base font-bold text-white mb-1">সদস্যের প্রাক-লঞ্চ পেমেন্ট (Opening Balance)</h2>
+                <p className="text-xs text-slate-400 mb-4">ওয়েবসাইট চালুর আগে কোনো সদস্য কত টাকা জমা দিয়েছিলেন</p>
+                <form onSubmit={handleOpeningBalanceSubmit} className="space-y-3">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-400 mb-1.5">পর্যন্ত মাস</label>
-                    <select name="upToMonth" required
+                    <label className="block text-xs font-semibold text-slate-400 mb-1.5">সদস্য</label>
+                    <select name="userId" required
                       className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-amber-400/50 transition-all">
-                      {MONTH_NAMES.map((m, i) => (
-                        <option key={i} value={i + 1}>{m}</option>
+                      <option value="">সদস্য নির্বাচন করুন</option>
+                      {allUsers.map(u => (
+                        <option key={u.id} value={u.id}>
+                          {u.name} ({u.role})
+                        </option>
                       ))}
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-slate-400 mb-1.5">বছর</label>
-                    <input type="number" name="upToYear" defaultValue={new Date().getFullYear()}
-                      className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-amber-400/50 transition-all" />
+                    <label className="block text-xs font-semibold text-slate-400 mb-1.5">মোট পরিশোধিত পরিমাণ (৳)</label>
+                    <input type="number" name="totalPaid" required placeholder="যেমন: ৪০০০"
+                      className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-amber-400/50 transition-all" />
                   </div>
-                </div>
-                <button type="submit" disabled={submitting}
-                  className="w-full flex items-center justify-center gap-2 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all disabled:opacity-60">
-                  {submitting && <span className="loading loading-spinner loading-xs" />}
-                  ব্যালেন্স সেট করুন
-                </button>
-              </form>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-400 mb-1.5">পর্যন্ত মাস</label>
+                      <select name="upToMonth" required
+                        className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-amber-400/50 transition-all">
+                        {MONTH_NAMES.map((m, i) => (
+                          <option key={i} value={i + 1}>{m}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-400 mb-1.5">বছর</label>
+                      <input type="number" name="upToYear" defaultValue={new Date().getFullYear()}
+                        className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-amber-400/50 transition-all" />
+                    </div>
+                  </div>
+                  <button type="submit" disabled={submitting}
+                    className="w-full flex items-center justify-center gap-2 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all disabled:opacity-60">
+                    {submitting && <span className="loading loading-spinner loading-xs" />}
+                    ব্যালেন্স সেট করুন
+                  </button>
+                </form>
+              </div>
+            </div>
+
+            {/* ✅ Danger Zone */}
+            <div className="bg-red-950/20 border border-red-500/10 rounded-2xl p-6 shadow-xl max-w-4xl mx-auto">
+              <h2 className="text-base font-black text-red-400 mb-1.5 flex items-center gap-2">
+                <svg className="w-5 h-5 animate-pulse text-red-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                ⚠️ বিপজ্জনক অঞ্চল (Danger Zone)
+              </h2>
+              <p className="text-xs text-slate-400 mb-5">
+                নিচের অ্যাকশনগুলো স্থায়ীভাবে ডেটা মুছে ফেলবে এবং এটি আর কোনোভাবেই পুনরুদ্ধার বা পূর্বাবস্থায় ফিরিয়ে নেওয়া সম্ভব নয়। অনুগ্রহ করে সতর্কতার সাথে ব্যবহার করুন।
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {[
+                  { label: 'সব শিট মুছুন', endpoint: '/sheets/reset' },
+                  { label: 'সব বেতন মুছুন', endpoint: '/salaries/reset' },
+                  { label: 'সব পেমেন্ট মুছুন', endpoint: '/payments/reset' },
+                  { label: 'সব ওপেনিং ব্যালেন্স মুছুন', endpoint: '/payments/opening-balances/reset' },
+                  { label: 'সেটিংস রিসেট করুন', endpoint: '/settings/reset' },
+                  { label: 'সব সাধারণ খরচ মুছুন', endpoint: '/expenses/reset/all' },
+                ].map((item, i) => (
+                  <button key={i} onClick={() => handleReset(item.label, item.endpoint)}
+                    className="w-full flex items-center justify-between px-4 py-3.5 bg-red-950/30 hover:bg-red-500/10 border border-red-500/10 hover:border-red-500/20 rounded-xl text-xs font-bold text-red-400 transition-all active:scale-[0.98]">
+                    <span>{item.label}</span>
+                    <svg className="w-4 h-4 text-red-500/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         )}
