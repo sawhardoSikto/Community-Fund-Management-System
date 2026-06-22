@@ -58,12 +58,74 @@ const getTabIcon = (key, isActive) => {
   }
 };
 
+const getCategoryIcon = (category, className = "w-4 h-4 shrink-0") => {
+  switch (category) {
+    case 'food':
+      return (
+        <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m11.314 11.314l.707-.707M12 5a7 7 0 100 14 7 7 0 000-14z" />
+        </svg>
+      );
+    case 'transport':
+      return (
+        <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+        </svg>
+      );
+    case 'meeting':
+      return (
+        <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+        </svg>
+      );
+    case 'utility':
+      return (
+        <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+      );
+    case 'other':
+    default:
+      return (
+        <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+        </svg>
+      );
+  }
+};
+
+const getTransactionTypeIcon = (type, className = "w-4 h-4 shrink-0") => {
+  switch (type) {
+    case 'expense':
+      return (
+        <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15 13l-3 3m0 0l-3-3m3 3V8m0 13a9 9 0 110-18 9 9 0 010 18z" />
+        </svg>
+      );
+    case 'profit':
+      return (
+        <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 11l3-3m0 0l3 3m-3-3v8m0 5a9 9 0 110-18 9 9 0 010 18z" />
+        </svg>
+      );
+    case 'capital_return':
+    default:
+      return (
+        <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89M9 11l3-3m0 0l3 3" />
+        </svg>
+      );
+  }
+};
+
+
 const PAYMENT_METHOD_LABELS = {
-  bkash: "🟣 বিকাশ",
-  nagad: "🟠 নগদ",
-  cash: "💵 নগদ অর্থ",
-  card: "💳 কার্ড",
-  other: "🔵 অন্যান্য",
+  bkash: "বিকাশ",
+  nagad: "নগদ",
+  cash: "নগদ অর্থ",
+  card: "কার্ড",
+  other: "অন্যান্য",
 };
 
 const parseCoveredMonths = (coveredMonths) => {
@@ -1015,9 +1077,9 @@ const handleCreateProject = async (e) => {
                   </label>
                   <div className="grid grid-cols-3 gap-2">
                     {[
-                      { value: "expense", label: "📤 ব্যয়" },
-                      { value: "profit", label: "📈 মুনাফা" },
-                      { value: "capital_return", label: "🔄 রিটার্ন" },
+                      { value: "expense", label: "ব্যয়" },
+                      { value: "profit", label: "মুনাফা" },
+                      { value: "capital_return", label: "রিটার্ন" },
                     ].map((type) => (
                       <button
                         key={type.value}
@@ -1028,9 +1090,10 @@ const handleCreateProject = async (e) => {
                             type: type.value,
                           }))
                         }
-                        className={`py-2 rounded-xl text-xs font-semibold transition-all ${transactionForm.type === type.value ? "bg-amber-500 text-white" : "bg-slate-800 text-slate-400 hover:bg-slate-700"}`}
+                        className={`inline-flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-semibold transition-all border ${transactionForm.type === type.value ? "bg-amber-500 text-white border-amber-500 shadow-lg shadow-amber-500/20" : "bg-slate-800 border-white/5 text-slate-400 hover:bg-slate-700 hover:text-white"}`}
                       >
-                        {type.label}
+                        {getTransactionTypeIcon(type.value, `w-3.5 h-3.5 ${transactionForm.type === type.value ? 'text-white' : 'text-slate-455'}`)}
+                        <span>{type.label}</span>
                       </button>
                     ))}
                   </div>
@@ -1341,16 +1404,17 @@ const handleCreateProject = async (e) => {
           <label className="block text-xs font-semibold text-slate-400 mb-1.5">ক্যাটাগরি</label>
           <div className="grid grid-cols-3 gap-2">
             {[
-              { value: 'food', label: '🍽️ খাবার' },
-              { value: 'transport', label: '🚗 যাতায়াত' },
-              { value: 'meeting', label: '🤝 মিটিং' },
-              { value: 'utility', label: '🔧 ইউটিলিটি' },
-              { value: 'other', label: '📦 অন্যান্য' },
+              { value: 'food', label: 'খাবার' },
+              { value: 'transport', label: 'যাতায়াত' },
+              { value: 'meeting', label: 'মিটিং' },
+              { value: 'utility', label: 'ইউটিলিটি' },
+              { value: 'other', label: 'অন্যান্য' },
             ].map(cat => (
               <button key={cat.value} type="button"
                 onClick={() => setExpenseForm(f => ({ ...f, category: cat.value }))}
-                className={`py-2 rounded-xl text-xs font-semibold transition-all ${expenseForm.category === cat.value ? 'bg-amber-500 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}>
-                {cat.label}
+                className={`inline-flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-semibold transition-all border ${expenseForm.category === cat.value ? 'bg-amber-500 text-white border-amber-500 shadow-lg shadow-amber-500/20' : 'bg-slate-800 border-white/5 text-slate-400 hover:bg-slate-700 hover:text-white'}`}>
+                {getCategoryIcon(cat.value, `w-3.5 h-3.5 ${expenseForm.category === cat.value ? 'text-white' : 'text-slate-450'}`)}
+                <span>{cat.label}</span>
               </button>
             ))}
           </div>
@@ -1389,12 +1453,9 @@ const handleCreateProject = async (e) => {
               <div>
                 <p className="text-sm font-semibold text-white">{expense.title}</p>
                 <div className="flex items-center gap-2 mt-0.5">
-                  <span className="text-xs text-slate-500">
-                    {expense.category === 'food' ? '🍽️' :
-                     expense.category === 'transport' ? '🚗' :
-                     expense.category === 'meeting' ? '🤝' :
-                     expense.category === 'utility' ? '🔧' : '📦'}
-                    {' '}{new Date(expense.date).toLocaleDateString('bn-BD')}
+                  <span className="inline-flex items-center gap-1 text-xs text-slate-500 bg-slate-800/80 px-2 py-0.5 rounded-md border border-white/5">
+                    {getCategoryIcon(expense.category, "w-3 h-3 text-slate-400")}
+                    <span>{new Date(expense.date).toLocaleDateString('bn-BD')}</span>
                   </span>
                 </div>
                 {expense.description && <p className="text-xs text-slate-500 italic mt-0.5">"{expense.description}"</p>}
