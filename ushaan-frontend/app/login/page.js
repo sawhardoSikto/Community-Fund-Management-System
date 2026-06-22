@@ -181,20 +181,6 @@ export default function LoginPage() {
           </Link>
         </p>
 
-        {/* Footer */}
-        <div className="mt-12 text-center text-xs text-slate-500">
-          <p>
-            Developed by{' '}
-            <a
-              href="https://siktobiswas.netlify.app/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-amber-500 hover:text-amber-400 font-semibold transition-colors hover:underline"
-            >
-              Sikto Biswas
-            </a>
-          </p>
-        </div>
       </div>
     </div>
   );
