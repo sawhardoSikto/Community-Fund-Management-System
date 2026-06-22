@@ -472,8 +472,8 @@ export default function MemberDashboard() {
                   className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white font-bold rounded-xl shadow-lg shadow-amber-500/20 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed">
                   {submitting && <span className="loading loading-spinner loading-xs" />}
                   {submitting ? 'জমা হচ্ছে...'
-                    : selectedMonthPaid ? '✅ এই মাস পরিশোধিত'
-                    : selectedMonthPending ? '⏳ অনুমোদন বাকি'
+                    : selectedMonthPaid ? 'এই মাস পরিশোধিত'
+                    : selectedMonthPending ? 'অনুমোদন বাকি'
                     : 'পেমেন্ট জমা দিন'}
                 </button>
               </form>

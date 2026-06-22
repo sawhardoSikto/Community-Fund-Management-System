@@ -578,7 +578,11 @@ const handleCreateProject = async (e) => {
                   <div className="max-w-md">
                     <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
                       <h2 className="text-base font-bold text-white mb-4 flex items-center gap-2">
-                        <span className="w-7 h-7 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-400 text-sm">💰</span>
+                        <span className="w-7 h-7 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-400 text-sm">
+                          <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </span>
                         আমার মাসিক পেমেন্ট
                       </h2>
                       <PaymentForm user={user} onSuccess={(msg) => showToast(msg)} />
@@ -593,8 +597,12 @@ const handleCreateProject = async (e) => {
               অনুমোদন অপেক্ষায় ({pendingPayments.length})
             </h2>
             {pendingPayments.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-4xl mb-3">✅</p>
+              <div className="text-center py-12 flex flex-col items-center justify-center">
+                <span className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-400 mb-3">
+                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                </span>
                 <p className="text-slate-400 text-sm">
                   সব পেমেন্ট অনুমোদিত হয়েছে
                 </p>
@@ -1498,11 +1506,23 @@ const handleCreateProject = async (e) => {
                       </div>
                       <div className="flex items-center gap-2">
                         <span
-                          className={`px-2.5 py-1 text-xs font-bold rounded-lg ${sheet.status === "published" ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" : "bg-amber-500/10 text-amber-400 border border-amber-500/20"}`}
+                          className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold rounded-lg ${sheet.status === "published" ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" : "bg-amber-500/10 text-amber-400 border border-amber-500/20"}`}
                         >
-                          {sheet.status === "published"
-                            ? "✅ প্রকাশিত"
-                            : "📝 খসড়া"}
+                          {sheet.status === "published" ? (
+                            <>
+                              <svg className="w-3.5 h-3.5 text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                              </svg>
+                              প্রকাশিত
+                            </>
+                          ) : (
+                            <>
+                              <svg className="w-3.5 h-3.5 text-amber-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                              </svg>
+                              খসড়া
+                            </>
+                          )}
                         </span>
                         <Link
                           href={`/sheets/${sheet.id}`}

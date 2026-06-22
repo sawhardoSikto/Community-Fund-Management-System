@@ -731,7 +731,12 @@ export default function AdminDashboard() {
                 {/* ✅ Settings দেখাও */}
                 {currentSettings && Number(currentSettings.openingCashInHand) > 0 && (
                   <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-xl p-3 mb-4">
-                    <p className="text-xs text-emerald-400 font-semibold">✅ সেটিিংস সংরক্ষিত আছে</p>
+                    <p className="text-xs text-emerald-400 font-semibold flex items-center gap-1">
+                      <svg className="w-3.5 h-3.5 text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                      সেটিংস সংরক্ষিত আছে
+                    </p>
                     <div className="flex gap-4 mt-2">
                       <span className="text-xs text-slate-400">নগদ: <span className="text-white font-semibold">{Number(currentSettings.openingCashInHand).toFixed(0)} ৳</span></span>
                       <span className="text-xs text-slate-400">বিনিয়োগ: <span className="text-white font-semibold">{Number(currentSettings.openingTotalInvested).toFixed(0)} ৳</span></span>
