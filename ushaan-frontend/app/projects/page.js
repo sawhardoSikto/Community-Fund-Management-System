@@ -56,7 +56,10 @@ export default function ProjectsPage() {
             {/* Active */}
             {activeProjects.length > 0 && (
               <div>
-                <h2 className="text-sm font-bold text-emerald-400 mb-3">● সক্রিয় প্রজেক্ট</h2>
+                <h2 className="text-sm font-bold text-emerald-400 mb-3 flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  সক্রিয় প্রজেক্ট
+                </h2>
                 <div className="space-y-3">
                   {activeProjects.map(project => (
                     <ProjectCard key={project.id} project={project} />
@@ -68,7 +71,12 @@ export default function ProjectsPage() {
             {/* Completed */}
             {completedProjects.length > 0 && (
               <div className="mt-6">
-                <h2 className="text-sm font-bold text-slate-400 mb-3">✓ সম্পন্ন প্রজেক্ট</h2>
+                <h2 className="text-sm font-bold text-slate-400 mb-3 flex items-center gap-1.5">
+                  <svg className="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                  সম্পন্ন প্রজেক্ট
+                </h2>
                 <div className="space-y-3">
                   {completedProjects.map(project => (
                     <ProjectCard key={project.id} project={project} />
@@ -106,9 +114,19 @@ function ProjectCard({ project }) {
               {isProfit ? `+${netProfit.toFixed(0)} ৳` : `${netProfit.toFixed(0)} ৳`}
             </span>
           )}
-          <span className={`text-xs font-bold px-2.5 py-1 rounded-lg ${project.status === 'active' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-slate-700 text-slate-400'}`}>
-            {project.status === 'active' ? '● সক্রিয়' : '✓ সম্পন্ন'}
-          </span>
+          {project.status === 'active' ? (
+            <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-lg border bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
+              <span className="w-1 h-1 rounded-full bg-emerald-400 animate-pulse" />
+              সক্রিয়
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-lg border bg-slate-800 text-slate-400 border-white/5">
+              <svg className="w-3 h-3 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+              সম্পন্ন
+            </span>
+          )}
         </div>
       </div>
 

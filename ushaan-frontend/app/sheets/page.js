@@ -70,9 +70,21 @@ export default function SheetsPage() {
                     <p className="text-sm font-black text-white">{Number(sheet.totalAsset).toFixed(0)} ৳</p>
                     <p className="text-xs text-slate-400">মোট সম্পদ</p>
                   </div>
-                  <span className={`inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-lg shrink-0 ${sheet.status === 'published' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'}`}>
-                    {sheet.status === 'published' ? '✓ প্রকাশিত' : '✎ খসড়া'}
-                  </span>
+                  {sheet.status === 'published' ? (
+                    <span className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-lg shrink-0 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                      <svg className="w-3.5 h-3.5 text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                      প্রকাশিত
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-lg shrink-0 bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                      <svg className="w-3.5 h-3.5 text-amber-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                      </svg>
+                      খসড়া
+                    </span>
+                  )}
                 </div>
               </Link>
             ))}

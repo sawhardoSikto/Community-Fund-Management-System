@@ -180,45 +180,139 @@ export default function MemberDashboard() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-6">
           <h1 className="text-2xl sm:text-3xl font-black text-white">
             স্বাগতম, {user?.name}! 👋
           </h1>
           <p className="text-slate-400 mt-1 text-sm">ঊষাণ কমিউনিটি ফান্ড ম্যানেজমেন্ট</p>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
+        {/* Personal Status Alert Banner (HCI Visual Hierarchy) */}
+        {myDues.length > 0 ? (
+          <div className="mb-6 bg-gradient-to-r from-red-500/15 to-orange-500/5 border border-red-500/20 rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <span className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center text-red-400 shrink-0 mt-0.5 animate-pulse">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </span>
+              <div>
+                <h3 className="text-sm font-bold text-white">আপনার চাঁদা বকেয়া রয়েছে</h3>
+                <p className="text-xs text-slate-400 mt-1">
+                  আপনার মোট <span className="text-red-400 font-bold">{myDues.length} মাসের</span> চাঁদা বকেয়া আছে (মোট বকেয়া: <span className="text-amber-400 font-bold">{myDues.reduce((acc, curr) => acc + Number(curr.amount), 0)} ৳</span>)। অনুগ্রহ করে দ্রুত পরিশোধ করুন।
+                </p>
+              </div>
+            </div>
+            <button 
+              onClick={() => {
+                document.getElementById('payment-section')?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-xs font-bold rounded-xl transition-all shadow-lg shadow-red-500/25 shrink-0 self-start sm:self-center"
+            >
+              এখনই পরিশোধ করুন
+            </button>
+          </div>
+        ) : (
+          <div className="mb-6 bg-gradient-to-r from-emerald-500/10 to-teal-500/5 border border-emerald-500/20 rounded-2xl p-5 flex items-center gap-3">
+            <span className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 shrink-0">
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            </span>
+            <div>
+              <h3 className="text-sm font-bold text-white">আপনার কোনো বকেয়া নেই!</h3>
+              <p className="text-xs text-slate-400 mt-0.5">সব পরিশোধিত করার জন্য আপনাকে ধন্যবাদ। 🎉 আপনি চাইলে পরবর্তী মাসের জন্য অগ্রিম চাঁদা দিতে পারেন।</p>
+            </div>
+          </div>
+        )}
+
+        {/* Stats Cards (Personal focus) */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
           {[
-            { label: 'মোট পরিশোধ', value: `${overview?.grandTotal || 0} ৳`, sub: `ওয়েবসাইট: ${overview?.websiteTotal || 0} ৳`, icon: '💰', color: 'from-emerald-500/20 to-emerald-600/10 border-emerald-500/20', textColor: 'text-emerald-400' },
-            { label: 'বকেয়া মাস', value: myDues.length, sub: myDues.length > 0 ? `${myDues[0].amount} ৳/মাস` : 'কোনো বকেয়া নেই', icon: '⚠️', color: myDues.length > 0 ? 'from-red-500/20 to-red-600/10 border-red-500/20' : 'from-slate-800/50 to-slate-700/10 border-white/5', textColor: myDues.length > 0 ? 'text-red-400' : 'text-slate-400' },
-            { label: 'মাসিক চাঁদা', value: `${user?.monthlyAmount || 200} ৳`, sub: 'প্রতি মাসে', icon: '📅', color: 'from-blue-500/20 to-blue-600/10 border-blue-500/20', textColor: 'text-blue-400' },
-            { label: 'ফান্ড অবস্থা', value: `${Number(overallStatus?.cashInHand || 0).toFixed(0)} ৳`, sub: 'হাতে আছে', icon: '🏦', color: 'from-amber-500/20 to-amber-600/10 border-amber-500/20', textColor: 'text-amber-400' },
+            { 
+              label: 'মোট পরিশোধ', 
+              value: `${overview?.grandTotal || 0} ৳`, 
+              sub: `ওয়েবসাইট: ${overview?.websiteTotal || 0} ৳`, 
+              icon: (
+                <svg className="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              ), 
+              color: 'from-emerald-500/20 to-emerald-600/10 border-emerald-500/20', 
+              textColor: 'text-emerald-400' 
+            },
+            { 
+              label: 'বকেয়া মাস', 
+              value: `${myDues.length} মাস`, 
+              sub: myDues.length > 0 ? `বকেয়া: ${myDues.reduce((acc, curr) => acc + Number(curr.amount), 0)} ৳` : 'কোনো বকেয়া নেই', 
+              icon: (
+                <svg className="w-5 h-5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              ), 
+              color: myDues.length > 0 ? 'from-red-500/20 to-red-600/10 border-red-500/20' : 'from-slate-800/50 to-slate-700/10 border-white/5', 
+              textColor: myDues.length > 0 ? 'text-red-400' : 'text-slate-400' 
+            },
+            { 
+              label: 'মাসিক চাঁদা', 
+              value: `${user?.monthlyAmount || 200} ৳`, 
+              sub: 'প্রতি মাসে', 
+              icon: (
+                <svg className="w-5 h-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              ), 
+              color: 'from-blue-500/20 to-blue-600/10 border-blue-500/20', 
+              textColor: 'text-blue-400' 
+            },
+            { 
+              label: 'চলতি মাস', 
+              value: `${MONTH_NAMES[new Date().getMonth()]}`, 
+              sub: selectedMonthPaid ? 'পরিশোধিত' : selectedMonthPending ? 'অপেক্ষমাণ' : 'বকেয়া রয়েছে', 
+              icon: (
+                <svg className={`w-5 h-5 ${selectedMonthPaid ? 'text-emerald-400' : selectedMonthPending ? 'text-amber-400' : 'text-slate-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                </svg>
+              ), 
+              color: selectedMonthPaid ? 'from-emerald-500/20 to-emerald-600/10 border-emerald-500/20' : selectedMonthPending ? 'from-amber-500/20 to-amber-600/10 border-amber-500/20' : 'from-slate-800/50 to-slate-700/10 border-white/5', 
+              textColor: selectedMonthPaid ? 'text-emerald-400' : selectedMonthPending ? 'text-amber-400' : 'text-slate-400' 
+            },
           ].map((stat, i) => (
-            <div key={i} className={`bg-gradient-to-br ${stat.color} border rounded-2xl p-4`}>
-              <div className="text-2xl mb-2">{stat.icon}</div>
-              <p className={`text-xl sm:text-2xl font-black ${stat.textColor}`}>{stat.value}</p>
-              <p className="text-xs text-slate-400 mt-1">{stat.label}</p>
-              <p className="text-xs text-slate-500 mt-0.5">{stat.sub}</p>
+            <div key={i} className={`bg-gradient-to-br ${stat.color} border rounded-2xl p-4 flex items-center justify-between`}>
+              <div>
+                <p className="text-xs text-slate-400">{stat.label}</p>
+                <p className={`text-lg sm:text-2xl font-black mt-1 ${stat.textColor}`}>{stat.value}</p>
+                <p className="text-[10px] sm:text-xs text-slate-500 mt-0.5">{stat.sub}</p>
+              </div>
+              <div className="p-2.5 bg-white/5 rounded-xl shrink-0">
+                {stat.icon}
+              </div>
             </div>
           ))}
         </div>
 
+        {/* Grid Layout (HCI Column structure) */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-          {/* Payment Form */}
-          <div className="lg:col-span-1 space-y-4">
-            <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
+          {/* Left Column (2/3 width - High Importance) */}
+          <div className="lg:col-span-2 space-y-6">
+
+            {/* Payment Form Card */}
+            <div id="payment-section" className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
               <h2 className="text-base font-bold text-white mb-4 flex items-center gap-2">
-                <span className="w-7 h-7 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-400 text-sm">💳</span>
-                পেমেন্ট করুন
+                <span className="w-7 h-7 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-400 text-sm">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                  </svg>
+                </span>
+                চাঁদা পেমেন্ট করুন
               </h2>
 
               {/* Selected month status */}
               {selectedMonthPaid ? (
                 <div className="flex items-center gap-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4 mb-4">
-                  <svg className="w-5 h-5 text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  <svg className="w-5 h-5 text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                   </svg>
                   <div>
                     <p className="text-sm font-bold text-emerald-400">এই মাসের পেমেন্ট পরিশোধিত হয়েছে</p>
@@ -228,16 +322,16 @@ export default function MemberDashboard() {
               ) : selectedMonthPending ? (
                 <div className="flex items-center gap-3 bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 mb-4">
                   <svg className="w-5 h-5 text-amber-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   <div>
-                    <p className="text-sm font-bold text-amber-400">অনুমোদনের অপেক্ষায়</p>
+                    <p className="text-sm font-bold text-amber-400">অনুমোদনের অপেক্ষায় আছে</p>
                     <p className="text-xs text-slate-400 mt-0.5">{selectedMonthPending.transactionNumber || selectedMonthPending.paymentMethod}</p>
                   </div>
                 </div>
               ) : null}
 
-              <form onSubmit={handlePaymentSubmit} className="space-y-3">
+              <form onSubmit={handlePaymentSubmit} className="space-y-4">
 
                 {/* Month + Year */}
                 <div className="grid grid-cols-2 gap-3">
@@ -324,52 +418,55 @@ export default function MemberDashboard() {
                     className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-amber-400/50 transition-all" />
                 </div>
 
-{/* Amount info */}
-<div className="bg-amber-500/5 border border-amber-500/10 rounded-xl p-3 space-y-2">
-  {dueInfo && dueInfo.length > 0 && (
-    <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-2.5">
-      <p className="text-xs font-bold text-red-400 mb-1.5">
-        ⚠️ {dueInfo.length} মাস বকেয়া আছে!
-      </p>
-      <p className="text-xs text-slate-400 mb-1.5">
-        <span className="text-amber-400 font-bold">
-          {monthlyAmount} × {dueInfo.length} due + {monthlyAmount} current = {(dueInfo.length + 1) * monthlyAmount} ৳
-        </span>
-      </p>
-      <div className="space-y-1">
-        {dueInfo.map((d, i) => (
-          <div key={i} className="flex justify-between">
-            <span className="text-xs text-slate-400">
-              {MONTH_NAMES[d.month - 1]} {d.year} (বকেয়া)
-            </span>
-            <span className="text-xs font-bold text-red-400">{d.amount} ৳</span>
-          </div>
-        ))}
-        <div className="flex justify-between pt-1 border-t border-red-500/20">
-          <span className="text-xs text-slate-400">
-            {MONTH_NAMES[paymentForm.month - 1]} {paymentForm.year} (এই মাস)
-          </span>
-          <span className="text-xs font-bold text-white">{user?.monthlyAmount} ৳</span>
-        </div>
-      </div>
-      <div className="flex justify-between mt-2 pt-2 border-t border-red-500/20">
-        <span className="text-xs font-bold text-white">মোট দিতে হবে</span>
-        <span className="text-sm font-black text-amber-400">
-          {(dueInfo.length + 1) * monthlyAmount} ৳
-        </span>
-      </div>
-    </div>
-  )}
+                {/* Amount Info */}
+                <div className="bg-amber-500/5 border border-amber-500/10 rounded-xl p-3 space-y-2">
+                  {dueInfo && dueInfo.length > 0 && (
+                    <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-2.5">
+                      <p className="text-xs font-bold text-red-400 mb-1.5 flex items-center gap-1">
+                        <svg className="w-3.5 h-3.5 text-red-400 shrink-0 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                        {dueInfo.length} মাস বকেয়া আছে!
+                      </p>
+                      <p className="text-xs text-slate-400 mb-1.5">
+                        <span className="text-amber-400 font-bold">
+                          {monthlyAmount} × {dueInfo.length} due + {monthlyAmount} current = {(dueInfo.length + 1) * monthlyAmount} ৳
+                        </span>
+                      </p>
+                      <div className="space-y-1">
+                        {dueInfo.map((d, i) => (
+                          <div key={i} className="flex justify-between">
+                            <span className="text-xs text-slate-400">
+                              {MONTH_NAMES[d.month - 1]} {d.year} (বকেয়া)
+                            </span>
+                            <span className="text-xs font-bold text-red-400">{d.amount} ৳</span>
+                          </div>
+                        ))}
+                        <div className="flex justify-between pt-1 border-t border-red-500/20">
+                          <span className="text-xs text-slate-400">
+                            {MONTH_NAMES[paymentForm.month - 1]} {paymentForm.year} (এই মাস)
+                          </span>
+                          <span className="text-xs font-bold text-white">{user?.monthlyAmount} ৳</span>
+                        </div>
+                      </div>
+                      <div className="flex justify-between mt-2 pt-2 border-t border-red-500/20">
+                        <span className="text-xs font-bold text-white">মোট দিতে হবে</span>
+                        <span className="text-sm font-black text-amber-400">
+                          {(dueInfo.length + 1) * monthlyAmount} ৳
+                        </span>
+                      </div>
+                    </div>
+                  )}
 
-  {(!dueInfo || dueInfo.length === 0) && (
-    <p className="text-xs text-slate-400">
-      পরিমাণ: <span className="text-amber-400 font-bold">{monthlyAmount} current = {monthlyAmount} ৳</span>
-    </p>
-  )}
-  <p className="text-xs text-slate-500">পেমেন্ট করার পর এই ফর্ম পূরণ করুন</p>
-</div>
+                  {(!dueInfo || dueInfo.length === 0) && (
+                    <p className="text-xs text-slate-400">
+                      পরিমাণ: <span className="text-amber-400 font-bold">{monthlyAmount} current = {monthlyAmount} ৳</span>
+                    </p>
+                  )}
+                  <p className="text-xs text-slate-500">পেমেন্ট করার পর এই ফর্ম পূরণ করুন</p>
+                </div>
 
-                {/* ✅ Submit Button */}
+                {/* Submit Button */}
                 <button type="submit"
                   disabled={submitting || !!selectedMonthPaid || !!selectedMonthPending}
                   className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white font-bold rounded-xl shadow-lg shadow-amber-500/20 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed">
@@ -382,39 +479,24 @@ export default function MemberDashboard() {
               </form>
             </div>
 
-            {/* Due List */}
-            {myDues.length > 0 && (
-              <div className="bg-slate-900/50 border border-red-500/10 rounded-2xl p-5">
-                <h3 className="text-sm font-bold text-red-400 mb-3">⚠️ বকেয়া তালিকা ({myDues.length} মাস)</h3>
-                <div className="space-y-2 max-h-48 overflow-y-auto">
-                  {myDues.map((due, i) => (
-                    <div key={i} className="flex items-center justify-between px-3 py-2 bg-red-500/5 rounded-lg">
-                      <span className="text-xs text-slate-300">{MONTH_NAMES[due.month - 1]} {due.year}</span>
-                      <span className="text-xs font-bold text-red-400">{due.amount} ৳</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Right Side */}
-          <div className="lg:col-span-2 space-y-6">
-
             {/* Payment History */}
             <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
               <h2 className="text-base font-bold text-white mb-4 flex items-center gap-2">
-                <span className="w-7 h-7 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-400 text-sm">📋</span>
+                <span className="w-7 h-7 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-400 text-sm">
+                  <svg className="w-4 h-4 text-blue-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                  </svg>
+                </span>
                 পেমেন্ট ইতিহাস
               </h2>
               {myPayments.length === 0 ? (
                 <div className="text-center py-8 text-slate-500 text-sm">কোনো পেমেন্ট নেই</div>
               ) : (
-                <div className="space-y-2 max-h-64 overflow-y-auto">
+                <div className="space-y-2 max-h-96 overflow-y-auto">
                   {myPayments.slice(0, 10).map(payment => (
                     <div key={payment.id} className="flex items-center justify-between px-4 py-3 bg-slate-800/50 rounded-xl hover:bg-slate-800 transition-colors">
                       <div className="flex items-center gap-3">
-                        <div className={`w-2 h-2 rounded-full shrink-0 ${payment.status === 'approved' ? 'bg-emerald-400' : payment.status === 'pending' ? 'bg-amber-400' : 'bg-red-400'}`} />
+                        <div className={`w-2 h-2 rounded-full shrink-0 ${payment.status === 'approved' ? 'bg-emerald-400 animate-pulse' : payment.status === 'pending' ? 'bg-amber-400' : 'bg-red-400'}`} />
                         <div>
                           <p className="text-sm font-semibold text-white">{MONTH_NAMES[payment.month - 1]} {payment.year}</p>
                           <p className="text-xs text-slate-500">
@@ -433,7 +515,26 @@ export default function MemberDashboard() {
                       <div className="text-right">
                         <p className="text-sm font-bold text-white">{Number(payment.amount).toFixed(0)} ৳</p>
                         <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-lg border ${payment.status === 'approved' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : payment.status === 'pending' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'}`}>
-                          {payment.status === 'approved' ? 'অনুমোদিত' : payment.status === 'pending' ? 'অপেক্ষমাণ' : 'বাতিল'}
+                          {payment.status === 'approved' ? (
+                            <>
+                              <svg className="w-2.5 h-2.5 text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                              </svg>
+                              অনুমোদিত
+                            </>
+                          ) : payment.status === 'pending' ? (
+                            <>
+                              <span className="w-1 h-1 rounded-full bg-amber-400 animate-ping shrink-0" />
+                              অপেক্ষমাণ
+                            </>
+                          ) : (
+                            <>
+                              <svg className="w-2.5 h-2.5 text-red-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                              বাতিল
+                            </>
+                          )}
                         </span>
                       </div>
                     </div>
@@ -441,15 +542,74 @@ export default function MemberDashboard() {
                 </div>
               )}
             </div>
+          </div>
 
-            {/* Projects */}
+          {/* Right Column (1/3 width - Secondary Importance) */}
+          <div className="lg:col-span-1 space-y-6">
+
+            {/* Dues Alert Table */}
+            {myDues.length > 0 && (
+              <div className="bg-slate-900/50 border border-red-500/15 rounded-2xl p-5">
+                <h3 className="text-sm font-bold text-red-400 mb-3 flex items-center gap-1.5">
+                  <svg className="w-4 h-4 text-red-400 shrink-0 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  বকেয়া তালিকা ({myDues.length} মাস)
+                </h3>
+                <div className="space-y-2 max-h-48 overflow-y-auto">
+                  {myDues.map((due, i) => (
+                    <div key={i} className="flex items-center justify-between px-3 py-2.5 bg-red-500/5 border border-red-500/10 rounded-xl">
+                      <span className="text-xs font-semibold text-slate-300">{MONTH_NAMES[due.month - 1]} {due.year}</span>
+                      <span className="text-xs font-bold text-red-400">{due.amount} ৳</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Overall Fund Status (Moved to Sidebar) */}
+            {overallStatus && (
+              <div className="bg-gradient-to-br from-amber-500/10 to-orange-500/5 border border-amber-500/20 rounded-2xl p-5">
+                <h2 className="text-base font-bold text-white mb-4 flex items-center gap-2">
+                  <span className="w-7 h-7 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-400 text-sm">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                  </span>
+                  সামগ্রিক ফান্ড অবস্থা
+                </h2>
+                <div className="space-y-3">
+                  {[
+                    { label: 'হাতে আছে', value: `${Number(overallStatus.cashInHand).toFixed(0)} ৳`, color: 'text-emerald-400', bg: 'bg-emerald-500/5 border-emerald-500/10' },
+                    { label: 'বিনিয়োগকৃত', value: `${Number(overallStatus.totalInvested).toFixed(0)} ৳`, color: 'text-blue-400', bg: 'bg-blue-500/5 border-blue-500/10' },
+                    { label: 'মোট সম্পদ', value: `${Number(overallStatus.totalAsset).toFixed(0)} ৳`, color: 'text-amber-400', bg: 'bg-amber-500/5 border-amber-500/10' },
+                  ].map((item, i) => (
+                    <div key={i} className={`flex items-center justify-between p-3 rounded-xl border ${item.bg}`}>
+                      <span className="text-xs text-slate-400">{item.label}</span>
+                      <span className={`text-sm font-black ${item.color}`}>{item.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Projects List (Moved to Sidebar) */}
             <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-base font-bold text-white flex items-center gap-2">
-                  <span className="w-7 h-7 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-400 text-sm">📁</span>
+                  <span className="w-7 h-7 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-400 text-sm">
+                    <svg className="w-4 h-4 text-purple-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                    </svg>
+                  </span>
                   প্রজেক্টসমূহ
                 </h2>
-                <Link href="/projects" className="text-xs text-amber-400 hover:text-amber-300 font-semibold">সব দেখুন →</Link>
+                <Link href="/projects" className="text-xs text-amber-400 hover:text-amber-300 font-semibold flex items-center gap-0.5">
+                  সব দেখুন 
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
+                </Link>
               </div>
               {projects.length === 0 ? (
                 <div className="text-center py-8 text-slate-500 text-sm">কোনো প্রজেক্ট নেই</div>
@@ -463,9 +623,19 @@ export default function MemberDashboard() {
                         <p className="text-xs text-slate-500 mt-0.5">বিনিয়োগ: {Number(project.totalInvested).toFixed(0)} ৳</p>
                       </div>
                       <div className="text-right">
-                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-lg ${project.status === 'active' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-slate-700 text-slate-400'}`}>
-                          {project.status === 'active' ? '● সক্রিয়' : '✓ সম্পন্ন'}
-                        </span>
+                        {project.status === 'active' ? (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-lg border bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
+                            <span className="w-1 h-1 rounded-full bg-emerald-400 animate-pulse" />
+                            সক্রিয়
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-lg border bg-slate-800 text-slate-400 border-white/5">
+                            <svg className="w-2.5 h-2.5 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                            সম্পন্ন
+                          </span>
+                        )}
                         {project.summary && (
                           <p className="text-xs text-amber-400 mt-1">মুনাফা: {Number(project.summary.totalProfit).toFixed(0)} ৳</p>
                         )}
@@ -475,25 +645,6 @@ export default function MemberDashboard() {
                 </div>
               )}
             </div>
-
-            {/* Overall Fund Status */}
-            {overallStatus && (
-              <div className="bg-gradient-to-br from-amber-500/10 to-orange-500/5 border border-amber-500/20 rounded-2xl p-5">
-                <h2 className="text-base font-bold text-white mb-4">🏦 সামগ্রিক ফান্ড অবস্থা</h2>
-                <div className="grid grid-cols-3 gap-3">
-                  {[
-                    { label: 'হাতে আছে', value: `${Number(overallStatus.cashInHand).toFixed(0)} ৳`, color: 'text-emerald-400' },
-                    { label: 'বিনিয়োগকৃত', value: `${Number(overallStatus.totalInvested).toFixed(0)} ৳`, color: 'text-blue-400' },
-                    { label: 'মোট সম্পদ', value: `${Number(overallStatus.totalAsset).toFixed(0)} ৳`, color: 'text-amber-400' },
-                  ].map((item, i) => (
-                    <div key={i} className="text-center">
-                      <p className={`text-lg font-black ${item.color}`}>{item.value}</p>
-                      <p className="text-xs text-slate-400 mt-1">{item.label}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
         </div>
       </div>

@@ -8,6 +8,52 @@ import { MONTH_NAMES, ROLE_LABELS } from '@/lib/constants';
 import UserAvatar from '@/components/UserAvatar';
 import PaymentForm from '@/components/PaymentForm';
 
+const getTabIcon = (key, isActive) => {
+  const activeColor = isActive ? "text-white" : "text-slate-400 group-hover:text-white";
+  const className = `w-4.5 h-4.5 ${activeColor} transition-colors shrink-0`;
+  switch (key) {
+    case 'overview':
+      return (
+        <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+      );
+    case 'members':
+      return (
+        <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+        </svg>
+      );
+    case 'payments':
+      return (
+        <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+        </svg>
+      );
+    case 'my-payment':
+      return (
+        <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      );
+    case 'projects':
+      return (
+        <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+        </svg>
+      );
+    case 'settings':
+      return (
+        <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+      );
+    default:
+      return null;
+  }
+};
+
 export default function AdminDashboard() {
   const router = useRouter();
   const [user, setUser] = useState(null);
@@ -227,12 +273,12 @@ export default function AdminDashboard() {
   const staffs = allUsers.filter(u => u.role !== 'member');
 
   const TABS = [
-    { key: 'overview', label: '📊 সারসংক্ষেপ' },
-    { key: 'members', label: '👥 সদস্য', count: allUsers.length },
-    { key: 'payments', label: '💳 পেমেন্ট' },
-    { key: 'my-payment', label: '💰 আমার পেমেন্ট' },
-    { key: 'projects', label: '📁 প্রজেক্ট' },
-    { key: 'settings', label: '⚙️ সেটিংস' },
+    { key: 'overview', label: 'সারসংক্ষেপ' },
+    { key: 'members', label: 'সদস্য', count: allUsers.length },
+    { key: 'payments', label: 'পেমেন্ট' },
+    { key: 'my-payment', label: 'আমার পেমেন্ট' },
+    { key: 'projects', label: 'প্রজেক্ট' },
+    { key: 'settings', label: 'সেটিংস' },
   ];
 
   return (
@@ -346,14 +392,18 @@ export default function AdminDashboard() {
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 bg-slate-900/50 border border-white/5 p-1 rounded-2xl mb-6 overflow-x-auto">
-          {TABS.map(t => (
-            <button key={t.key} onClick={() => setTab(t.key)}
-              className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all ${tab === t.key ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/20' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}>
-              {t.label}
-              {t.count > 0 && <span className="w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-black">{t.count}</span>}
-            </button>
-          ))}
+        <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 bg-slate-900/50 border border-white/5 p-1.5 rounded-2xl mb-6">
+          {TABS.map(t => {
+            const isActive = tab === t.key;
+            return (
+              <button key={t.key} onClick={() => setTab(t.key)}
+                className={`flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold transition-all group ${isActive ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/20' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}>
+                {getTabIcon(t.key, isActive)}
+                <span>{t.label}</span>
+                {t.count > 0 && <span className="w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-black shrink-0">{t.count}</span>}
+              </button>
+            );
+          })}
         </div>
 
         {/* Overview */}
@@ -370,9 +420,21 @@ export default function AdminDashboard() {
                         <p className="text-xs text-slate-400">হাতে: {Number(sheet.cashInHand).toFixed(0)} ৳</p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className={`inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-lg ${sheet.status === 'published' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'}`}>
-                          {sheet.status === 'published' ? '✓ প্রকাশিত' : '✎ খসড়া'}
-                        </span>
+                        {sheet.status === 'published' ? (
+                          <span className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                            <svg className="w-3.5 h-3.5 text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                            প্রকাশিত
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                            <svg className="w-3.5 h-3.5 text-amber-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                            </svg>
+                            খসড়া
+                          </span>
+                        )}
                         <Link href={`/sheets/${sheet.id}`} className="px-2.5 py-1 bg-slate-700 hover:bg-slate-600 text-white text-xs rounded-lg transition-colors">দেখুন</Link>
                       </div>
                     </div>
@@ -389,9 +451,19 @@ export default function AdminDashboard() {
                       className="block px-4 py-3 bg-slate-800/50 hover:bg-slate-800/80 border border-white/0 hover:border-white/5 rounded-xl transition-all">
                       <div className="flex items-center justify-between mb-1">
                         <p className="text-sm font-bold text-white">{project.name}</p>
-                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-lg ${project.status === 'active' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-slate-700 text-slate-400'}`}>
-                          {project.status === 'active' ? '● সক্রিয়' : '✓ সম্পন্ন'}
-                        </span>
+                        {project.status === 'active' ? (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-lg border bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                            সক্রিয়
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-lg border bg-slate-800 text-slate-400 border-white/5">
+                            <svg className="w-3 h-3 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                            সম্পন্ন
+                          </span>
+                        )}
                       </div>
                       <div className="flex gap-3">
                         <span className="text-xs text-red-400">বিনিয়োগ: {Number(project.totalInvested).toFixed(0)} ৳</span>
@@ -580,24 +652,49 @@ export default function AdminDashboard() {
                       {project.description && <p className="text-xs text-slate-400 mt-0.5">{project.description}</p>}
                     </Link>
                     <div className="flex items-center gap-2 self-start sm:self-center shrink-0">
-                      <span className={`text-xs font-bold px-2.5 py-1 rounded-lg ${project.status === 'active' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-slate-700 text-slate-400'}`}>
-                        {project.status === 'active' ? '● সক্রিয়' : '✓ সম্পন্ন'}
-                      </span>
+                      {project.status === 'active' ? (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-lg border bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                          সক্রিয়
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-lg border bg-slate-800 text-slate-400 border-white/5">
+                          <svg className="w-3 h-3 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                          সম্পন্ন
+                        </span>
+                      )}
                       <button
                         onClick={() => handleToggleProjectStatus(project)}
-                        className={`text-xs font-bold px-2.5 py-1 rounded-lg border transition-all cursor-pointer ${
+                        className={`inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-lg border transition-all cursor-pointer ${
                           project.status === 'active'
                             ? 'bg-slate-800 text-slate-300 border-white/5 hover:bg-amber-500/10 hover:text-amber-400 hover:border-amber-500/20'
                             : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500 hover:text-white'
                         }`}
                       >
-                        {project.status === 'active' ? '✓ সম্পন্ন করুন' : '● সক্রিয় করুন'}
+                        {project.status === 'active' ? (
+                          <>
+                            <svg className="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                            সম্পন্ন করুন
+                          </>
+                        ) : (
+                          <>
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                            সক্রিয় করুন
+                          </>
+                        )}
                       </button>
                       <button
                         onClick={() => handleDeleteProject(project.id)}
-                        className="text-xs font-bold px-2.5 py-1 rounded-lg bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500 hover:text-white transition-all cursor-pointer"
+                        className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-lg bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500 hover:text-white transition-all cursor-pointer"
                       >
-                        🗑️ ডিলিট
+                        <svg className="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                        ডিলিট
                       </button>
                     </div>
                   </div>

@@ -8,9 +8,9 @@ import { RolesGuard } from '../auth/roles.guard';
 export class UsersController {
   constructor(private usersService: UsersService) {}
 
-  // Admin — সব users দেখো
+  // Admin & Members — সব users দেখো
   @Get()
-  @Roles('admin', 'accountant', 'general_secretary')
+  @Roles('admin', 'accountant', 'general_secretary', 'member')
   findAll() {
     return this.usersService.findAll();
   }

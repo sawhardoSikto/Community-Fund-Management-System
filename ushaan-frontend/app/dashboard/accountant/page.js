@@ -7,6 +7,57 @@ import api from "@/lib/api";
 import { MONTH_NAMES } from "@/lib/constants";
 import PaymentForm from "@/components/PaymentForm";
 
+const getTabIcon = (key, isActive) => {
+  const activeColor = isActive ? "text-white" : "text-slate-400 group-hover:text-white";
+  const className = `w-4.5 h-4.5 ${activeColor} transition-colors shrink-0`;
+  switch (key) {
+    case 'payments':
+      return (
+        <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+        </svg>
+      );
+    case 'my-payment':
+      return (
+        <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      );
+    case 'manual':
+      return (
+        <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+        </svg>
+      );
+    case 'projects':
+      return (
+        <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+        </svg>
+      );
+    case 'salary':
+      return (
+        <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+        </svg>
+      );
+    case 'sheets':
+      return (
+        <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+      );
+    case 'expenses':
+      return (
+        <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      );
+    default:
+      return null;
+  }
+};
+
 const PAYMENT_METHOD_LABELS = {
   bkash: "🟣 বিকাশ",
   nagad: "🟠 নগদ",
@@ -399,13 +450,13 @@ const handleCreateProject = async (e) => {
     );
 
   const TABS = [
-    { key: "payments", label: "💳 পেমেন্ট", count: pendingPayments.length },
-    { key: "my-payment", label: "💰 আমার পেমেন্ট" }, // ✅ নতুন
-    { key: "manual", label: "✍️ ম্যানুয়াল" },
-    { key: "projects", label: "📁 প্রজেক্ট" },
-    { key: "salary", label: "👔 বেতন" },
-    { key: "sheets", label: "📋 শিট" },
-    { key: 'expenses', label: '💸 খরচ' },
+    { key: "payments", label: "পেমেন্ট", count: pendingPayments.length },
+    { key: "my-payment", label: "আমার পেমেন্ট" },
+    { key: "manual", label: "ম্যানুয়াল" },
+    { key: "projects", label: "প্রজেক্ট" },
+    { key: "salary", label: "বেতন" },
+    { key: "sheets", label: "শিট" },
+    { key: 'expenses', label: 'খরচ' },
   ];
 
   return (
@@ -502,21 +553,25 @@ const handleCreateProject = async (e) => {
         )}
 
         {/* Tabs */}
-        <div className="flex gap-1 bg-slate-900/50 border border-white/5 p-1 rounded-2xl mb-6 overflow-x-auto">
-          {TABS.map((t) => (
-            <button
-              key={t.key}
-              onClick={() => setTab(t.key)}
-              className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all ${tab === t.key ? "bg-amber-500 text-white shadow-lg shadow-amber-500/20" : "text-slate-400 hover:text-white hover:bg-white/5"}`}
-            >
-              {t.label}
-              {t.count > 0 && (
-                <span className="w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-black">
-                  {t.count}
-                </span>
-              )}
-            </button>
-          ))}
+        <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 bg-slate-900/50 border border-white/5 p-1.5 rounded-2xl mb-6">
+          {TABS.map((t) => {
+            const isActive = tab === t.key;
+            return (
+              <button
+                key={t.key}
+                onClick={() => setTab(t.key)}
+                className={`flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold transition-all group ${isActive ? "bg-amber-500 text-white shadow-lg shadow-amber-500/20" : "text-slate-400 hover:text-white hover:bg-white/5"}`}
+              >
+                {getTabIcon(t.key, isActive)}
+                <span>{t.label}</span>
+                {t.count > 0 && (
+                  <span className="w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-black shrink-0">
+                    {t.count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
                {/* My Payment */}
                 {tab === 'my-payment' && (
@@ -595,7 +650,12 @@ const handleCreateProject = async (e) => {
                         {processing === payment.id ? (
                           <span className="loading loading-spinner loading-xs" />
                         ) : (
-                          "✓ অনুমোদন"
+                          <span className="inline-flex items-center gap-1">
+                            <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                            অনুমোদন
+                          </span>
                         )}
                       </button>
                       <button
@@ -605,7 +665,16 @@ const handleCreateProject = async (e) => {
                         disabled={processing === payment.id}
                         className="flex-1 sm:flex-none px-4 py-2 bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white border border-red-500/20 hover:border-red-500 rounded-xl text-xs font-bold transition-all disabled:opacity-50"
                       >
-                        ✗ বাতিল
+                        {processing === payment.id ? (
+                          <span className="loading loading-spinner loading-xs" />
+                        ) : (
+                          <span className="inline-flex items-center gap-1">
+                            <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                            বাতিল
+                          </span>
+                        )}
                       </button>
                     </div>
                   </div>
@@ -843,8 +912,11 @@ const handleCreateProject = async (e) => {
                     {manualPaymentType === 'dues' ? (
                       manualDueInfo.length > 0 ? (
                         <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-2.5 space-y-1">
-                          <p className="text-xs font-bold text-red-400">
-                            ⚠️ {manualDueInfo.length} মাস বকেয়া আছে
+                          <p className="text-xs font-bold text-red-400 flex items-center gap-1">
+                            <svg className="w-3.5 h-3.5 text-red-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                            {manualDueInfo.length} মাস বকেয়া আছে
                           </p>
                           <p className="text-xs text-slate-400">
                             <span className="text-amber-400 font-bold">
@@ -860,8 +932,11 @@ const handleCreateProject = async (e) => {
                     ) : (
                       nextUnpaid ? (
                         <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-2.5 space-y-1">
-                          <p className="text-xs font-bold text-emerald-400">
-                            ✓ অগ্রিম পেমেন্ট বিবরণ ({futureMonthsCount} মাস)
+                          <p className="text-xs font-bold text-emerald-400 flex items-center gap-1">
+                            <svg className="w-3.5 h-3.5 text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                            অগ্রিম পেমেন্ট বিবরণ ({futureMonthsCount} মাস)
                           </p>
                           <p className="text-xs text-slate-300">
                             মাসের তালিকা: <span className="text-amber-400 font-semibold">{getFutureCoveredMonths().map(m => `${MONTH_NAMES[m.month - 1]} ${m.year}`).join(', ')}</span>

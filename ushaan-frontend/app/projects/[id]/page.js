@@ -84,9 +84,19 @@ export default function ProjectDetailPage() {
             </div>
           </div>
           <div className="flex items-center gap-3 self-start sm:self-center">
-            <span className={`text-xs font-bold px-3 py-1.5 rounded-xl border ${project.status === 'active' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-slate-800 text-slate-400 border-white/5'}`}>
-              {project.status === 'active' ? '● সক্রিয়' : '✓ সম্পন্ন'}
-            </span>
+            {project.status === 'active' ? (
+              <span className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl border bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                সক্রিয়
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl border bg-slate-800 text-slate-400 border-white/5">
+                <svg className="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+                সম্পন্ন
+              </span>
+            )}
           </div>
         </div>
 
