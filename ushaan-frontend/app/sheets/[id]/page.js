@@ -154,15 +154,10 @@ const totalExpense =
               {member.role}
             </span>
           </div>
-          {member.displayAmount && (
-            <p className="text-[10px] text-slate-500 mt-1 font-mono">
-              {member.displayAmount}
-            </p>
-          )}
         </td>
 
-        <td className="border border-black p-2 text-center">
-          {member.monthlyAmount} ৳
+        <td className="border border-black p-2 text-center text-xs font-mono">
+          {member.displayAmount || `${member.monthlyAmount} ৳`}
         </td>
 
         <td className="border border-black p-2 text-center">
