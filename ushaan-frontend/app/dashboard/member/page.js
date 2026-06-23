@@ -551,25 +551,7 @@ export default function MemberDashboard() {
             {/* Notice Board */}
             <NoticeBoard user={user} />
 
-            {/* Dues Alert Table */}
-            {myDues.length > 0 && (
-              <div className="bg-slate-900/50 border border-red-500/15 rounded-2xl p-5">
-                <h3 className="text-sm font-bold text-red-400 mb-3 flex items-center gap-1.5">
-                  <svg className="w-4 h-4 text-red-400 shrink-0 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                  </svg>
-                  বকেয়া তালিকা ({myDues.length} মাস)
-                </h3>
-                <div className="space-y-2 max-h-48 overflow-y-auto">
-                  {myDues.map((due, i) => (
-                    <div key={i} className="flex items-center justify-between px-3 py-2.5 bg-red-500/5 border border-red-500/10 rounded-xl">
-                      <span className="text-xs font-semibold text-slate-300">{MONTH_NAMES[due.month - 1]} {due.year}</span>
-                      <span className="text-xs font-bold text-red-400">{due.amount} ৳</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+
 
             {/* Overall Fund Status (Moved to Sidebar) */}
             {overallStatus && (
