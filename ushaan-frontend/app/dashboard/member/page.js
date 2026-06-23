@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import api from '@/lib/api';
 import { MONTH_NAMES } from '@/lib/constants';
+import NoticeBoard from '@/components/NoticeBoard';
 
 export default function MemberDashboard() {
   const router = useRouter();
@@ -546,6 +547,9 @@ export default function MemberDashboard() {
 
           {/* Right Column (1/3 width - Secondary Importance) */}
           <div className="lg:col-span-1 space-y-6">
+
+            {/* Notice Board */}
+            <NoticeBoard user={user} />
 
             {/* Dues Alert Table */}
             {myDues.length > 0 && (

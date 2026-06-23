@@ -6,6 +6,7 @@ import Link from "next/link";
 import api from "@/lib/api";
 import { MONTH_NAMES } from "@/lib/constants";
 import PaymentForm from "@/components/PaymentForm";
+import NoticeBoard from "@/components/NoticeBoard";
 
 const getTabIcon = (key, isActive) => {
   const activeColor = isActive ? "text-white" : "text-slate-400 group-hover:text-white";
@@ -614,8 +615,12 @@ const handleCreateProject = async (e) => {
           </div>
         )}
 
-        {/* Tabs */}
-        <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 bg-slate-900/50 border border-white/5 p-1.5 rounded-2xl mb-6">
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+          {/* Left Column - Tabs and Tab Content */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Tabs */}
+            <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 bg-slate-900/50 border border-white/5 p-1.5 rounded-2xl">
           {TABS.map((t) => {
             const isActive = tab === t.key;
             return (
@@ -1612,6 +1617,13 @@ const handleCreateProject = async (e) => {
             </div>
           </div>
         )}
+          </div>
+
+          {/* Right Column - Notice Board */}
+          <div className="lg:col-span-1">
+            <NoticeBoard user={user} />
+          </div>
+        </div>
       </div>
     </div>
   );

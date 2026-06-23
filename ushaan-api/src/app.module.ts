@@ -14,6 +14,7 @@ import { JwtGuard } from './auth/jwt.guard';
 import { SettingsModule } from './settings/settings.module';
 import { ExpensesModule } from './expenses/expenses.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { NoticesModule } from './notices/notices.module';
 
 
 @Module({
@@ -47,6 +48,7 @@ import { NotificationsModule } from './notifications/notifications.module';
     SettingsModule,
     ExpensesModule,
     NotificationsModule,
+    NoticesModule,
   ],
   providers: [
     {
