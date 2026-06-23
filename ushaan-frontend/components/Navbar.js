@@ -126,6 +126,28 @@ useEffect(() => {
           {/* Desktop Nav */}
           {user && (
             <div className="hidden md:flex items-center gap-1">
+              {user.role === 'member' && (
+                <>
+                  <Link
+                    href="/dashboard/member"
+                    className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${pathname === "/dashboard/member" ? "bg-amber-500/10 text-amber-400" : "text-slate-400 hover:text-white hover:bg-white/5"}`}
+                  >
+                    ড্যাশবোর্ড
+                  </Link>
+                  <Link
+                    href="/dashboard/member/pay-bill"
+                    className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${pathname === "/dashboard/member/pay-bill" ? "bg-amber-500/10 text-amber-400" : "text-slate-400 hover:text-white hover:bg-white/5"}`}
+                  >
+                    পেমেন্ট করুন
+                  </Link>
+                  <Link
+                    href="/dashboard/member/payment-history"
+                    className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${pathname === "/dashboard/member/payment-history" ? "bg-amber-500/10 text-amber-400" : "text-slate-400 hover:text-white hover:bg-white/5"}`}
+                  >
+                    পেমেন্ট ইতিহাস
+                  </Link>
+                </>
+              )}
               <Link
                 href="/projects"
                 className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${pathname === "/projects" ? "bg-amber-500/10 text-amber-400" : "text-slate-400 hover:text-white hover:bg-white/5"}`}
@@ -401,6 +423,31 @@ useEffect(() => {
         {/* Mobile Menu */}
         {menuOpen && user && (
           <div className="md:hidden border-t border-white/5 py-3 space-y-1">
+            {user.role === 'member' && (
+              <>
+                <Link
+                  href="/dashboard/member"
+                  onClick={() => setMenuOpen(false)}
+                  className={`block px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${pathname === "/dashboard/member" ? "bg-amber-500/10 text-amber-400" : "text-slate-400 hover:text-white hover:bg-white/5"}`}
+                >
+                  ড্যাশবোর্ড
+                </Link>
+                <Link
+                  href="/dashboard/member/pay-bill"
+                  onClick={() => setMenuOpen(false)}
+                  className={`block px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${pathname === "/dashboard/member/pay-bill" ? "bg-amber-500/10 text-amber-400" : "text-slate-400 hover:text-white hover:bg-white/5"}`}
+                >
+                  পেমেন্ট করুন
+                </Link>
+                <Link
+                  href="/dashboard/member/payment-history"
+                  onClick={() => setMenuOpen(false)}
+                  className={`block px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${pathname === "/dashboard/member/payment-history" ? "bg-amber-500/10 text-amber-400" : "text-slate-400 hover:text-white hover:bg-white/5"}`}
+                >
+                  পেমেন্ট ইতিহাস
+                </Link>
+              </>
+            )}
             {[
               { href: "/projects", label: "প্রজেক্ট" },
               { href: "/sheets", label: "শিট" },
