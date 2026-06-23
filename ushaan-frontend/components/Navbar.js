@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -15,6 +15,21 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
 const [showNotifications, setShowNotifications] = useState(false);
+const notificationRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+        setShowNotifications(false);
+      }
+    }
+    if (showNotifications) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showNotifications]);
 
   const loadUser = () => {
     try {
@@ -139,7 +154,7 @@ useEffect(() => {
               <span className="hidden sm:block px-2.5 py-1 text-xs font-semibold bg-amber-500/10 text-amber-400 rounded-lg border border-amber-500/20">
                 {ROLE_LABELS[user.role]}
               </span>
-              <div className="relative">
+              <div className="relative" ref={notificationRef}>
                 <button
                   onClick={async () => {
                     if (showNotifications) {
@@ -181,64 +196,58 @@ useEffect(() => {
                 </button>
 
                 {showNotifications && (
-                  <>
-                    <div
-                      className="fixed inset-0 z-40 bg-transparent"
-                      onClick={() => setShowNotifications(false)}
-                    />
-                    <div className="fixed inset-x-4 top-16 md:absolute md:right-0 md:left-auto md:inset-x-auto md:top-auto mt-2 w-auto md:w-80 bg-slate-800 border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-50">
-                      <div className="px-4 py-3 border-b border-white/10 flex items-center justify-between">
-                        <h3 className="font-bold text-white">Notifications</h3>
-                        {notifications.length > 0 && (
-                          <button
-                            onClick={clearAllNotifications}
-                            className="text-xs text-amber-400 hover:text-amber-300 font-semibold transition-colors"
-                          >
-                            সব মুছুন
-                          </button>
-                        )}
-                      </div>
-
-                      <div className="max-h-96 overflow-y-auto">
-                        {notifications.length === 0 ? (
-                          <div className="p-4 text-sm text-slate-400">
-                            কোনো নোটিফিকেশন নেই
-                          </div>
-                        ) : (
-                          notifications.map((n) => (
-                            <div
-                              key={n.id}
-                              className={`p-4 border-b border-white/5 cursor-pointer hover:bg-white/5 ${
-                                !n.isRead ? "bg-amber-500/5" : ""
-                              }`}
-                              onClick={async () => {
-                                if (!n.isRead) {
-                                  try {
-                                    await api.patch(`/notifications/${n.id}/read`);
-                                    setNotifications((prev) =>
-                                      prev.map((item) =>
-                                        item.id === n.id
-                                          ? { ...item, isRead: true }
-                                          : item
-                                      )
-                                    );
-                                  } catch (err) {
-                                    console.error(err);
-                                  }
-                                }
-                              }}
-                            >
-                              <p className="text-sm text-white">{n.message}</p>
-
-                              <p className="text-xs text-slate-400 mt-1">
-                                {new Date(n.createdAt).toLocaleString()}
-                              </p>
-                            </div>
-                          ))
-                        )}
-                      </div>
+                  <div className="fixed inset-x-4 top-16 md:absolute md:right-0 md:left-auto md:inset-x-auto md:top-auto mt-2 w-auto md:w-80 bg-slate-800 border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-50">
+                    <div className="px-4 py-3 border-b border-white/10 flex items-center justify-between">
+                      <h3 className="font-bold text-white">Notifications</h3>
+                      {notifications.length > 0 && (
+                        <button
+                          onClick={clearAllNotifications}
+                          className="text-xs text-amber-400 hover:text-amber-300 font-semibold transition-colors"
+                        >
+                          সব মুছুন
+                        </button>
+                      )}
                     </div>
-                  </>
+
+                    <div className="max-h-96 overflow-y-auto">
+                      {notifications.length === 0 ? (
+                        <div className="p-4 text-sm text-slate-400">
+                          কোনো নোটিফিকেশন নেই
+                        </div>
+                      ) : (
+                        notifications.map((n) => (
+                          <div
+                            key={n.id}
+                            className={`p-4 border-b border-white/5 cursor-pointer hover:bg-white/5 ${
+                              !n.isRead ? "bg-amber-500/5" : ""
+                            }`}
+                            onClick={async () => {
+                              if (!n.isRead) {
+                                try {
+                                  await api.patch(`/notifications/${n.id}/read`);
+                                  setNotifications((prev) =>
+                                    prev.map((item) =>
+                                      item.id === n.id
+                                        ? { ...item, isRead: true }
+                                        : item
+                                    )
+                                  );
+                                } catch (err) {
+                                  console.error(err);
+                                }
+                              }
+                            }}
+                          >
+                            <p className="text-sm text-white">{n.message}</p>
+
+                            <p className="text-xs text-slate-400 mt-1">
+                              {new Date(n.createdAt).toLocaleString()}
+                            </p>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
                 )}
               </div>
 

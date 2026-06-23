@@ -8,8 +8,7 @@ export default function NoticeBoard({ user }) {
   const [notices, setNotices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-
-  // Modals visibility
+  const [showAll, setShowAll] = useState(false);
   const [selectedNotice, setSelectedNotice] = useState(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -135,7 +134,7 @@ export default function NoticeBoard({ user }) {
         <div className="text-center py-8 text-slate-500 text-sm">কোনো নোটিশ নেই</div>
       ) : (
         <div className="divide-y divide-white/5 max-h-[350px] overflow-y-auto pr-1">
-          {notices.map((notice, index) => {
+          {(showAll ? notices : notices.slice(0, 5)).map((notice, index) => {
             const dateObj = new Date(notice.createdAt);
             const day = String(dateObj.getDate()).padStart(2, '0');
             const month = dateObj.toLocaleString('en-US', { month: 'short' }).toUpperCase();
@@ -189,6 +188,17 @@ export default function NoticeBoard({ user }) {
               </div>
             );
           })}
+          {notices.length > 5 && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowAll(!showAll);
+              }}
+              className="w-full text-center text-xs text-amber-400 hover:text-amber-300 font-bold pt-3 mt-2 border-t border-white/5 cursor-pointer block"
+            >
+              {showAll ? 'সংক্ষিপ্ত করুন' : `সব নোটিশ দেখুন (${notices.length})`}
+            </button>
+          )}
         </div>
       )}
 
