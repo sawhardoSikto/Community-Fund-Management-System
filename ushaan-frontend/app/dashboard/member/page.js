@@ -165,6 +165,16 @@ export default function MemberDashboard() {
     p => p.status === 'pending' && paymentCoversMonth(p, paymentForm.month, paymentForm.year)
   );
 
+  // ✅ চলতি মাস (Current calendar month) এর payment check
+  const currentMonthNum = new Date().getMonth() + 1;
+  const currentYearNum = new Date().getFullYear();
+  const isCurrentMonthDue = myDues.some(d => d.month === currentMonthNum && d.year === currentYearNum);
+  const isCurrentMonthPending = myPayments.some(
+    p => p.status === 'pending' && paymentCoversMonth(p, currentMonthNum, currentYearNum)
+  );
+  const isCurrentMonthPaid = !isCurrentMonthDue && !isCurrentMonthPending;
+
+
   return (
     <div className="min-h-screen bg-slate-950">
       {toast.show && (
@@ -269,14 +279,14 @@ export default function MemberDashboard() {
             { 
               label: 'চলতি মাস', 
               value: `${MONTH_NAMES[new Date().getMonth()]}`, 
-              sub: selectedMonthPaid ? 'পরিশোধিত' : selectedMonthPending ? 'অপেক্ষমাণ' : 'বকেয়া রয়েছে', 
+              sub: isCurrentMonthPaid ? 'পরিশোধিত' : isCurrentMonthPending ? 'অপেক্ষমাণ' : 'বকেয়া রয়েছে', 
               icon: (
-                <svg className={`w-5 h-5 ${selectedMonthPaid ? 'text-emerald-400' : selectedMonthPending ? 'text-amber-400' : 'text-slate-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <svg className={`w-5 h-5 ${isCurrentMonthPaid ? 'text-emerald-400' : isCurrentMonthPending ? 'text-amber-400' : 'text-slate-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                 </svg>
               ), 
-              color: selectedMonthPaid ? 'from-emerald-500/20 to-emerald-600/10 border-emerald-500/20' : selectedMonthPending ? 'from-amber-500/20 to-amber-600/10 border-amber-500/20' : 'from-slate-800/50 to-slate-700/10 border-white/5', 
-              textColor: selectedMonthPaid ? 'text-emerald-400' : selectedMonthPending ? 'text-amber-400' : 'text-slate-400' 
+              color: isCurrentMonthPaid ? 'from-emerald-500/20 to-emerald-600/10 border-emerald-500/20' : isCurrentMonthPending ? 'from-amber-500/20 to-amber-600/10 border-amber-500/20' : 'from-slate-800/50 to-slate-700/10 border-white/5', 
+              textColor: isCurrentMonthPaid ? 'text-emerald-400' : isCurrentMonthPending ? 'text-amber-400' : 'text-slate-400' 
             },
           ].map((stat, i) => (
             <div key={i} className={`bg-gradient-to-br ${stat.color} border rounded-2xl p-4 flex items-center justify-between`}>
@@ -296,7 +306,8 @@ export default function MemberDashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
           {/* Left Column (2/3 width - High Importance) */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
 
             {/* Payment Form Card */}
             <div id="payment-section" className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
@@ -544,14 +555,9 @@ export default function MemberDashboard() {
               )}
             </div>
           </div>
-
+        </div>
           {/* Right Column (1/3 width - Secondary Importance) */}
           <div className="lg:col-span-1 space-y-6">
-
-            {/* Notice Board */}
-            <NoticeBoard user={user} />
-
-
 
             {/* Overall Fund Status (Moved to Sidebar) */}
             {overallStatus && (
@@ -579,6 +585,8 @@ export default function MemberDashboard() {
               </div>
             )}
 
+            {/* Notice Board */}
+            <NoticeBoard user={user} />
             {/* Projects List (Moved to Sidebar) */}
             <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
               <div className="flex items-center justify-between mb-4">
