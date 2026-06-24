@@ -360,7 +360,7 @@ async getOverallStatus() {
     totalProjectExpense += totalExpense;
 
     const stillOutside = openingInvested + totalExpense - capitalReturn;
-    if (stillOutside > 0) {
+    if (p.status === 'active' && stillOutside > 0) {
       totalInvested += stillOutside;
     }
   }

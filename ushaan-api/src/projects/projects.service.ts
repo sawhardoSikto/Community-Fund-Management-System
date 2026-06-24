@@ -203,8 +203,9 @@ for (const user of users) {
 
   // Overall fund status এর জন্য
   async getOverallInvestedAmount() {
-  // ✅ সব projects (active + completed)
+  // ✅ শুধু active projects
   const projects = await this.projectRepo.find({
+    where: { status: ProjectStatus.ACTIVE },
     relations: { transactions: true },
   });
 

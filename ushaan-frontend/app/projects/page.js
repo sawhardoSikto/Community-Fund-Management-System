@@ -93,7 +93,7 @@ export default function ProjectsPage() {
 
 function ProjectCard({ project }) {
   const s = project.summary;
-  const netProfit = s ? s.totalProfit + s.capitalReturn - s.totalExpense : 0;
+  const netProfit = s ? s.totalProfit + s.capitalReturn - (Number(s.openingInvested) + Number(s.totalExpense)) : 0;
   const isProfit = netProfit >= 0;
 
   return (
