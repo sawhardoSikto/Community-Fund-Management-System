@@ -22,8 +22,8 @@ export default function SheetsPage() {
     </div>
   );
 
-  const published = sheets.filter(s => s.status === 'published');
-  const drafts = sheets.filter(s => s.status === 'draft');
+  const totalSheets = sheets.length;
+  const latestAsset = sheets[0] ? Number(sheets[0].totalAsset).toFixed(0) : '0';
 
   return (
     <div className="min-h-screen bg-slate-950">
@@ -35,8 +35,8 @@ export default function SheetsPage() {
 
         <div className="grid grid-cols-2 gap-3 mb-8">
           {[
-            { label: 'প্রকাশিত', value: published.length, color: 'text-emerald-400' },
-            { label: 'খসড়া', value: drafts.length, color: 'text-amber-400' },
+            { label: 'মোট শিট', value: totalSheets, color: 'text-amber-400' },
+            { label: 'সর্বশেষ ফান্ড সম্পদ', value: `${latestAsset} ৳`, color: 'text-emerald-400' },
           ].map((s, i) => (
             <div key={i} className="bg-slate-900/50 border border-white/5 rounded-2xl p-4 text-center">
               <p className={`text-2xl font-black ${s.color}`}>{s.value}</p>
@@ -66,25 +66,10 @@ export default function SheetsPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="text-right hidden sm:block">
+                  <div className="text-right">
                     <p className="text-sm font-black text-white">{Number(sheet.totalAsset).toFixed(0)} ৳</p>
                     <p className="text-xs text-slate-400">মোট সম্পদ</p>
                   </div>
-                  {sheet.status === 'published' ? (
-                    <span className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-lg shrink-0 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                      <svg className="w-3.5 h-3.5 text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                      </svg>
-                      প্রকাশিত
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-lg shrink-0 bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                      <svg className="w-3.5 h-3.5 text-amber-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                      </svg>
-                      খসড়া
-                    </span>
-                  )}
                 </div>
               </Link>
             ))}

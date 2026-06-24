@@ -80,7 +80,7 @@ export class SheetsService implements OnModuleInit {
         cashInHand: previousBalance,
         totalInvested: 0,
         totalAsset: previousBalance,
-        status: SheetStatus.DRAFT,
+        status: SheetStatus.PUBLISHED,
       });
       await this.sheetRepo.save(sheet);
     }
@@ -246,13 +246,13 @@ const totalGeneralExpense = await this.expensesService.getTotalExpenseByMonth(
     cashInHand,
     totalInvested,
     totalAsset,
-    status: SheetStatus.DRAFT,
+    status: SheetStatus.PUBLISHED,
     publishedBy: accountantId,
     totalCapitalReturn, // ✅
   });
   await this.sheetRepo.save(sheet);
 
-  return { message: 'Sheet generated (draft)', data: sheet };
+  return { message: 'Sheet generated (published)', data: sheet };
 }
 
   // Sheet publish করো
