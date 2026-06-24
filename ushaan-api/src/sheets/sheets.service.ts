@@ -336,6 +336,7 @@ async getOverallStatus() {
   let totalProjectExpense = 0;
   let totalInvested = 0;
   let activeInvested = 0;
+  let totalCapitalLoss = 0;
 
   for (const p of projects) {
     const openingInvested = Number(p.openingInvested || 0);
@@ -366,6 +367,8 @@ async getOverallStatus() {
       totalInvested += stillOutside;
       if (p.status === 'active') {
         activeInvested += stillOutside;
+      } else if (p.status === 'completed') {
+        totalCapitalLoss += stillOutside;
       }
     }
   }
@@ -397,7 +400,7 @@ async getOverallStatus() {
     - totalProjectExpense
     - totalGeneralExpense;
 
-  const totalProfit = openingTotalProfit + totalProjectProfit;
+  const totalProfit = openingTotalProfit + totalProjectProfit - totalCapitalLoss;
   const totalAsset = cashInHand + activeInvested;
 
   return {

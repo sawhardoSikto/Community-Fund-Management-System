@@ -592,10 +592,10 @@ const handleCreateProject = async (e) => {
                 bg: "from-blue-500/10 border-blue-500/20",
               },
               {
-                label: "মোট মুনাফা",
+                label: "নিট লাভ/ক্ষতি",
                 value: `${overallStatus.totalProfit} ৳`,
-                color: "text-purple-400",
-                bg: "from-purple-500/10 border-purple-500/20",
+                color: Number(overallStatus.totalProfit) >= 0 ? "text-purple-400" : "text-red-400",
+                bg: Number(overallStatus.totalProfit) >= 0 ? "from-purple-500/10 border-purple-500/20" : "from-red-500/10 border-red-500/20",
               },
               {
                 label: "মোট সম্পদ",
