@@ -224,6 +224,7 @@ export default function MemberDashboard() {
                   {[
                     { label: 'হাতে আছে', value: `${Number(overallStatus.cashInHand).toFixed(0)} ৳`, color: 'text-emerald-400', bg: 'bg-emerald-500/5 border-emerald-500/10' },
                     { label: 'বিনিয়োগকৃত', value: `${Number(overallStatus.totalInvested).toFixed(0)} ৳`, color: 'text-blue-400', bg: 'bg-blue-500/5 border-blue-500/10' },
+                    { label: 'নিট লাভ/ক্ষতি', value: `${Number(overallStatus.totalProfit).toFixed(0)} ৳`, color: Number(overallStatus.totalProfit) >= 0 ? 'text-purple-400' : 'text-red-400', bg: Number(overallStatus.totalProfit) >= 0 ? 'bg-purple-500/5 border-purple-500/10' : 'bg-red-500/5 border-red-500/10' },
                     { label: 'মোট সম্পদ', value: `${Number(overallStatus.totalAsset).toFixed(0)} ৳`, color: 'text-amber-400', bg: 'bg-amber-500/5 border-amber-500/10' },
                   ].map((item, i) => (
                     <div key={i} className={`flex items-center justify-between p-3 rounded-xl border ${item.bg}`}>
