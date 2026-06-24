@@ -203,6 +203,32 @@ for (const user of users) {
 
   // Overall fund status এর জন্য
   async getOverallInvestedAmount() {
+  // ✅ সব projects (active + completed)
+  const projects = await this.projectRepo.find({
+    relations: { transactions: true },
+  });
+
+  let totalStillOutside = 0;
+  for (const project of projects) {
+    const transactions = project.transactions || [];
+
+    const totalExpense = transactions
+      .filter(t => t.type === TransactionType.EXPENSE)
+      .reduce((sum, t) => sum + Number(t.amount), 0);
+
+    const capitalReturn = transactions
+      .filter(t => t.type === TransactionType.CAPITAL_RETURN)
+      .reduce((sum, t) => sum + Number(t.amount), 0);
+
+    // ✅ এখনো বাইরে = invest - return
+    const stillOutside = Number(project.openingInvested) + totalExpense - capitalReturn;
+    if (stillOutside > 0) totalStillOutside += stillOutside;
+  }
+
+  return totalStillOutside;
+}
+
+  async getActiveInvestedAmount() {
   // ✅ শুধু active projects
   const projects = await this.projectRepo.find({
     where: { status: ProjectStatus.ACTIVE },

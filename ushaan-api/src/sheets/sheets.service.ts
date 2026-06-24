@@ -96,9 +96,10 @@ const totalGeneralExpense = await this.expensesService.getTotalExpenseByMonth(
 
   // ✅ ৭. Total Invested = সব project এ stillOutside
   const totalInvested = await this.projectsService.getOverallInvestedAmount();
+  const activeInvested = await this.projectsService.getActiveInvestedAmount();
 
   // ✅ ৮. Total Asset
-  const totalAsset = cashInHand + totalInvested;
+  const totalAsset = cashInHand + activeInvested;
 
   const sheet = this.sheetRepo.create({
     month: dto.month,
@@ -334,6 +335,7 @@ async getOverallStatus() {
   let totalCapitalReturn = 0;
   let totalProjectExpense = 0;
   let totalInvested = 0;
+  let activeInvested = 0;
 
   for (const p of projects) {
     const openingInvested = Number(p.openingInvested || 0);
@@ -360,8 +362,11 @@ async getOverallStatus() {
     totalProjectExpense += totalExpense;
 
     const stillOutside = openingInvested + totalExpense - capitalReturn;
-    if (p.status === 'active' && stillOutside > 0) {
+    if (stillOutside > 0) {
       totalInvested += stillOutside;
+      if (p.status === 'active') {
+        activeInvested += stillOutside;
+      }
     }
   }
 
@@ -393,7 +398,7 @@ async getOverallStatus() {
     - totalGeneralExpense;
 
   const totalProfit = openingTotalProfit + totalProjectProfit;
-  const totalAsset = cashInHand + totalInvested;
+  const totalAsset = cashInHand + activeInvested;
 
   return {
     message: 'Overall fund status',
