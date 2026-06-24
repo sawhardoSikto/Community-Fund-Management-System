@@ -246,8 +246,17 @@ export default function AdminDashboard() {
     setProcessing(id);
     try {
       await api.patch(`/payments/${id}/status`, { status });
-      showToast(`পেমেন্ট ${status === 'approved' ? 'অনুমোদিত' : 'বাতিল'} হয়েছে`);
+      if (status === 'approved') {
+        showToast('পেমেন্ট অনুমোদিত হয়েছে');
+      } else if (status === 'rejected') {
+        showToast('পেমেন্ট বাতিল হয়েছে');
+      } else if (status === 'pending') {
+        showToast('পেমেন্টের অনুমোদন বাতিল করে পেন্ডিং করা হয়েছে');
+      } else {
+        showToast('পেমেন্ট স্ট্যাটাস আপডেট হয়েছে');
+      }
       fetchAll();
+      fetchPayments();
     } catch (err) {
       showToast(err.response?.data?.message || 'ব্যর্থ হয়েছে', false);
     } finally { setProcessing(null); }
@@ -562,17 +571,63 @@ export default function AdminDashboard() {
               ) : (
                 <div className="space-y-2">
                   {allPayments.map(p => (
-                    <div key={p.id} className="flex items-center justify-between px-4 py-3 bg-slate-800/50 rounded-xl">
+                    <div key={p.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-800/50 rounded-xl p-4">
                       <div>
                         <p className="text-sm font-bold text-white">{p.user?.name}</p>
-                        <p className="text-xs text-slate-400">{p.paymentMethod} {p.transactionNumber && `· ${p.transactionNumber}`}</p>
+                        <p className="text-xs text-slate-400">
+                          {p.paymentMethod} {p.transactionNumber && `· ${p.transactionNumber}`} · {Number(p.amount).toFixed(0)} ৳
+                        </p>
                         {p.note && <p className="text-xs text-slate-500 italic">"{p.note}"</p>}
                       </div>
-                      <div className="text-right">
-                        <p className="text-sm font-bold text-white">{Number(p.amount).toFixed(0)} ৳</p>
+                      <div className="flex items-center gap-2">
                         <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-lg border ${p.status === 'approved' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : p.status === 'pending' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'}`}>
                           {p.status === 'approved' ? 'পরিশোধিত' : p.status === 'pending' ? 'অপেক্ষমাণ' : 'বাতিল'}
                         </span>
+                        
+                        {p.status === 'approved' && (
+                          <button
+                            onClick={() => {
+                              if (confirm('আপনি কি নিশ্চিত যে এই পেমেন্টটির অনুমোদন বাতিল করে পেন্ডিং করতে চান? এর ফলে সংশ্লিষ্ট শিটের ব্যালেন্স পুনরায় হিসাব করা হবে।')) {
+                                handlePaymentStatus(p.id, "pending");
+                              }
+                            }}
+                            disabled={processing === p.id}
+                            className="px-2.5 py-1 bg-amber-500/10 hover:bg-amber-500 text-amber-400 hover:text-white border border-amber-500/20 hover:border-amber-500 rounded-lg text-xs font-bold transition-all disabled:opacity-50"
+                          >
+                            {processing === p.id ? (
+                              <span className="loading loading-spinner loading-xs" />
+                            ) : (
+                              "অনুমোদন বাতিল"
+                            )}
+                          </button>
+                        )}
+                        
+                        {p.status === 'pending' && (
+                          <>
+                            <button
+                              onClick={() => {
+                                if (confirm('আপনি কি নিশ্চিত যে এই পেমেন্টটি অনুমোদন করতে চান?')) {
+                                  handlePaymentStatus(p.id, "approved");
+                                }
+                              }}
+                              disabled={processing === p.id}
+                              className="px-2.5 py-1 bg-emerald-500/10 hover:bg-emerald-500 text-emerald-400 hover:text-white border border-emerald-500/20 hover:border-emerald-500 rounded-lg text-xs font-bold transition-all disabled:opacity-50"
+                            >
+                              অনুমোদন
+                            </button>
+                            <button
+                              onClick={() => {
+                                if (confirm('আপনি কি নিশ্চিত যে এই পেমেন্টটি বাতিল করতে চান?')) {
+                                  handlePaymentStatus(p.id, "rejected");
+                                }
+                              }}
+                              disabled={processing === p.id}
+                              className="px-2.5 py-1 bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white border border-red-500/20 hover:border-red-500 rounded-lg text-xs font-bold transition-all disabled:opacity-50"
+                            >
+                              বাতিল
+                            </button>
+                          </>
+                        )}
                       </div>
                     </div>
                   ))}

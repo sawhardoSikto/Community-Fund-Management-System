@@ -182,6 +182,7 @@ export default  function AccountantDashboard() {
   });
   // States
   const [pendingPayments, setPendingPayments] = useState([]);
+  const [allPayments, setAllPayments] = useState([]); // ✅ অনুমোদিত পেমেন্টের ইতিহাস
   const [allUsers, setAllUsers] = useState([]);
   const [projects, setProjects] = useState([]);
   const [overallStatus, setOverallStatus] = useState(null);
@@ -331,21 +332,23 @@ export default  function AccountantDashboard() {
 const fetchAll = async () => {
   setLoading(true);
   try {
-    const [pendingRes, usersRes, projectsRes, overallRes, sheetsRes, expensesRes] =
+    const [pendingRes, usersRes, projectsRes, overallRes, sheetsRes, expensesRes, allPaymentsRes] =
       await Promise.all([
         api.get('/payments/pending'),
         api.get('/users'),
         api.get('/projects'),
         api.get('/sheets/overall-status'),
         api.get('/sheets'),
-        api.get('/expenses'), // ✅ এখানে add করো
+        api.get('/expenses'),
+        api.get('/payments'), // ✅ approved history এর জন্য
       ]);
     setPendingPayments(pendingRes.data.data || []);
     setAllUsers(usersRes.data || []);
     setProjects(projectsRes.data.data || []);
     setOverallStatus(overallRes.data.data);
     setSheets(sheetsRes.data.data || []);
-    setExpenses(expensesRes.data || []); // ✅
+    setExpenses(expensesRes.data || []);
+    setAllPayments(allPaymentsRes.data.data || []); // ✅
   } catch (err) { console.error(err); }
   finally { setLoading(false); }
 };
@@ -363,7 +366,7 @@ const fetchAll = async () => {
 
 
 
-  // Payment approve/reject
+  // Payment approve/reject/revert
 const handlePaymentStatus = async (id, status) => {
   setProcessing(id);
   try {
@@ -373,7 +376,15 @@ const handlePaymentStatus = async (id, status) => {
     if (res.data.sheetWarning) {
       showToast(res.data.sheetWarning, false); // ⚠️ warning toast
     } else {
-      showToast(`পেমেন্ট ${status === 'approved' ? 'অনুমোদিত' : 'বাতিল'} হয়েছে`);
+      if (status === 'approved') {
+        showToast('পেমেন্ট অনুমোদিত হয়েছে');
+      } else if (status === 'rejected') {
+        showToast('পেমেন্ট বাতিল হয়েছে');
+      } else if (status === 'pending') {
+        showToast('পেমেন্টের অনুমোদন বাতিল করে পেন্ডিং করা হয়েছে');
+      } else {
+        showToast('পেমেন্ট স্ট্যাটাস আপডেট হয়েছে');
+      }
     }
     fetchAll();
   } catch (err) {
@@ -659,103 +670,188 @@ const handleCreateProject = async (e) => {
 
         {/* ── Payments Tab ── */}
         {tab === "payments" && (
-          <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
-            <h2 className="text-base font-bold text-white mb-4">
-              অনুমোদন অপেক্ষায় ({pendingPayments.length})
-            </h2>
-            {pendingPayments.length === 0 ? (
-              <div className="text-center py-12 flex flex-col items-center justify-center">
-                <span className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-400 mb-3">
-                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                  </svg>
-                </span>
-                <p className="text-slate-400 text-sm">
-                  সব পেমেন্ট অনুমোদিত হয়েছে
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {pendingPayments.map((payment) => (
-                  <div
-                    key={payment.id}
-                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-800/50 rounded-xl p-4"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-400 font-black text-sm shrink-0">
-                        {payment.user?.name?.[0]?.toUpperCase()}
+          <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5 space-y-6">
+            <div>
+              <h2 className="text-base font-bold text-white mb-4">
+                অনুমোদন অপেক্ষায় ({pendingPayments.length})
+              </h2>
+              {pendingPayments.length === 0 ? (
+                <div className="text-center py-12 flex flex-col items-center justify-center bg-slate-800/20 rounded-xl border border-white/5">
+                  <span className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-400 mb-3">
+                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </span>
+                  <p className="text-slate-400 text-sm">
+                    সব পেমেন্ট অনুমোদিত হয়েছে
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {pendingPayments.map((payment) => (
+                    <div
+                      key={payment.id}
+                      className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-800/50 rounded-xl p-4"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-400 font-black text-sm shrink-0">
+                          {payment.user?.name?.[0]?.toUpperCase()}
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-white">
+                            {payment.user?.name}
+                          </p>
+                          <p className="text-xs text-slate-400">
+                            {MONTH_NAMES[payment.month - 1]} {payment.year} ·{" "}
+                            {payment.amount} ৳
+                          </p>
+                          <p className="text-xs text-slate-500 mt-0.5">
+                            {PAYMENT_METHOD_LABELS[payment.paymentMethod] ||
+                              payment.paymentMethod}
+                          </p>
+                          {parseCoveredMonths(payment.coveredMonths).length > 0 && (
+                            <p className="text-xs text-sky-400 mt-0.5">
+                              📌 {formatPaymentBreakdown(payment)}
+                            </p>
+                          )}
+                          {payment.transactionNumber && (
+                            <p className="text-xs text-amber-400 mt-0.5 font-medium">
+                              📱 {payment.transactionNumber}
+                            </p>
+                          )}
+                          {payment.note && (
+                            <p className="text-xs text-slate-500 mt-0.5 italic">
+                              "{payment.note}"
+                            </p>
+                          )}
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-sm font-bold text-white">
-                          {payment.user?.name}
-                        </p>
-                        <p className="text-xs text-slate-400">
-                          {MONTH_NAMES[payment.month - 1]} {payment.year} ·{" "}
-                          {payment.amount} ৳
-                        </p>
-                        <p className="text-xs text-slate-500 mt-0.5">
-                          {PAYMENT_METHOD_LABELS[payment.paymentMethod] ||
-                            payment.paymentMethod}
-                        </p>
-                        {parseCoveredMonths(payment.coveredMonths).length > 0 && (
-                          <p className="text-xs text-sky-400 mt-0.5">
-                            📌 {formatPaymentBreakdown(payment)}
-                          </p>
-                        )}
-                        {payment.transactionNumber && (
-                          <p className="text-xs text-amber-400 mt-0.5 font-medium">
-                            📱 {payment.transactionNumber}
-                          </p>
-                        )}
-                        {payment.note && (
-                          <p className="text-xs text-slate-500 mt-0.5 italic">
-                            "{payment.note}"
-                          </p>
-                        )}
+                      <div className="flex gap-2 sm:shrink-0">
+                        <button
+                          onClick={() => {
+                            if (confirm('আপনি কি নিশ্চিত যে এই পেমেন্টটি অনুমোদন করতে চান?')) {
+                              handlePaymentStatus(payment.id, "approved");
+                            }
+                          }}
+                          disabled={processing === payment.id}
+                          className="flex-1 sm:flex-none px-4 py-2 bg-emerald-500/10 hover:bg-emerald-500 text-emerald-400 hover:text-white border border-emerald-500/20 hover:border-emerald-500 rounded-xl text-xs font-bold transition-all disabled:opacity-50"
+                        >
+                          {processing === payment.id ? (
+                            <span className="loading loading-spinner loading-xs" />
+                          ) : (
+                            <span className="inline-flex items-center gap-1">
+                              <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                              </svg>
+                              অনুমোদন
+                            </span>
+                          )}
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (confirm('আপনি কি নিশ্চিত যে এই পেমেন্টটি বাতিল করতে চান?')) {
+                              handlePaymentStatus(payment.id, "rejected");
+                            }
+                          }}
+                          disabled={processing === payment.id}
+                          className="flex-1 sm:flex-none px-4 py-2 bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white border border-red-500/20 hover:border-red-500 rounded-xl text-xs font-bold transition-all disabled:opacity-50"
+                        >
+                          {processing === payment.id ? (
+                            <span className="loading loading-spinner loading-xs" />
+                          ) : (
+                            <span className="inline-flex items-center gap-1">
+                              <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                              বাতিল
+                            </span>
+                          )}
+                        </button>
                       </div>
                     </div>
-                    <div className="flex gap-2 sm:shrink-0">
-                      <button
-                        onClick={() =>
-                          handlePaymentStatus(payment.id, "approved")
-                        }
-                        disabled={processing === payment.id}
-                        className="flex-1 sm:flex-none px-4 py-2 bg-emerald-500/10 hover:bg-emerald-500 text-emerald-400 hover:text-white border border-emerald-500/20 hover:border-emerald-500 rounded-xl text-xs font-bold transition-all disabled:opacity-50"
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Approved Payments History */}
+            <div className="pt-6 border-t border-white/5">
+              <h2 className="text-base font-bold text-white mb-4">
+                অনুমোদিত পেমেন্টের ইতিহাস
+              </h2>
+              {allPayments.filter(p => p.status === 'approved').length === 0 ? (
+                <div className="text-center py-8 bg-slate-800/10 rounded-xl border border-white/5">
+                  <p className="text-slate-500 text-sm">কোনো অনুমোদিত পেমেন্ট নেই</p>
+                </div>
+              ) : (
+                <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
+                  {allPayments
+                    .filter(p => p.status === 'approved')
+                    .map((payment) => (
+                      <div
+                        key={payment.id}
+                        className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-800/30 rounded-xl p-4 border border-white/5"
                       >
-                        {processing === payment.id ? (
-                          <span className="loading loading-spinner loading-xs" />
-                        ) : (
-                          <span className="inline-flex items-center gap-1">
-                            <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                            </svg>
-                            অনুমোদন
-                          </span>
-                        )}
-                      </button>
-                      <button
-                        onClick={() =>
-                          handlePaymentStatus(payment.id, "rejected")
-                        }
-                        disabled={processing === payment.id}
-                        className="flex-1 sm:flex-none px-4 py-2 bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white border border-red-500/20 hover:border-red-500 rounded-xl text-xs font-bold transition-all disabled:opacity-50"
-                      >
-                        {processing === payment.id ? (
-                          <span className="loading loading-spinner loading-xs" />
-                        ) : (
-                          <span className="inline-flex items-center gap-1">
-                            <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                            বাতিল
-                          </span>
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 font-black text-sm shrink-0">
+                            {payment.user?.name?.[0]?.toUpperCase()}
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold text-white">
+                              {payment.user?.name}
+                            </p>
+                            <p className="text-xs text-slate-400">
+                              {MONTH_NAMES[payment.month - 1]} {payment.year} ·{" "}
+                              {payment.amount} ৳
+                            </p>
+                            <p className="text-xs text-slate-500 mt-0.5">
+                              {PAYMENT_METHOD_LABELS[payment.paymentMethod] ||
+                                payment.paymentMethod}
+                            </p>
+                            {parseCoveredMonths(payment.coveredMonths).length > 0 && (
+                              <p className="text-xs text-sky-400 mt-0.5">
+                                📌 {formatPaymentBreakdown(payment)}
+                              </p>
+                            )}
+                            {payment.capturedInMonth && payment.capturedInYear && (
+                              <p className="text-xs text-emerald-400 mt-0.5">
+                                📅 শিটে যুক্ত: {MONTH_NAMES[payment.capturedInMonth - 1]} {payment.capturedInYear}
+                              </p>
+                            )}
+                            {payment.transactionNumber && (
+                              <p className="text-xs text-amber-400 mt-0.5 font-medium">
+                                📱 {payment.transactionNumber}
+                              </p>
+                            )}
+                            {payment.note && (
+                              <p className="text-xs text-slate-500 mt-0.5 italic">
+                                "{payment.note}"
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex gap-2 sm:shrink-0">
+                          <button
+                            onClick={() => {
+                              if (confirm('আপনি কি নিশ্চিত যে এই পেমেন্টটির অনুমোদন বাতিল করে পেন্ডিং করতে চান? এর ফলে সংশ্লিষ্ট শিটের ব্যালেন্স পুনরায় হিসাব করা হবে।')) {
+                                handlePaymentStatus(payment.id, "pending");
+                              }
+                            }}
+                            disabled={processing === payment.id}
+                            className="flex-1 sm:flex-none px-4 py-2 bg-amber-500/10 hover:bg-amber-500 text-amber-400 hover:text-white border border-amber-500/20 hover:border-amber-500 rounded-xl text-xs font-bold transition-all disabled:opacity-50"
+                          >
+                            {processing === payment.id ? (
+                              <span className="loading loading-spinner loading-xs" />
+                            ) : (
+                              "অনুমোদন বাতিল করুন"
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
 
@@ -1489,52 +1585,6 @@ const handleCreateProject = async (e) => {
         {/* ── Sheets Tab ── */}
         {tab === "sheets" && (
           <div className="space-y-6">
-            {/* Generate Sheet */}
-            <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
-              <h2 className="text-base font-bold text-white mb-4">
-                মাসিক শিট তৈরি করুন
-              </h2>
-              <div className="flex flex-col sm:flex-row gap-3">
-                <select
-                  value={sheetForm.month}
-                  onChange={(e) =>
-                    setSheetForm((f) => ({
-                      ...f,
-                      month: parseInt(e.target.value),
-                    }))
-                  }
-                  className="flex-1 px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-amber-400/50 transition-all"
-                >
-                  {MONTH_NAMES.map((m, i) => (
-                    <option key={i} value={i + 1}>
-                      {m}
-                    </option>
-                  ))}
-                </select>
-                <input
-                  type="number"
-                  value={sheetForm.year}
-                  onChange={(e) =>
-                    setSheetForm((f) => ({
-                      ...f,
-                      year: parseInt(e.target.value),
-                    }))
-                  }
-                  className="w-full sm:w-28 px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-amber-400/50 transition-all"
-                />
-                <button
-                  onClick={handleGenerateSheet}
-                  disabled={submitting}
-                  className="flex items-center justify-center gap-2 px-6 py-2.5 bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white font-bold rounded-xl transition-all disabled:opacity-60"
-                >
-                  {submitting && (
-                    <span className="loading loading-spinner loading-xs" />
-                  )}
-                  শিট তৈরি করুন
-                </button>
-              </div>
-            </div>
-
             {/* Sheets List */}
             <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
               <h2 className="text-base font-bold text-white mb-4">

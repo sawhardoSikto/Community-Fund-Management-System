@@ -1,6 +1,7 @@
-import { Injectable, NotFoundException, BadRequestException, OnModuleInit } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, OnModuleInit, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { SheetsService } from 'src/sheets/sheets.service';
 import { Payment, PaymentStatus } from './entities/payment.entity';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { UpdatePaymentDto } from './dto/update-payment.dto';
@@ -23,6 +24,8 @@ constructor(
   private sheetRepo: Repository<MonthlySheet>,
   private usersService: UsersService,
   private notificationsService: NotificationsService,
+  @Inject(forwardRef(() => SheetsService))
+  private sheetsService: SheetsService,
 ) {}
 
   async onModuleInit() {
@@ -184,58 +187,81 @@ private async getDueMonths(
     return { message: 'All payments fetched', count: payments.length, data: payments };
   }
 
-  // Accountant — payment approve/reject করো
+  // Accountant — payment approve/reject/revert করো
   async updatePaymentStatus(paymentId: number, accountantId: number, dto: UpdatePaymentDto) {
-  const payment = await this.paymentRepo.findOne({ where: { id: paymentId } });
-  if (!payment) throw new NotFoundException('Payment not found');
-  if (payment.status !== PaymentStatus.PENDING) {
-    throw new BadRequestException('Payment already processed');
-  }
+    const payment = await this.paymentRepo.findOne({ where: { id: paymentId } });
+    if (!payment) throw new NotFoundException('Payment not found');
 
-  payment.status = dto.status;
-  payment.approvedBy = accountantId;
-  if (dto.status === PaymentStatus.APPROVED) {
-    payment.approvedAt = new Date();
-    const capture = await this.getCaptureMonthAndYear();
-    payment.capturedInMonth = capture.month;
-    payment.capturedInYear = capture.year;
-  }
-  if (dto.note) payment.note = dto.note;
-  await this.paymentRepo.save(payment);
-  if (dto.status === PaymentStatus.APPROVED) {
-  await this.notificationsService.create(
-    payment.userId,
-    'আপনার পেমেন্ট অনুমোদিত হয়েছে।',
-  );
-}
-if (dto.status === PaymentStatus.REJECTED) {
-  await this.notificationsService.create(
-    payment.userId,
-    'আপনার পেমেন্ট বাতিল করা হয়েছে।',
-  );
-}
+    const oldStatus = payment.status;
+    const oldMonth = payment.capturedInMonth;
+    const oldYear = payment.capturedInYear;
 
-  // ✅ Approved হলে check করো sheet published কিনা
-  let sheetWarning: string | null = null;
-  if (dto.status === PaymentStatus.APPROVED) {
-    const publishedSheet = await this.sheetRepo.findOne({
-      where: {
-        month: payment.month,
-        year: payment.year,
-        status: SheetStatus.PUBLISHED,
-      },
-    });
-    if (publishedSheet) { 
-      sheetWarning = `${payment.month}/${payment.year} এর শিট ইতোমধ্যে প্রকাশিত হয়েছে। অনুগ্রহ করে শিট regenerate করুন।`;
+    if (dto.status === PaymentStatus.PENDING) {
+      payment.status = PaymentStatus.PENDING;
+      payment.capturedInMonth = null;
+      payment.capturedInYear = null;
+      payment.approvedBy = null;
+      payment.approvedAt = null;
+    } else {
+      payment.status = dto.status;
+      payment.approvedBy = accountantId;
+      if (dto.status === PaymentStatus.APPROVED) {
+        payment.approvedAt = new Date();
+        const capture = await this.getCaptureMonthAndYear();
+        payment.capturedInMonth = capture.month;
+        payment.capturedInYear = capture.year;
+      }
     }
-  }
 
-  return {
-    message: `Payment ${dto.status}`,
-    sheetWarning,
-    data: payment,
-  };
-}
+    if (dto.note !== undefined) payment.note = dto.note;
+    await this.paymentRepo.save(payment);
+
+    // Notifications
+    if (dto.status === PaymentStatus.APPROVED && oldStatus !== PaymentStatus.APPROVED) {
+      await this.notificationsService.create(
+        payment.userId,
+        'আপনার পেমেন্ট অনুমোদিত হয়েছে।',
+      );
+    } else if (dto.status === PaymentStatus.REJECTED && oldStatus !== PaymentStatus.REJECTED) {
+      await this.notificationsService.create(
+        payment.userId,
+        'আপনার পেমেন্ট বাতিল করা হয়েছে।',
+      );
+    } else if (dto.status === PaymentStatus.PENDING && oldStatus === PaymentStatus.APPROVED) {
+      await this.notificationsService.create(
+        payment.userId,
+        'আপনার পেমেন্টের অনুমোদন বাতিল করে পেন্ডিং করা হয়েছে।',
+      );
+    }
+
+    // ✅ ডাইনামিক শিট রিক্যালকুলেট
+    if (oldMonth && oldYear) {
+      await this.sheetsService.recalculateSheetCascade(oldMonth, oldYear);
+    }
+    if (payment.capturedInMonth && payment.capturedInYear && (payment.capturedInMonth !== oldMonth || payment.capturedInYear !== oldYear)) {
+      await this.sheetsService.recalculateSheetCascade(payment.capturedInMonth, payment.capturedInYear);
+    }
+
+    let sheetWarning: string | null = null;
+    if (dto.status === PaymentStatus.APPROVED) {
+      const publishedSheet = await this.sheetRepo.findOne({
+        where: {
+          month: payment.month,
+          year: payment.year,
+          status: SheetStatus.PUBLISHED,
+        },
+      });
+      if (publishedSheet) { 
+        sheetWarning = `${payment.month}/${payment.year} এর শিট ইতোমধ্যে প্রকাশিত হয়েছে। অনুগ্রহ করে শিট আপডেট/পাবলিশ চেক করুন।`;
+      }
+    }
+
+    return {
+      message: `Payment ${dto.status}`,
+      sheetWarning,
+      data: payment,
+    };
+  }
 
   // Sheet generate এর জন্য — একটা মাসের approved payments
   async getApprovedPaymentsByMonth(month: number, year: number) {
@@ -288,6 +314,11 @@ async createManualPayment(dto: ManualPaymentDto, addedBy: number) {
     dto.userId,
     `আপনার ${dto.month}/${dto.year} মাসের পেমেন্ট যুক্ত করা হয়েছে (${coveredMonths.length} মাস)।`,
   );
+
+  // ✅ ডাইনামিক শিট রিক্যালকুলেট
+  if (payment.capturedInMonth && payment.capturedInYear) {
+    await this.sheetsService.recalculateSheetCascade(payment.capturedInMonth, payment.capturedInYear);
+  }
 
   return {
     message: `Payment added successfully (${coveredMonths.length} months)`,

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
+import { Injectable, NotFoundException, OnModuleInit, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Project, ProjectStatus } from './entities/project.entity';
@@ -23,6 +23,8 @@ export class ProjectsService implements OnModuleInit {
     private sheetRepo: Repository<MonthlySheet>,
     private usersService: UsersService,
     private notificationsService: NotificationsService,
+    @Inject(forwardRef(() => SheetsService))
+    private sheetsService: SheetsService,
   ) {}
 
   async onModuleInit() {
@@ -104,9 +106,26 @@ for (const user of users) {
 
   // Project delete করো
   async remove(id: number) {
-    await this.findOne(id);
+    const projectData = await this.findOne(id);
+    const project = projectData.data;
+
+    // Find all transactions to get unique months/years
+    const txs = project.transactions || [];
+    const uniquePeriods = Array.from(new Set(txs.map(t => `${t.capturedInMonth}-${t.capturedInYear}`)))
+      .map(p => {
+        const [month, year] = p.split('-').map(Number);
+        return { month, year };
+      })
+      .filter(p => !isNaN(p.month) && !isNaN(p.year));
+
     await this.transactionRepo.delete({ projectId: id });
     await this.projectRepo.delete(id);
+
+    // ✅ Recalculate sheets for these periods
+    for (const period of uniquePeriods) {
+      await this.sheetsService.recalculateSheetCascade(period.month, period.year);
+    }
+
     return { message: 'Project deleted', id };
   }
 
@@ -147,6 +166,11 @@ for (const user of users) {
       await this.projectRepo.update(projectId, {
         totalInvested: Number(project.totalInvested) + dto.amount,
       });
+    }
+
+    // ✅ ডাইনামিক শিট রিক্যালকুলেট
+    if (transaction.capturedInMonth && transaction.capturedInYear) {
+      await this.sheetsService.recalculateSheetCascade(transaction.capturedInMonth, transaction.capturedInYear);
     }
 
     return { message: 'Transaction added', data: transaction };

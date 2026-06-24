@@ -1,9 +1,10 @@
-import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
+import { Injectable, NotFoundException, OnModuleInit, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between } from 'typeorm';
 import { Expense } from './entities/expense.entity';
 import { CreateExpenseDto } from './dto/create-expense.dto';
 import { MonthlySheet, SheetStatus } from 'src/sheets/entities/monthly-sheet.entity';
+import { SheetsService } from '../sheets/sheets.service';
 
 @Injectable()
 export class ExpensesService implements OnModuleInit {
@@ -12,6 +13,8 @@ export class ExpensesService implements OnModuleInit {
     private expenseRepo: Repository<Expense>,
     @InjectRepository(MonthlySheet)
     private sheetRepo: Repository<MonthlySheet>,
+    @Inject(forwardRef(() => SheetsService))
+    private sheetsService: SheetsService,
   ) {}
 
   async onModuleInit() {
@@ -63,6 +66,12 @@ export class ExpensesService implements OnModuleInit {
       capturedInYear: capture.year,
     });
     await this.expenseRepo.save(expense);
+
+    // ✅ ডাইনামিক শিট রিক্যালকুলেট
+    if (expense.capturedInMonth && expense.capturedInYear) {
+      await this.sheetsService.recalculateSheetCascade(expense.capturedInMonth, expense.capturedInYear);
+    }
+
     return { message: 'Expense added', data: expense };
   }
 
@@ -89,6 +98,12 @@ export class ExpensesService implements OnModuleInit {
     const expense = await this.expenseRepo.findOne({ where: { id } });
     if (!expense) throw new NotFoundException('Expense not found');
     await this.expenseRepo.delete(id);
+
+    // ✅ ডাইনামিক শিট রিক্যালকুলেট
+    if (expense.capturedInMonth && expense.capturedInYear) {
+      await this.sheetsService.recalculateSheetCascade(expense.capturedInMonth, expense.capturedInYear);
+    }
+
     return { message: 'Expense deleted', id };
   }
 

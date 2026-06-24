@@ -43,8 +43,8 @@ export class Payment {
   })
   status!: PaymentStatus;
 
-  @Column({ nullable: true })
-  approvedBy!: number; // accountant id
+  @Column({ nullable: true, type: 'int' })
+  approvedBy!: number | null; // accountant id
 
   @Column({ nullable: true })
   note!: string;

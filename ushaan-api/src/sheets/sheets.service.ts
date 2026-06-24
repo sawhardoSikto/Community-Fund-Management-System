@@ -1,6 +1,7 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, OnModuleInit, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { Cron } from '@nestjs/schedule';
 import { MonthlySheet, SheetStatus } from './entities/monthly-sheet.entity';
 import { CreateSheetDto } from './dto/create-sheet.dto';
 import { PaymentsService } from '../payments/payments.service';
@@ -13,18 +14,150 @@ import { NotificationsService } from 'src/notifications/notifications.service';
 
 
 @Injectable()
-export class SheetsService {
+export class SheetsService implements OnModuleInit {
   constructor(
     @InjectRepository(MonthlySheet)
     private sheetRepo: Repository<MonthlySheet>,
+    @Inject(forwardRef(() => PaymentsService))
     private paymentsService: PaymentsService,
+    @Inject(forwardRef(() => ProjectsService))
     private projectsService: ProjectsService,
+    @Inject(forwardRef(() => SalariesService))
     private salariesService: SalariesService,
     private usersService: UsersService,
     private settingsService: SettingsService,
+    @Inject(forwardRef(() => ExpensesService))
     private expensesService: ExpensesService, // ✅ নতুন
     private notificationsService: NotificationsService, // ✅ নতুন
   ) {}
+
+  async onModuleInit() {
+    // সার্ভার স্টার্ট হওয়ার সময় চলতি ক্যালেন্ডার মাসের শিট তৈরি করো ও রিক্যালকুলেট করো
+    const now = new Date();
+    const currentMonth = now.getMonth() + 1;
+    const currentYear = now.getFullYear();
+    try {
+      await this.getOrCreateDraftSheet(currentMonth, currentYear);
+      await this.recalculateSheetCascade(currentMonth, currentYear);
+      console.log(`[SheetsService] Auto-initialized/recalculated sheet for ${currentMonth}/${currentYear}`);
+    } catch (err) {
+      console.error('[SheetsService] Failed to auto-initialize sheet on startup:', err);
+    }
+  }
+
+  @Cron('0 0 1 * *') // প্রতি মাসের ১ তারিখ রাত ১২টায়
+  async handleMonthlyAutoSheetGeneration() {
+    const now = new Date();
+    const currentMonth = now.getMonth() + 1;
+    const currentYear = now.getFullYear();
+    try {
+      await this.getOrCreateDraftSheet(currentMonth, currentYear);
+      await this.recalculateSheetCascade(currentMonth, currentYear);
+      console.log(`[SheetsService] Cron Job: Auto-generated sheet for ${currentMonth}/${currentYear}`);
+    } catch (err) {
+      console.error('[SheetsService] Cron Job: Failed to auto-generate sheet:', err);
+    }
+  }
+
+  async getOrCreateDraftSheet(month: number, year: number): Promise<MonthlySheet> {
+    let sheet = await this.sheetRepo.findOne({ where: { month, year } });
+    if (!sheet) {
+      const previousSheet = await this.getPreviousSheet(month, year);
+      const previousBalance = previousSheet
+        ? Number(previousSheet.cashInHand)
+        : Number((await this.settingsService.getSettings()).openingCashInHand);
+
+      sheet = this.sheetRepo.create({
+        month,
+        year,
+        totalMemberIncome: 0,
+        totalProjectIncome: 0,
+        totalProjectExpense: 0,
+        totalSalary: 0,
+        totalGeneralExpense: 0,
+        totalCapitalReturn: 0,
+        previousBalance,
+        cashInHand: previousBalance,
+        totalInvested: 0,
+        totalAsset: previousBalance,
+        status: SheetStatus.DRAFT,
+      });
+      await this.sheetRepo.save(sheet);
+    }
+    return sheet;
+  }
+
+  async recalculateSheetCascade(month: number, year: number) {
+    const sheet = await this.getOrCreateDraftSheet(month, year);
+
+    // ১. আগের ব্যালেন্স নির্ধারণ করো
+    const previousSheet = await this.getPreviousSheet(month, year);
+    const previousBalance = previousSheet
+      ? Number(previousSheet.cashInHand)
+      : Number((await this.settingsService.getSettings()).openingCashInHand);
+
+    // ২. মেম্বার পেমেন্ট
+    const payments = await this.paymentsService.getApprovedPaymentsCapturedInMonth(month, year);
+    const totalMemberIncome = payments.reduce((sum, p) => sum + Number(p.amount), 0);
+
+    // ৩. প্রজেক্ট প্রফিট
+    const projectIncomes = await this.projectsService.getProjectIncomeByMonth(month, year);
+    const totalProjectIncome = projectIncomes.reduce((sum, p) => sum + Number(p.amount), 0);
+
+    // ৪. প্রজেক্ট ক্যাপিটাল রিটার্ন
+    const capitalReturns = await this.projectsService.getCapitalReturnByMonth(month, year);
+    const totalCapitalReturn = capitalReturns.reduce((sum, r) => sum + Number(r.amount), 0);
+
+    // ৫. প্রজেক্ট ব্যয় (বিনিয়োগ)
+    const projectExpenses = await this.projectsService.getProjectExpenseByMonth(month, year);
+    const totalProjectExpense = projectExpenses.reduce((sum, e) => sum + Number(e.amount), 0);
+
+    // ৬. বেতন
+    const salaries = await this.salariesService.getSalariesByMonth(month, year);
+    const totalSalary = salaries.reduce((sum, s) => sum + Number(s.amount), 0);
+
+    // ৭. সাধারণ খরচ
+    const totalGeneralExpense = await this.expensesService.getTotalExpenseByMonth(month, year);
+
+    // ৮. হিসাব
+    const cashInHand = previousBalance
+      + totalMemberIncome
+      + totalProjectIncome
+      + totalCapitalReturn
+      - totalSalary
+      - totalProjectExpense
+      - totalGeneralExpense;
+
+    const totalInvested = await this.projectsService.getOverallInvestedAmount();
+    const activeInvested = await this.projectsService.getActiveInvestedAmount();
+    const totalAsset = cashInHand + activeInvested;
+
+    // ৯. আপডেট করো
+    sheet.previousBalance = previousBalance;
+    sheet.totalMemberIncome = totalMemberIncome;
+    sheet.totalProjectIncome = totalProjectIncome;
+    sheet.totalCapitalReturn = totalCapitalReturn;
+    sheet.totalProjectExpense = totalProjectExpense;
+    sheet.totalSalary = totalSalary;
+    sheet.totalGeneralExpense = totalGeneralExpense;
+    sheet.cashInHand = cashInHand;
+    sheet.totalInvested = totalInvested;
+    sheet.totalAsset = totalAsset;
+
+    await this.sheetRepo.save(sheet);
+
+    // ১০. ক্যাসকেড (পরবর্তী মাসের শিট থাকলে তা-ও আপডেট করো)
+    let nextMonth = month + 1;
+    let nextYear = year;
+    if (nextMonth > 12) {
+      nextMonth = 1;
+      nextYear += 1;
+    }
+    const nextSheet = await this.sheetRepo.findOne({ where: { month: nextMonth, year: nextYear } });
+    if (nextSheet) {
+      await this.recalculateSheetCascade(nextMonth, nextYear);
+    }
+  }
 
   // Sheet generate করো (draft)
  async generateSheet(dto: CreateSheetDto, accountantId: number) {
@@ -146,8 +279,18 @@ const totalGeneralExpense = await this.expensesService.getTotalExpenseByMonth(
     return { message: 'Sheet published successfully', data: sheet };
   }
 
+  async ensureCurrentMonthSheet(): Promise<MonthlySheet> {
+    const now = new Date();
+    const currentMonth = now.getMonth() + 1;
+    const currentYear = now.getFullYear();
+    const sheet = await this.getOrCreateDraftSheet(currentMonth, currentYear);
+    await this.recalculateSheetCascade(currentMonth, currentYear);
+    return sheet;
+  }
+
   // সব sheets দেখো
   async findAll() {
+    await this.ensureCurrentMonthSheet(); // ✅ সর্বদা চলতি মাসের শিট নিশ্চিত করো
     const sheets = await this.sheetRepo.find({
       order: { year: 'DESC', month: 'DESC' },
     });
@@ -307,6 +450,7 @@ const totalGeneralExpense = await this.expensesService.getTotalExpenseByMonth(
 
   // Overall Fund Status
 async getOverallStatus() {
+  await this.ensureCurrentMonthSheet(); // ✅ সর্বদা চলতি মাসের শিট নিশ্চিত করো
   const settings = await this.settingsService.getSettings();
   const openingCashInHand = Number(settings.openingCashInHand || 0);
   const openingTotalProfit = Number(settings.openingTotalProfit || 0);

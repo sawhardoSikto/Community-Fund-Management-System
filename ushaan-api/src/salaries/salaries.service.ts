@@ -1,9 +1,10 @@
-import { Injectable, NotFoundException, BadRequestException, OnModuleInit } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, OnModuleInit, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Salary } from './entities/salary.entity';
 import { CreateSalaryDto } from './dto/create-salary.dto';
 import { MonthlySheet, SheetStatus } from 'src/sheets/entities/monthly-sheet.entity';
+import { SheetsService } from '../sheets/sheets.service';
 
 @Injectable()
 export class SalariesService implements OnModuleInit {
@@ -12,6 +13,8 @@ export class SalariesService implements OnModuleInit {
     private salaryRepo: Repository<Salary>,
     @InjectRepository(MonthlySheet)
     private sheetRepo: Repository<MonthlySheet>,
+    @Inject(forwardRef(() => SheetsService))
+    private sheetsService: SheetsService,
   ) {}
 
   async onModuleInit() {
@@ -65,6 +68,12 @@ export class SalariesService implements OnModuleInit {
       capturedInYear: capture.year,
     });
     await this.salaryRepo.save(salary);
+
+    // ✅ ডাইনামিক শিট রিক্যালকুলেট
+    if (salary.capturedInMonth && salary.capturedInYear) {
+      await this.sheetsService.recalculateSheetCascade(salary.capturedInMonth, salary.capturedInYear);
+    }
+
     return { message: 'Salary added', data: salary };
   }
 
@@ -93,6 +102,12 @@ export class SalariesService implements OnModuleInit {
     const salary = await this.salaryRepo.findOne({ where: { id } });
     if (!salary) throw new NotFoundException('Salary not found');
     await this.salaryRepo.delete(id);
+
+    // ✅ ডাইনামিক শিট রিক্যালকুলেট
+    if (salary.capturedInMonth && salary.capturedInYear) {
+      await this.sheetsService.recalculateSheetCascade(salary.capturedInMonth, salary.capturedInYear);
+    }
+
     return { message: 'Salary deleted', id };
   }
 
@@ -134,6 +149,19 @@ export class SalariesService implements OnModuleInit {
         }
       }
     }
+
+    // ✅ ডাইনামিক শিট রিক্যালকুলেট (সব ইউনিক মাসের জন্য)
+    const uniquePeriods = Array.from(new Set(created.map(s => `${s.capturedInMonth}-${s.capturedInYear}`)))
+      .map(p => {
+        const [m, y] = p.split('-').map(Number);
+        return { month: m, year: y };
+      })
+      .filter(p => !isNaN(p.month) && !isNaN(p.year));
+
+    for (const period of uniquePeriods) {
+      await this.sheetsService.recalculateSheetCascade(period.month, period.year);
+    }
+
     return created;
   }
   async resetAll() {
