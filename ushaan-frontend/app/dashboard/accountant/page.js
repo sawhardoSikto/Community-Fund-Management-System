@@ -1844,7 +1844,35 @@ const handleCreateProject = async (e) => {
           </div>
 
           {/* Right Column - Notice Board */}
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1 space-y-6">
+            {/* সদস্যদের বকেয়া তালিকা */}
+            <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
+              <h2 className="text-base font-bold text-white mb-4 flex items-center gap-2">
+                <span className="w-7 h-7 rounded-lg bg-red-500/10 flex items-center justify-center text-red-400 text-sm">
+                  ⚠️
+                </span>
+                সদস্যদের বকেয়া তালিকা
+              </h2>
+              <div className="space-y-2.5 max-h-64 overflow-y-auto pr-1">
+                {allUsers
+                  .filter(u => u.isApproved && u.dueAmount > 0)
+                  .sort((a, b) => b.dueAmount - a.dueAmount)
+                  .map(u => (
+                    <div key={u.id} className="flex items-center justify-between p-3 bg-slate-800/30 rounded-xl border border-white/5">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-md bg-rose-500/10 flex items-center justify-center text-rose-400 text-xs font-bold shrink-0">
+                          {u.name ? u.name[0] : '👥'}
+                        </div>
+                        <span className="text-xs font-bold text-slate-200">{u.name}</span>
+                      </div>
+                      <span className="text-xs font-black text-rose-400">{u.dueAmount} ৳</span>
+                    </div>
+                  ))}
+                {allUsers.filter(u => u.isApproved && u.dueAmount > 0).length === 0 && (
+                  <p className="text-xs text-slate-500 text-center py-4">কারো কোনো বকেয়া নেই! 🎉</p>
+                )}
+              </div>
+            </div>
             <NoticeBoard user={user} />
           </div>
         </div>
