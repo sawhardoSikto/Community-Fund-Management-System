@@ -59,60 +59,15 @@ export default function AdminDashboard() {
   const [projects, setProjects] = useState([]);
   const [overallStatus, setOverallStatus] = useState(null);
   const [sheets, setSheets] = useState([]);
-  const [pendingPayments, setPendingPayments] = useState([]);
-  const [allPayments, setAllPayments] = useState([]);
 
   const [userForm, setUserForm] = useState({ name: '', email: '', phone: '', nid: '', role: 'member', monthlyAmount: '200' });
   const [editingUser, setEditingUser] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [processing, setProcessing] = useState(null);
-  const [filterMonth, setFilterMonth] = useState(new Date().getMonth() + 1);
-  const [filterYear, setFilterYear] = useState(new Date().getFullYear());
-  const [projectForm, setProjectForm] = useState({ name: '', description: '', openingInvested: '', startDate: '', endDate: '' });
 
   const showToast = (msg, success = true) => {
     setToast({ show: true, msg, success });
     setTimeout(() => setToast(t => ({ ...t, show: false })), 3000);
-  };
-
-  const handleCreateProject = async (e) => {
-    e.preventDefault();
-    setSubmitting(true);
-    try {
-      await api.post('/projects', {
-        ...projectForm,
-        openingInvested: parseFloat(projectForm.openingInvested) || 0,
-      });
-      showToast('প্রজেক্ট তৈরি হয়েছে!');
-      setProjectForm({ name: '', description: '', openingInvested: '', startDate: '', endDate: '' });
-      fetchAll();
-    } catch (err) {
-      showToast(err.response?.data?.message || 'ব্যর্থ হয়েছে', false);
-    } finally { setSubmitting(false); }
-  };
-
-  const handleDeleteProject = async (id) => {
-    if (!confirm('আপনি কি নিশ্চিত যে এই প্রজেক্টটি ডিলিট করতে চান?')) return;
-    try {
-      await api.delete(`/projects/${id}`);
-      showToast('প্রজেক্টটি ডিলিট করা হয়েছে।');
-      fetchAll();
-    } catch (err) {
-      showToast(err.response?.data?.message || 'ডিলিট করতে ব্যর্থ হয়েছে', false);
-    }
-  };
-
-  const handleToggleProjectStatus = async (project) => {
-    const newStatus = project.status === 'active' ? 'completed' : 'active';
-    const actionText = newStatus === 'completed' ? 'সম্পন্ন' : 'সক্রিয়';
-    if (!confirm(`আপনি কি এই প্রজেক্টটি ${actionText} করতে চান?`)) return;
-    try {
-      await api.patch(`/projects/${project.id}`, { status: newStatus });
-      showToast(`প্রজেক্টটি ${actionText} করা হয়েছে।`);
-      fetchAll();
-    } catch (err) {
-      showToast(err.response?.data?.message || 'স্ট্যাটাস আপডেট করতে ব্যর্থ হয়েছে', false);
-    }
   };
 
 
@@ -144,12 +99,7 @@ export default function AdminDashboard() {
     finally { setLoading(false); }
   };
 
-  const fetchPayments = async () => {
-    try {
-      const res = await api.get(`/payments?month=${filterMonth}&year=${filterYear}`);
-      setAllPayments(res.data.data || []);
-    } catch (err) { console.error(err); }
-  };
+
 
 
 
@@ -190,25 +140,7 @@ export default function AdminDashboard() {
     } finally { setProcessing(null); }
   };
 
-  const handlePaymentStatus = async (id, status) => {
-    setProcessing(id);
-    try {
-      await api.patch(`/payments/${id}/status`, { status });
-      if (status === 'approved') {
-        showToast('পেমেন্ট অনুমোদিত হয়েছে');
-      } else if (status === 'rejected') {
-        showToast('পেমেন্ট বাতিল হয়েছে');
-      } else if (status === 'pending') {
-        showToast('পেমেন্টের অনুমোদন বাতিল করে পেন্ডিং করা হয়েছে');
-      } else {
-        showToast('পেমেন্ট স্ট্যাটাস আপডেট হয়েছে');
-      }
-      fetchAll();
-      fetchPayments();
-    } catch (err) {
-      showToast(err.response?.data?.message || 'ব্যর্থ হয়েছে', false);
-    } finally { setProcessing(null); }
-  };
+
 
 
 
@@ -225,7 +157,6 @@ export default function AdminDashboard() {
   const TABS = [
     { key: 'overview', label: 'সারসংক্ষেপ' },
     { key: 'members', label: 'সদস্য', count: pendingMembers.length },
-    { key: 'payments', label: 'পেমেন্ট' },
     { key: 'my-payment', label: 'আমার পেমেন্ট' },
     { key: 'projects', label: 'প্রজেক্ট' },
   ];
@@ -521,93 +452,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* Payments */}
-        {tab === 'payments' && (
-          <div className="space-y-5">
-            
-            <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-4">
-                <h2 className="text-base font-bold text-white flex-1">সব পেমেন্ট</h2>
-                <div className="flex gap-2">
-                  <select value={filterMonth} onChange={e => setFilterMonth(parseInt(e.target.value))}
-                    className="px-3 py-2 bg-slate-800 border border-white/10 rounded-xl text-white text-sm focus:outline-none transition-all">
-                    {MONTH_NAMES.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
-                  </select>
-                  <input type="number" value={filterYear} onChange={e => setFilterYear(parseInt(e.target.value))}
-                    className="w-24 px-3 py-2 bg-slate-800 border border-white/10 rounded-xl text-white text-sm focus:outline-none transition-all" />
-                  <button onClick={fetchPayments} className="px-4 py-2 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-xl text-sm font-semibold hover:bg-amber-500/20 transition-all">দেখুন</button>
-                </div>
-              </div>
-              {allPayments.length === 0 ? (
-                <p className="text-center text-slate-500 text-sm py-6">উপরের বাটন চাপুন</p>
-              ) : (
-                <div className="space-y-2">
-                  {allPayments.map(p => (
-                    <div key={p.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-800/50 rounded-xl p-4">
-                      <div>
-                        <p className="text-sm font-bold text-white">{p.user?.name}</p>
-                        <p className="text-xs text-slate-400">
-                          {p.paymentMethod} {p.transactionNumber && `· ${p.transactionNumber}`} · {Number(p.amount).toFixed(0)} ৳
-                        </p>
-                        {p.note && <p className="text-xs text-slate-500 italic">"{p.note}"</p>}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-lg border ${p.status === 'approved' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : p.status === 'pending' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'}`}>
-                          {p.status === 'approved' ? 'পরিশোধিত' : p.status === 'pending' ? 'অপেক্ষমাণ' : 'বাতিল'}
-                        </span>
-                        
-                        {p.status === 'approved' && (
-                          <button
-                            onClick={() => {
-                              if (confirm('আপনি কি নিশ্চিত যে এই পেমেন্টটির অনুমোদন বাতিল করে পেন্ডিং করতে চান? এর ফলে সংশ্লিষ্ট শিটের ব্যালেন্স পুনরায় হিসাব করা হবে।')) {
-                                handlePaymentStatus(p.id, "pending");
-                              }
-                            }}
-                            disabled={processing === p.id}
-                            className="px-2.5 py-1 bg-amber-500/10 hover:bg-amber-500 text-amber-400 hover:text-white border border-amber-500/20 hover:border-amber-500 rounded-lg text-xs font-bold transition-all disabled:opacity-50"
-                          >
-                            {processing === p.id ? (
-                              <span className="loading loading-spinner loading-xs" />
-                            ) : (
-                              "অনুমোদন বাতিল"
-                            )}
-                          </button>
-                        )}
-                        
-                        {p.status === 'pending' && (
-                          <>
-                            <button
-                              onClick={() => {
-                                if (confirm('আপনি কি নিশ্চিত যে এই পেমেন্টটি অনুমোদন করতে চান?')) {
-                                  handlePaymentStatus(p.id, "approved");
-                                }
-                              }}
-                              disabled={processing === p.id}
-                              className="px-2.5 py-1 bg-emerald-500/10 hover:bg-emerald-500 text-emerald-400 hover:text-white border border-emerald-500/20 hover:border-emerald-500 rounded-lg text-xs font-bold transition-all disabled:opacity-50"
-                            >
-                              অনুমোদন
-                            </button>
-                            <button
-                              onClick={() => {
-                                if (confirm('আপনি কি নিশ্চিত যে এই পেমেন্টটি বাতিল করতে চান?')) {
-                                  handlePaymentStatus(p.id, "rejected");
-                                }
-                              }}
-                              disabled={processing === p.id}
-                              className="px-2.5 py-1 bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white border border-red-500/20 hover:border-red-500 rounded-lg text-xs font-bold transition-all disabled:opacity-50"
-                            >
-                              বাতিল
-                            </button>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
+
 
         {/* My Payment */}
         {tab === 'my-payment' && (
@@ -624,130 +469,56 @@ export default function AdminDashboard() {
 
         {/* Projects */}
         {tab === 'projects' && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Create Project Form */}
-            <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5 h-fit">
-              <h2 className="text-base font-bold text-white mb-4">নতুন প্রজেক্ট</h2>
-              <form onSubmit={handleCreateProject} className="space-y-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-400 mb-1.5">প্রজেক্টের নাম</label>
-                  <input type="text" value={projectForm.name} onChange={e => setProjectForm(f => ({ ...f, name: e.target.value }))}
-                    placeholder="যেমন: রাতুল ইনভেস্টমেন্ট" required
-                    className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-amber-400/50 transition-all" />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-400 mb-1.5">বিবরণ</label>
-                  <textarea value={projectForm.description} onChange={e => setProjectForm(f => ({ ...f, description: e.target.value }))}
-                    placeholder="প্রজেক্টের বিবরণ" rows={2}
-                    className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-amber-400/50 transition-all resize-none" />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-400 mb-1.5">শুরুর তারিখ</label>
-                    <input type="date" value={projectForm.startDate} onChange={e => setProjectForm(f => ({ ...f, startDate: e.target.value }))}
-                      className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-amber-400/50 transition-all" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-400 mb-1.5">শেষের তারিখ</label>
-                    <input type="date" value={projectForm.endDate} onChange={e => setProjectForm(f => ({ ...f, endDate: e.target.value }))}
-                      className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-amber-400/50 transition-all" />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-400 mb-1.5">পুরনো বিনিয়োগ (৳)</label>
-                  <input type="number" value={projectForm.openingInvested} onChange={e => setProjectForm(f => ({ ...f, openingInvested: e.target.value }))}
-                    placeholder="আগে থেকে যা invest আছে (না থাকলে 0)"
-                    className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-amber-400/50 transition-all" />
-                  <p className="text-xs text-slate-500 mt-1">ওয়েবসাইটের আগে যদি এই project এ invest করা থাকে</p>
-                </div>
-                <button type="submit" disabled={submitting}
-                  className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white font-bold rounded-xl transition-all disabled:opacity-60">
-                  {submitting && <span className="loading loading-spinner loading-xs" />}
-                  প্রজেক্ট তৈরি করুন
-                </button>
-              </form>
-            </div>
-
-            {/* Projects List */}
-            <div className="space-y-4">
+          <div className="space-y-4 max-w-4xl">
+            <div className="flex items-center justify-between mb-4">
               <h2 className="text-base font-bold text-white">সব প্রজেক্ট ({projects.length})</h2>
-              {projects.length === 0 ? (
-                <p className="text-center text-slate-500 py-12 bg-slate-900/50 border border-white/5 rounded-2xl">কোনো প্রজেক্ট নেই</p>
-              ) : projects.map(project => (
-                <div key={project.id} className="bg-slate-900/50 border border-white/5 rounded-2xl p-5 hover:border-white/10 transition-all">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-                    <Link href={`/projects/${project.id}`} className="group flex-1">
-                      <h3 className="text-base font-bold text-white group-hover:text-amber-400 transition-colors flex items-center gap-1.5">
-                        {project.name}
-                        <span className="text-xs font-normal text-amber-500/80 group-hover:text-amber-400">→ বিস্তারিত দেখুন</span>
-                      </h3>
-                      {project.description && <p className="text-xs text-slate-400 mt-0.5">{project.description}</p>}
-                    </Link>
-                    <div className="flex items-center gap-2 self-start sm:self-center shrink-0">
-                      {project.status === 'active' ? (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-lg border bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                          সক্রিয়
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-lg border bg-slate-800 text-slate-400 border-white/5">
-                          <svg className="w-3 h-3 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                          </svg>
-                          সম্পন্ন
-                        </span>
-                      )}
-                      <button
-                        onClick={() => handleToggleProjectStatus(project)}
-                        className={`inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-lg border transition-all cursor-pointer ${
-                          project.status === 'active'
-                            ? 'bg-slate-800 text-slate-300 border-white/5 hover:bg-amber-500/10 hover:text-amber-400 hover:border-amber-500/20'
-                            : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500 hover:text-white'
-                        }`}
-                      >
+            </div>
+            {projects.length === 0 ? (
+              <p className="text-center text-slate-500 py-12 bg-slate-900/50 border border-white/5 rounded-2xl">কোনো প্রজেক্ট নেই</p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {projects.map(project => (
+                  <div key={project.id} className="bg-slate-900/50 border border-white/5 rounded-2xl p-5 hover:border-white/10 transition-all flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-start justify-between gap-4 mb-3">
+                        <Link href={`/projects/${project.id}`} className="group flex-1">
+                          <h3 className="text-base font-bold text-white group-hover:text-amber-400 transition-colors flex items-center gap-1.5">
+                            {project.name}
+                            <span className="text-xs font-normal text-amber-500/80 group-hover:text-amber-400">→</span>
+                          </h3>
+                          {project.description && <p className="text-xs text-slate-400 mt-0.5">{project.description}</p>}
+                        </Link>
                         {project.status === 'active' ? (
-                          <>
-                            <svg className="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                            </svg>
-                            সম্পন্ন করুন
-                          </>
-                        ) : (
-                          <>
+                          <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-lg border bg-emerald-500/10 text-emerald-400 border-emerald-500/20 shrink-0">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                            সক্রিয় করুন
-                          </>
+                            সক্রিয়
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-lg border bg-slate-800 text-slate-400 border-white/5 shrink-0">
+                            সম্পন্ন
+                          </span>
                         )}
-                      </button>
-                      <button
-                        onClick={() => handleDeleteProject(project.id)}
-                        className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-lg bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500 hover:text-white transition-all cursor-pointer"
-                      >
-                        <svg className="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                        ডিলিট
-                      </button>
+                      </div>
+                      {project.summary && (
+                        <Link href={`/projects/${project.id}`} className="grid grid-cols-2 gap-2 mb-3 mt-4 block hover:opacity-90 transition-opacity">
+                          {[
+                            { label: 'বিনিয়োগ', value: `${Number(project.summary.totalExpense).toFixed(0)} ৳`, color: 'text-red-400' },
+                            { label: 'মুনাফা', value: `${Number(project.summary.totalProfit).toFixed(0)} ৳`, color: 'text-emerald-400' },
+                            { label: 'ফেরত', value: `${Number(project.summary.capitalReturn).toFixed(0)} ৳`, color: 'text-blue-400' },
+                            { label: 'বাইরে', value: `${Number(project.summary.stillOutside).toFixed(0)} ৳`, color: 'text-amber-400' },
+                          ].map((s, i) => (
+                            <div key={i} className="bg-slate-800/50 rounded-xl p-2.5 text-center">
+                              <p className={`text-sm font-black ${s.color}`}>{s.value}</p>
+                              <p className="text-[10px] text-slate-500 mt-0.5">{s.label}</p>
+                            </div>
+                          ))}
+                        </Link>
+                      )}
                     </div>
                   </div>
-                  {project.summary && (
-                    <Link href={`/projects/${project.id}`} className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3 block hover:opacity-90 transition-opacity">
-                      {[
-                        { label: 'বিনিয়োগ', value: `${Number(project.summary.totalExpense).toFixed(0)} ৳`, color: 'text-red-400' },
-                        { label: 'মুনাফা', value: `${Number(project.summary.totalProfit).toFixed(0)} ৳`, color: 'text-emerald-400' },
-                        { label: 'ফেরত', value: `${Number(project.summary.capitalReturn).toFixed(0)} ৳`, color: 'text-blue-400' },
-                        { label: 'বাইরে', value: `${Number(project.summary.stillOutside).toFixed(0)} ৳`, color: 'text-amber-400' },
-                      ].map((s, i) => (
-                        <div key={i} className="bg-slate-800/50 rounded-xl p-3 text-center">
-                          <p className={`text-sm font-black ${s.color}`}>{s.value}</p>
-                          <p className="text-xs text-slate-500 mt-0.5">{s.label}</p>
-                        </div>
-                      ))}
-                    </Link>
-                  )}
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 

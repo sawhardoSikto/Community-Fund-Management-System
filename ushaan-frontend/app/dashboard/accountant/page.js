@@ -511,6 +511,30 @@ const handleCreateProject = async (e) => {
   } finally { setSubmitting(false); }
 };
 
+const handleDeleteProject = async (id) => {
+  if (!confirm('এই প্রজেক্টটি মুছে ফেলবেন?')) return;
+  try {
+    await api.delete(`/projects/${id}`);
+    showToast('প্রজেক্ট মুছে ফেলা হয়েছে');
+    fetchAll();
+  } catch (err) {
+    showToast(err.response?.data?.message || 'ব্যর্থ হয়েছে', false);
+  }
+};
+
+const handleToggleProjectStatus = async (project) => {
+  const newStatus = project.status === 'active' ? 'completed' : 'active';
+  const actionText = newStatus === 'completed' ? 'সম্পন্ন' : 'সক্রিয়';
+  if (!confirm(`আপনি কি এই প্রজেক্টটি ${actionText} করতে চান?`)) return;
+  try {
+    await api.patch(`/projects/${project.id}`, { status: newStatus });
+    showToast(`প্রজেক্টটি ${actionText} করা হয়েছে।`);
+    fetchAll();
+  } catch (err) {
+    showToast(err.response?.data?.message || 'স্ট্যাটাস আপডেট করতে ব্যর্থ হয়েছে', false);
+  }
+};
+
   // Transaction add
   const handleAddTransaction = async (e) => {
     e.preventDefault();
@@ -1211,9 +1235,52 @@ const handleCreateProject = async (e) => {
 
         {/* ── Projects Tab ── */}
         {tab === "projects" && (
-          <div className="max-w-md mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+            {/* Create Project Form */}
+            <div className="lg:col-span-1 bg-slate-900/50 border border-white/5 rounded-2xl p-5 h-fit">
+              <h2 className="text-base font-bold text-white mb-4">নতুন প্রজেক্ট</h2>
+              <form onSubmit={handleCreateProject} className="space-y-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-400 mb-1.5">প্রজেক্টের নাম</label>
+                  <input type="text" value={projectForm.name} onChange={e => setProjectForm(f => ({ ...f, name: e.target.value }))}
+                    placeholder="যেমন: রাতুল ইনভেস্টমেন্ট" required
+                    className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-amber-400/50 transition-all" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-400 mb-1.5">বিবরণ</label>
+                  <textarea value={projectForm.description} onChange={e => setProjectForm(f => ({ ...f, description: e.target.value }))}
+                    placeholder="প্রজেক্টের বিবরণ" rows={2}
+                    className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-amber-400/50 transition-all resize-none" />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-400 mb-1.5">শুরুর তারিখ</label>
+                    <input type="date" value={projectForm.startDate} onChange={e => setProjectForm(f => ({ ...f, startDate: e.target.value }))}
+                      className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-amber-400/50 transition-all" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-400 mb-1.5">শেষের তারিখ</label>
+                    <input type="date" value={projectForm.endDate} onChange={e => setProjectForm(f => ({ ...f, endDate: e.target.value }))}
+                      className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-amber-400/50 transition-all" />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-400 mb-1.5">পুরনো বিনিয়োগ (৳)</label>
+                  <input type="number" value={projectForm.openingInvested} onChange={e => setProjectForm(f => ({ ...f, openingInvested: e.target.value }))}
+                    placeholder="আগে থেকে যা invest আছে (না থাকলে 0)"
+                    className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-amber-400/50 transition-all" />
+                  <p className="text-xs text-slate-500 mt-1">ওয়েবসাইটের আগে যদি এই project এ invest করা থাকে</p>
+                </div>
+                <button type="submit" disabled={submitting}
+                  className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white font-bold rounded-xl transition-all disabled:opacity-60">
+                  {submitting && <span className="loading loading-spinner loading-xs" />}
+                  প্রজেক্ট তৈরি করুন
+                </button>
+              </form>
+            </div>
+
             {/* Add Transaction */}
-            <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
+            <div className="lg:col-span-1 bg-slate-900/50 border border-white/5 rounded-2xl p-5 h-fit">
               <h2 className="text-base font-bold text-white mb-4">
                 লেনদেন যোগ করুন
               </h2>
@@ -1260,7 +1327,7 @@ const handleCreateProject = async (e) => {
                             type: type.value,
                           }))
                         }
-                        className={`inline-flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-semibold transition-all border ${transactionForm.type === type.value ? "bg-amber-500 text-white border-amber-500 shadow-lg shadow-amber-500/20" : "bg-slate-800 border-white/5 text-slate-400 hover:bg-slate-700 hover:text-white"}`}
+                        className={`inline-flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-semibold transition-all border ${transactionForm.type === type.value ? "bg-amber-500 text-white border-amber-500 shadow-lg shadow-amber-500/20" : "bg-slate-800 border-white/5 text-slate-454 hover:bg-slate-700 hover:text-white"}`}
                       >
                         {getTransactionTypeIcon(type.value, `w-3.5 h-3.5 ${transactionForm.type === type.value ? 'text-white' : 'text-slate-455'}`)}
                         <span>{type.label}</span>
@@ -1332,6 +1399,69 @@ const handleCreateProject = async (e) => {
                   লেনদেন যোগ করুন
                 </button>
               </form>
+            </div>
+
+            {/* Projects List */}
+            <div className="lg:col-span-1 space-y-4">
+              <h2 className="text-base font-bold text-white">সব প্রজেক্ট ({projects.length})</h2>
+              {projects.length === 0 ? (
+                <p className="text-center text-slate-500 py-12 bg-slate-900/50 border border-white/5 rounded-2xl">কোনো প্রজেক্ট নেই</p>
+              ) : projects.map(project => (
+                <div key={project.id} className="bg-slate-900/50 border border-white/5 rounded-2xl p-5 hover:border-white/10 transition-all">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                    <Link href={`/projects/${project.id}`} className="group flex-1">
+                      <h3 className="text-base font-bold text-white group-hover:text-amber-400 transition-colors flex items-center gap-1.5">
+                        {project.name}
+                        <span className="text-xs font-normal text-amber-500/80 group-hover:text-amber-400">→</span>
+                      </h3>
+                      {project.description && <p className="text-xs text-slate-400 mt-0.5">{project.description}</p>}
+                    </Link>
+                    <div className="flex items-center gap-2 self-start sm:self-center shrink-0">
+                      {project.status === 'active' ? (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-lg border bg-emerald-500/10 text-emerald-400 border-emerald-500/20 shrink-0">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                          সক্রিয়
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-lg border bg-slate-800 text-slate-400 border-white/5 shrink-0">
+                          সম্পন্ন
+                        </span>
+                      )}
+                      <button
+                        onClick={() => handleToggleProjectStatus(project)}
+                        className={`inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-lg border transition-all cursor-pointer ${
+                          project.status === 'active'
+                            ? 'bg-slate-800 text-slate-300 border-white/5 hover:bg-amber-500/10 hover:text-amber-400 hover:border-amber-500/20'
+                            : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500 hover:text-white'
+                        }`}
+                      >
+                        {project.status === 'active' ? "সম্পন্ন" : "সক্রিয়"}
+                      </button>
+                      <button
+                        onClick={() => handleDeleteProject(project.id)}
+                        className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-lg bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500 hover:text-white transition-all cursor-pointer"
+                      >
+                        ডিলিট
+                      </button>
+                    </div>
+                  </div>
+                  {project.summary && (
+                    <Link href={`/projects/${project.id}`} className="grid grid-cols-2 gap-2 mb-3 block hover:opacity-90 transition-opacity">
+                      {[
+                        { label: 'বিনিয়োগ', value: `${Number(project.summary.totalExpense).toFixed(0)} ৳`, color: 'text-red-400' },
+                        { label: 'মুনাফা', value: `${Number(project.summary.totalProfit).toFixed(0)} ৳`, color: 'text-emerald-400' },
+                        { label: 'ফেরত', value: `${Number(project.summary.capitalReturn).toFixed(0)} ৳`, color: 'text-blue-400' },
+                        { label: 'বাইরে', value: `${Number(project.summary.stillOutside).toFixed(0)} ৳`, color: 'text-amber-400' },
+                      ].map((s, i) => (
+                        <div key={i} className="bg-slate-800/50 rounded-xl p-2.5 text-center">
+                          <p className={`text-sm font-black ${s.color}`}>{s.value}</p>
+                          <p className="text-[10px] text-slate-500 mt-0.5">{s.label}</p>
+                        </div>
+                      ))}
+                    </Link>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
         )}
