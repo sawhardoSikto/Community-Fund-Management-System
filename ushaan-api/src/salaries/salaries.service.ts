@@ -28,26 +28,8 @@ export class SalariesService implements OnModuleInit {
   }
 
   async getCaptureMonthAndYear(targetMonth: number, targetYear: number): Promise<{ month: number; year: number }> {
-    const targetSheet = await this.sheetRepo.findOne({
-      where: { month: targetMonth, year: targetYear, status: SheetStatus.PUBLISHED }
-    });
-    if (!targetSheet) {
-      return { month: targetMonth, year: targetYear };
-    }
-    const latestPublishedSheet = await this.sheetRepo.findOne({
-      where: { status: SheetStatus.PUBLISHED },
-      order: { year: 'DESC', month: 'DESC' }
-    });
-    if (!latestPublishedSheet) {
-      return { month: targetMonth, year: targetYear };
-    }
-    let nextMonth = latestPublishedSheet.month + 1;
-    let nextYear = latestPublishedSheet.year;
-    if (nextMonth > 12) {
-      nextMonth = 1;
-      nextYear += 1;
-    }
-    return { month: nextMonth, year: nextYear };
+    const now = new Date();
+    return { month: now.getMonth() + 1, year: now.getFullYear() };
   }
 
   // Accountant — salary add করো
@@ -101,6 +83,13 @@ export class SalariesService implements OnModuleInit {
   async remove(id: number) {
     const salary = await this.salaryRepo.findOne({ where: { id } });
     if (!salary) throw new NotFoundException('Salary not found');
+
+    if (salary.capturedInMonth && salary.capturedInYear) {
+      if (this.sheetsService.isMonthLocked(salary.capturedInMonth, salary.capturedInYear)) {
+        throw new BadRequestException('Cannot delete a salary from a locked month.');
+      }
+    }
+
     await this.salaryRepo.delete(id);
 
     // ✅ ডাইনামিক শিট রিক্যালকুলেট

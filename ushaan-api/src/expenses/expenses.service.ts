@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, OnModuleInit, Inject, forwardRef } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, OnModuleInit, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between } from 'typeorm';
 import { Expense } from './entities/expense.entity';
@@ -29,32 +29,17 @@ export class ExpensesService implements OnModuleInit {
   }
 
   async getCaptureMonthAndYear(targetMonth: number, targetYear: number): Promise<{ month: number; year: number }> {
-    const targetSheet = await this.sheetRepo.findOne({
-      where: { month: targetMonth, year: targetYear, status: SheetStatus.PUBLISHED }
-    });
-    if (!targetSheet) {
-      return { month: targetMonth, year: targetYear };
-    }
-    const latestPublishedSheet = await this.sheetRepo.findOne({
-      where: { status: SheetStatus.PUBLISHED },
-      order: { year: 'DESC', month: 'DESC' }
-    });
-    if (!latestPublishedSheet) {
-      return { month: targetMonth, year: targetYear };
-    }
-    let nextMonth = latestPublishedSheet.month + 1;
-    let nextYear = latestPublishedSheet.year;
-    if (nextMonth > 12) {
-      nextMonth = 1;
-      nextYear += 1;
-    }
-    return { month: nextMonth, year: nextYear };
+    return { month: targetMonth, year: targetYear };
   }
 
   async create(dto: CreateExpenseDto, userId: number) {
     const expDate = new Date(dto.date);
     const targetMonth = expDate.getMonth() + 1;
     const targetYear = expDate.getFullYear();
+
+    if (this.sheetsService.isMonthLocked(targetMonth, targetYear)) {
+      throw new BadRequestException('Cannot add an expense to a locked month.');
+    }
 
     const capture = await this.getCaptureMonthAndYear(targetMonth, targetYear);
 
@@ -97,6 +82,13 @@ export class ExpensesService implements OnModuleInit {
   async remove(id: number) {
     const expense = await this.expenseRepo.findOne({ where: { id } });
     if (!expense) throw new NotFoundException('Expense not found');
+
+    if (expense.capturedInMonth && expense.capturedInYear) {
+      if (this.sheetsService.isMonthLocked(expense.capturedInMonth, expense.capturedInYear)) {
+        throw new BadRequestException('Cannot delete an expense from a locked month.');
+      }
+    }
+
     await this.expenseRepo.delete(id);
 
     // ✅ ডাইনামিক শিট রিক্যালকুলেট

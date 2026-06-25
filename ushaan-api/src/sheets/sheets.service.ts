@@ -31,6 +31,17 @@ export class SheetsService implements OnModuleInit {
     private notificationsService: NotificationsService, // ✅ নতুন
   ) {}
 
+  isMonthLocked(month: number, year: number): boolean {
+    const now = new Date();
+    const currentMonth = now.getMonth() + 1;
+    const currentYear = now.getFullYear();
+
+    if (year < currentYear) return true;
+    if (year === currentYear && month < currentMonth) return true;
+
+    return false;
+  }
+
   async onModuleInit() {
     // সার্ভার স্টার্ট হওয়ার সময় চলতি ক্যালেন্ডার মাসের শিট তৈরি করো ও রিক্যালকুলেট করো
     const now = new Date();

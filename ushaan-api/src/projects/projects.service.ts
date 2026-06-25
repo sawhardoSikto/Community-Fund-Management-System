@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, OnModuleInit, Inject, forwardRef } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, OnModuleInit, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Project, ProjectStatus } from './entities/project.entity';
@@ -38,26 +38,7 @@ export class ProjectsService implements OnModuleInit {
   }
 
   async getCaptureMonthAndYear(targetMonth: number, targetYear: number): Promise<{ month: number; year: number }> {
-    const targetSheet = await this.sheetRepo.findOne({
-      where: { month: targetMonth, year: targetYear, status: SheetStatus.PUBLISHED }
-    });
-    if (!targetSheet) {
-      return { month: targetMonth, year: targetYear };
-    }
-    const latestPublishedSheet = await this.sheetRepo.findOne({
-      where: { status: SheetStatus.PUBLISHED },
-      order: { year: 'DESC', month: 'DESC' }
-    });
-    if (!latestPublishedSheet) {
-      return { month: targetMonth, year: targetYear };
-    }
-    let nextMonth = latestPublishedSheet.month + 1;
-    let nextYear = latestPublishedSheet.year;
-    if (nextMonth > 12) {
-      nextMonth = 1;
-      nextYear += 1;
-    }
-    return { month: nextMonth, year: nextYear };
+    return { month: targetMonth, year: targetYear };
   }
 
   // সব project দেখো
@@ -111,6 +92,15 @@ for (const user of users) {
 
     // Find all transactions to get unique months/years
     const txs = project.transactions || [];
+
+    for (const tx of txs) {
+      if (tx.capturedInMonth && tx.capturedInYear) {
+        if (this.sheetsService.isMonthLocked(tx.capturedInMonth, tx.capturedInYear)) {
+          throw new BadRequestException('Cannot delete a project with transactions in a locked month.');
+        }
+      }
+    }
+
     const uniquePeriods = Array.from(new Set(txs.map(t => `${t.capturedInMonth}-${t.capturedInYear}`)))
       .map(p => {
         const [month, year] = p.split('-').map(Number);
@@ -137,6 +127,10 @@ for (const user of users) {
     const txDate = new Date(dto.date);
     const targetMonth = txDate.getMonth() + 1;
     const targetYear = txDate.getFullYear();
+
+    if (this.sheetsService.isMonthLocked(targetMonth, targetYear)) {
+      throw new BadRequestException('Cannot add a project transaction to a locked month.');
+    }
 
     const capture = await this.getCaptureMonthAndYear(targetMonth, targetYear);
 

@@ -196,6 +196,12 @@ private async getDueMonths(
     const oldMonth = payment.capturedInMonth;
     const oldYear = payment.capturedInYear;
 
+    if (oldStatus === PaymentStatus.APPROVED && oldMonth && oldYear) {
+      if (this.sheetsService.isMonthLocked(oldMonth, oldYear)) {
+        throw new BadRequestException('Cannot modify or revert a payment from a locked month.');
+      }
+    }
+
     if (dto.status === PaymentStatus.PENDING) {
       payment.status = PaymentStatus.PENDING;
       payment.capturedInMonth = null;
@@ -513,24 +519,8 @@ async getApprovedPaymentsCapturedInMonth(month: number, year: number) {
 }
 
 async getCaptureMonthAndYear(): Promise<{ month: number; year: number }> {
-  const latestPublishedSheet = await this.sheetRepo.findOne({
-    where: { status: SheetStatus.PUBLISHED },
-    order: { year: 'DESC', month: 'DESC' }
-  });
-  
-  if (!latestPublishedSheet) {
-    const now = new Date();
-    return { month: now.getMonth() + 1, year: now.getFullYear() };
-  }
-  
-  let nextMonth = latestPublishedSheet.month + 1;
-  let nextYear = latestPublishedSheet.year;
-  if (nextMonth > 12) {
-    nextMonth = 1;
-    nextYear += 1;
-  }
-  
-  return { month: nextMonth, year: nextYear };
+  const now = new Date();
+  return { month: now.getMonth() + 1, year: now.getFullYear() };
 }
 
 async getNextUnpaidMonthAndYear(userId: number): Promise<{ month: number; year: number }> {
