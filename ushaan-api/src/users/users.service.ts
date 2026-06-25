@@ -11,7 +11,8 @@ export class UsersService {
   ) {}
 
   async findByEmail(email: string): Promise<User | null> {
-    return this.userRepo.findOne({ where: { email } });
+    const cleanEmail = email ? email.trim().toLowerCase() : '';
+    return this.userRepo.findOne({ where: { email: cleanEmail } });
   }
 
   async findById(id: number): Promise<User | null> {

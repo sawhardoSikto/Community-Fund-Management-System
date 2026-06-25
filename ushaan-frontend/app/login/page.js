@@ -23,13 +23,19 @@ export default function LoginPage() {
     const rawMessage = err?.response?.data?.message;
     const message = Array.isArray(rawMessage) ? rawMessage.join(', ') : rawMessage;
 
+    if (typeof message === 'string' && message.trim()) {
+      if (message.includes('অনুমোদিত') || message.includes('approve') || message.includes('pending')) {
+        return message;
+      }
+      if (message.includes('Invalid email') || message.includes('Unauthorized') || message.includes('password')) {
+        return 'ইমেইল বা পাসওয়ার্ড ভুল';
+      }
+      return message;
+    }
+
     if (status === 401) return 'ইমেইল বা পাসওয়ার্ড ভুল';
     if (status === 404) return 'এই ইমেইল দিয়ে কোনো অ্যাকাউন্ট পাওয়া যায়নি';
     if (status === 429) return 'অনেকবার চেষ্টা করা হয়েছে, একটু পরে আবার চেষ্টা করুন';
-
-    if (typeof message === 'string' && message.trim()) {
-      return message;
-    }
 
     return 'লগইন ব্যর্থ হয়েছে, আবার চেষ্টা করুন';
   };
@@ -39,7 +45,11 @@ export default function LoginPage() {
     setLoading(true);
     setError('');
     try {
-      const res = await api.post('/auth/login', form);
+      const sanitizedForm = {
+        email: form.email.trim().toLowerCase(),
+        password: form.password,
+      };
+      const res = await api.post('/auth/login', sanitizedForm);
       const token = res.data.token;
       localStorage.setItem('token', token);
 

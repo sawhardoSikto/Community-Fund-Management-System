@@ -51,7 +51,7 @@ export default function RegisterPage() {
     try {
       const formData = new FormData();
       formData.append('name', form.name);
-      formData.append('email', form.email);
+      formData.append('email', form.email.trim().toLowerCase());
       formData.append('password', form.password);
       formData.append('phone', form.phone);
       formData.append('nid', form.nid);
@@ -60,8 +60,8 @@ export default function RegisterPage() {
       if (photo) formData.append('photo', photo);
 
       await api.post('/auth/register', formData, {
-  headers: { 'Content-Type': 'multipart/form-data' },
-});
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
 
 setSuccess('নিবন্ধন সফল হয়েছে! লগইন পেজে নিয়ে যাচ্ছি...');
 
