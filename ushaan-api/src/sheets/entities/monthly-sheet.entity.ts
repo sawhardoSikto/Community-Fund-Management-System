@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, Unique } from 'typeorm';
 
 export enum SheetStatus {
   DRAFT = 'draft',
@@ -6,6 +6,7 @@ export enum SheetStatus {
 }
 
 @Entity()
+@Unique(['month', 'year'])
 export class MonthlySheet {
   @PrimaryGeneratedColumn()
   id: number;

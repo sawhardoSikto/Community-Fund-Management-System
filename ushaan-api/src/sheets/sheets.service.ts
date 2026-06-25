@@ -82,7 +82,14 @@ export class SheetsService implements OnModuleInit {
         totalAsset: previousBalance,
         status: SheetStatus.PUBLISHED,
       });
-      await this.sheetRepo.save(sheet);
+      try {
+        await this.sheetRepo.save(sheet);
+      } catch (err) {
+        sheet = await this.sheetRepo.findOne({ where: { month, year } });
+        if (!sheet) {
+          throw err;
+        }
+      }
     }
     return sheet;
   }
@@ -589,6 +596,7 @@ async remove(id: number) {
     });
   }
   async resetAll() {
-  await this.sheetRepo.query('DELETE FROM monthly_sheet');
-}
+    await this.sheetRepo.query('DELETE FROM monthly_sheet');
+    await this.ensureCurrentMonthSheet();
+  }
 }

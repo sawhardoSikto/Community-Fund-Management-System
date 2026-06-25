@@ -464,19 +464,6 @@ const handlePaymentStatus = async (id, status) => {
     }
   };
 
-  // Sheet publish
-  const handlePublishSheet = async (id) => {
-    setProcessing(id);
-    try {
-      await api.patch(`/sheets/${id}/publish`);
-      showToast("শিট প্রকাশিত হয়েছে!");
-      fetchAll();
-    } catch (err) {
-      showToast(err.response?.data?.message || "ব্যর্থ হয়েছে", false);
-    } finally {
-      setProcessing(null);
-    }
-  };
 
   // Project create
 const handleCreateProject = async (e) => {
@@ -1621,44 +1608,12 @@ const handleCreateProject = async (e) => {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span
-                          className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold rounded-lg ${sheet.status === "published" ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" : "bg-amber-500/10 text-amber-400 border border-amber-500/20"}`}
-                        >
-                          {sheet.status === "published" ? (
-                            <>
-                              <svg className="w-3.5 h-3.5 text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                              </svg>
-                              প্রকাশিত
-                            </>
-                          ) : (
-                            <>
-                              <svg className="w-3.5 h-3.5 text-amber-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                              </svg>
-                              খসড়া
-                            </>
-                          )}
-                        </span>
                         <Link
                           href={`/sheets/${sheet.id}`}
                           className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-white text-xs font-semibold rounded-lg transition-colors"
                         >
                           দেখুন
                         </Link>
-                        {sheet.status === "draft" && (
-                          <button
-                            onClick={() => handlePublishSheet(sheet.id)}
-                            disabled={processing === sheet.id}
-                            className="px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500 text-emerald-400 hover:text-white border border-emerald-500/20 text-xs font-semibold rounded-lg transition-all disabled:opacity-50"
-                          >
-                            {processing === sheet.id ? (
-                              <span className="loading loading-spinner loading-xs" />
-                            ) : (
-                              "প্রকাশ করুন"
-                            )}
-                          </button>
-                        )}
                       </div>
                     </div>
                   ))}
