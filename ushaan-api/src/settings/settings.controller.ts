@@ -15,14 +15,14 @@ export class SettingsController {
   }
 
   @Post('opening-balance')
-  @Roles('admin')
+  @Roles('admin', 'accountant')
   setOpeningBalance(@Body() dto: OpeningBalanceDto, @Request() req) {
     return this.settingsService.setOpeningBalance(dto, req.user.id);
   }
   @Delete('reset')
-@Roles('admin')
-async reset() {
-  await this.settingsService.resetSettings();
-  return { message: 'Settings reset' };
-}
+  @Roles('admin', 'accountant')
+  async reset() {
+    await this.settingsService.resetSettings();
+    return { message: 'Settings reset' };
+  }
 }

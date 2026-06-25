@@ -35,11 +35,11 @@ export class SalariesController {
 
   // Salary delete করো
   @Delete('reset')
-@Roles('admin')
-async reset() {
-  await this.salariesService.resetAll();
-  return { message: 'All salaries deleted' };
-}
+  @Roles('admin', 'accountant')
+  async reset() {
+    await this.salariesService.resetAll();
+    return { message: 'All salaries deleted' };
+  }
   @Delete(':id')
   @Roles('accountant', 'admin')
   remove(@Param('id', ParseIntPipe) id: number) {

@@ -33,6 +33,9 @@ export class AuthService {
       ? `/uploads/${file.filename}`
       : null;
 
+    const userCount = await this.usersService.countUsers();
+    const isFirstUser = userCount === 0;
+
     const user = await this.usersService.create({
       name: dto.name,
       email: dto.email,
@@ -40,8 +43,9 @@ export class AuthService {
       phone: dto.phone,
       nid: dto.nid,
       monthlyAmount: dto.monthlyAmount || 200,
-     role: 'member',
+      role: isFirstUser ? 'admin' : 'member',
       isVerified: true,
+      isApproved: isFirstUser ? true : false,
       photoUrl,
     });
 
@@ -71,6 +75,12 @@ export class AuthService {
     if (!isMatch) {
       throw new UnauthorizedException(
         'Invalid email or password',
+      );
+    }
+
+    if (!user.isApproved) {
+      throw new UnauthorizedException(
+        'আপনার অ্যাকাউন্টটি এখনও অ্যাডমিন দ্বারা অনুমোদিত হয়নি। অনুগ্রহ করে অপেক্ষা করুন।',
       );
     }
 

@@ -54,6 +54,13 @@ const getTabIcon = (key, isActive) => {
           <path strokeLinecap="round" strokeLinejoin="round" d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
       );
+    case 'settings':
+      return (
+        <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+      );
     default:
       return null;
   }
@@ -225,6 +232,15 @@ export default  function AccountantDashboard() {
   });
   
 
+  const [currentSettings, setCurrentSettings] = useState(null);
+  const [settingsForm, setSettingsForm] = useState({
+    openingCashInHand: "",
+    openingTotalInvested: "",
+    openingTotalProfit: "",
+    openingMonth: new Date().getMonth() + 1,
+    openingYear: new Date().getFullYear(),
+  });
+
   const [processing, setProcessing] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [manualDueInfo, setManualDueInfo] = useState([]);
@@ -332,7 +348,7 @@ export default  function AccountantDashboard() {
 const fetchAll = async () => {
   setLoading(true);
   try {
-    const [pendingRes, usersRes, projectsRes, overallRes, sheetsRes, expensesRes, allPaymentsRes] =
+    const [pendingRes, usersRes, projectsRes, overallRes, sheetsRes, expensesRes, allPaymentsRes, settingsRes] =
       await Promise.all([
         api.get('/payments/pending'),
         api.get('/users'),
@@ -341,6 +357,7 @@ const fetchAll = async () => {
         api.get('/sheets'),
         api.get('/expenses'),
         api.get('/payments'), // ✅ approved history এর জন্য
+        api.get('/settings'), // ✅ settings এর জন্য
       ]);
     setPendingPayments(pendingRes.data.data || []);
     setAllUsers(usersRes.data || []);
@@ -349,6 +366,18 @@ const fetchAll = async () => {
     setSheets(sheetsRes.data.data || []);
     setExpenses(expensesRes.data || []);
     setAllPayments(allPaymentsRes.data.data || []); // ✅
+
+    const settings = settingsRes.data;
+    setCurrentSettings(settings);
+    if (settings) {
+      setSettingsForm({
+        openingCashInHand: Number(settings.openingCashInHand) || '',
+        openingTotalInvested: Number(settings.openingTotalInvested) || '',
+        openingTotalProfit: Number(settings.openingTotalProfit) || '',
+        openingMonth: settings.openingMonth || new Date().getMonth() + 1,
+        openingYear: settings.openingYear || new Date().getFullYear(),
+      });
+    }
   } catch (err) { console.error(err); }
   finally { setLoading(false); }
 };
@@ -503,6 +532,58 @@ const handleCreateProject = async (e) => {
     }
   };
 
+  const handleSettingsSave = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    try {
+      await api.post('/settings/opening-balance', {
+        openingCashInHand: parseFloat(settingsForm.openingCashInHand) || 0,
+        openingTotalInvested: parseFloat(settingsForm.openingTotalInvested) || 0,
+        openingTotalProfit: parseFloat(settingsForm.openingTotalProfit) || 0,
+        openingMonth: parseInt(settingsForm.openingMonth),
+        openingYear: parseInt(settingsForm.openingYear),
+      });
+      showToast('সেটিংস সংরক্ষিত হয়েছে!');
+      fetchAll();
+    } catch (err) {
+      showToast(err.response?.data?.message || 'ব্যর্থ হয়েছে', false);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleOpeningBalanceSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    try {
+      const fd = new FormData(e.target);
+      await api.post('/payments/opening-balance', {
+        userId: parseInt(fd.get('userId')),
+        totalPaid: parseFloat(fd.get('totalPaid')),
+        upToMonth: parseInt(fd.get('upToMonth')),
+        upToYear: parseInt(fd.get('upToYear')),
+      });
+      showToast('পুরনো ব্যালেন্স সেট হয়েছে!');
+      e.target.reset();
+      fetchAll();
+    } catch (err) {
+      showToast(err.response?.data?.message || 'ব্যর্থ হয়েছে', false);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleReset = async (label, endpoint) => {
+    if (!confirm(`"${label}" — আপনি কি নিশ্চিত? এটি পূর্বাবস্থায় ফেরানো যাবে না!`)) return;
+    try {
+      await api.delete(endpoint);
+      showToast(`${label} সম্পন্ন হয়েছে`);
+      fetchAll();
+    } catch (err) {
+      showToast(err.response?.data?.message || 'ব্যর্থ হয়েছে', false);
+    }
+  };
+
   if (loading)
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center">
@@ -518,6 +599,7 @@ const handleCreateProject = async (e) => {
     { key: "salary", label: "বেতন" },
     { key: "sheets", label: "শিট" },
     { key: 'expenses', label: 'খরচ' },
+    { key: 'settings', label: 'সেটিংস' },
   ];
 
   return (
@@ -1619,6 +1701,159 @@ const handleCreateProject = async (e) => {
                   ))}
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* ── Settings Tab ── */}
+        {tab === 'settings' && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Opening Balance Form */}
+              <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
+                <h2 className="text-base font-bold text-white mb-1">প্রারম্ভিক ব্যালেন্স (হাতে নগদ/বিনিয়োগ)</h2>
+                <p className="text-xs text-slate-400 mb-4">ওয়েবসাইট চালু হওয়ার আগের মূল তহবিল হিসাব</p>
+
+                {/* ✅ Settings দেখাও */}
+                {currentSettings && Number(currentSettings.openingCashInHand) > 0 && (
+                  <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-xl p-3 mb-4">
+                    <p className="text-xs text-emerald-400 font-semibold flex items-center gap-1">
+                      <svg className="w-3.5 h-3.5 text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                      সেটিংস সংরক্ষিত আছে
+                    </p>
+                    <div className="flex gap-4 mt-2">
+                      <span className="text-xs text-slate-400">নগদ: <span className="text-white font-semibold">{Number(currentSettings.openingCashInHand).toFixed(0)} ৳</span></span>
+                      <span className="text-xs text-slate-400">বিনিয়োগ: <span className="text-white font-semibold">{Number(currentSettings.openingTotalInvested).toFixed(0)} ৳</span></span>
+                      <span className="text-xs text-slate-400">মুনাফা: <span className="text-white font-semibold">{Number(currentSettings.openingTotalProfit).toFixed(0)} ৳</span></span>
+                    </div>
+                    <p className="text-xs text-slate-500 mt-1">{MONTH_NAMES[(currentSettings.openingMonth || 1) - 1]} {currentSettings.openingYear} থেকে শুরু</p>
+                  </div>
+                )}
+
+                <form onSubmit={handleSettingsSave} className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-400 mb-1.5">হাতে নগদ (৳)</label>
+                    <input type="number" value={settingsForm.openingCashInHand}
+                      onChange={e => setSettingsForm(f => ({ ...f, openingCashInHand: e.target.value }))}
+                      placeholder="যেমন: 21028"
+                      className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-amber-400/50 transition-all" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-400 mb-1.5">মোট বিনিয়োগকৃত (৳)</label>
+                    <input type="number" value={settingsForm.openingTotalInvested}
+                      onChange={e => setSettingsForm(f => ({ ...f, openingTotalInvested: e.target.value }))}
+                      placeholder="যেমন: 13195"
+                      className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-amber-400/50 transition-all" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-400 mb-1.5">মোট মুনাফা (৳)</label>
+                    <input type="number" value={settingsForm.openingTotalProfit}
+                      onChange={e => setSettingsForm(f => ({ ...f, openingTotalProfit: e.target.value }))}
+                      placeholder="যেমন: 600"
+                      className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-amber-400/50 transition-all" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-400 mb-1.5">থেকে মাস</label>
+                      <select value={settingsForm.openingMonth}
+                        onChange={e => setSettingsForm(f => ({ ...f, openingMonth: parseInt(e.target.value) }))}
+                        className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-amber-400/50 transition-all">
+                        {MONTH_NAMES.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-400 mb-1.5">বছর</label>
+                      <input type="number" value={settingsForm.openingYear}
+                        onChange={e => setSettingsForm(f => ({ ...f, openingYear: parseInt(e.target.value) }))}
+                        className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-amber-400/50 transition-all" />
+                    </div>
+                  </div>
+                  <button type="submit" disabled={submitting}
+                    className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white font-bold rounded-xl transition-all disabled:opacity-60">
+                    {submitting && <span className="loading loading-spinner loading-xs" />}
+                    সেটিংস সংরক্ষণ করুন
+                  </button>
+                </form>
+              </div>
+
+              {/* Member pre-launch Opening Balance Form */}
+              <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5 h-fit">
+                <h2 className="text-base font-bold text-white mb-1">সদস্যের প্রাক-লঞ্চ পেমেন্ট (Opening Balance)</h2>
+                <p className="text-xs text-slate-400 mb-4">ওয়েবসাইট চালুর আগে কোনো সদস্য কত টাকা জমা দিয়েছিলেন</p>
+                <form onSubmit={handleOpeningBalanceSubmit} className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-400 mb-1.5">সদস্য</label>
+                    <select name="userId" required
+                      className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-amber-400/50 transition-all">
+                      <option value="">সদস্য নির্বাচন করুন</option>
+                      {allUsers.map(u => (
+                        <option key={u.id} value={u.id}>
+                          {u.name} ({u.role})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-400 mb-1.5">মোট পরিশোধিত পরিমাণ (৳)</label>
+                    <input type="number" name="totalPaid" required placeholder="যেমন: ৪০০০"
+                      className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-amber-400/50 transition-all" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-400 mb-1.5">পর্যন্ত মাস</label>
+                      <select name="upToMonth" required
+                        className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-amber-400/50 transition-all">
+                        {MONTH_NAMES.map((m, i) => (
+                          <option key={i} value={i + 1}>{m}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-400 mb-1.5">বছর</label>
+                      <input type="number" name="upToYear" defaultValue={new Date().getFullYear()}
+                        className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-amber-400/50 transition-all" />
+                    </div>
+                  </div>
+                  <button type="submit" disabled={submitting}
+                    className="w-full flex items-center justify-center gap-2 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all disabled:opacity-60">
+                    {submitting && <span className="loading loading-spinner loading-xs" />}
+                    ব্যালেন্স সেট করুন
+                  </button>
+                </form>
+              </div>
+            </div>
+
+            {/* ✅ Danger Zone */}
+            <div className="bg-red-950/20 border border-red-500/10 rounded-2xl p-6 shadow-xl max-w-4xl mx-auto">
+              <h2 className="text-base font-black text-red-400 mb-1.5 flex items-center gap-2">
+                <svg className="w-5 h-5 animate-pulse text-red-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                ⚠️ বিপজ্জনক অঞ্চল (Danger Zone)
+              </h2>
+              <p className="text-xs text-slate-400 mb-5">
+                নিচের অ্যাকশনগুলো স্থায়ীভাবে ডেটা মুছে ফেলবে এবং এটি আর কোনোভাবেই পুনরুদ্ধার বা পূর্বাবস্থায় ফিরিয়ে নেওয়া সম্ভব নয়। অনুগ্রহ করে সতর্কতার সাথে ব্যবহার করুন।
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {[
+                  { label: 'সব শিট মুছুন', endpoint: '/sheets/reset' },
+                  { label: 'সব বেতন মুছুন', endpoint: '/salaries/reset' },
+                  { label: 'সব পেমেন্ট মুছুন', endpoint: '/payments/reset' },
+                  { label: 'সব ওপেনিং ব্যালেন্স মুছুন', endpoint: '/payments/opening-balances/reset' },
+                  { label: 'সেটিংস রিসেট করুন', endpoint: '/settings/reset' },
+                  { label: 'সব সাধারণ খরচ মুছুন', endpoint: '/expenses/reset/all' },
+                ].map((item, i) => (
+                  <button key={i} onClick={() => handleReset(item.label, item.endpoint)}
+                    className="w-full flex items-center justify-between px-4 py-3.5 bg-red-950/30 hover:bg-red-500/10 border border-red-500/10 hover:border-red-500/20 rounded-xl text-xs font-bold text-red-400 transition-all active:scale-[0.98]">
+                    <span>{item.label}</span>
+                    <svg className="w-4 h-4 text-red-500/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         )}

@@ -37,6 +37,9 @@ photoUrl: string | null;
   @Column({ default: false })
   isVerified: boolean; // OTP verify হলে true
 
+  @Column({ default: false })
+  isApproved: boolean; // Admin approve করলে true
+
   @Column({ nullable: true, type: 'varchar' })
   otp: string | null;
 

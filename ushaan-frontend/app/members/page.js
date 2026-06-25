@@ -13,7 +13,7 @@ export default function MembersPage() {
 
   useEffect(() => {
     api.get('/users').then(res => {
-      setUsers(res.data || []);
+      setUsers((res.data || []).filter(u => u.isApproved));
       setLoading(false);
     }).catch(() => setLoading(false));
   }, []);

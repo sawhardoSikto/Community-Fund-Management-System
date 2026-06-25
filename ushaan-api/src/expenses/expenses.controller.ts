@@ -38,9 +38,8 @@ export class ExpensesController {
     return this.expensesService.remove(id);
   }
 
-  // ✅ Reset (admin)
   @Delete('reset/all')
-  @Roles('admin')
+  @Roles('admin', 'accountant')
   resetAll() {
     return this.expensesService.resetAll();
   }

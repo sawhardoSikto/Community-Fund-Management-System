@@ -52,12 +52,12 @@ export class SheetsController {
 
   // ✅ Accountant — draft sheet delete করো
   @Delete('reset')
-@Roles('admin')
-@UseGuards(RolesGuard)
-async reset() {
-  await this.sheetsService.resetAll();
-  return { message: 'All sheets deleted' };
-}
+  @Roles('admin', 'accountant')
+  @UseGuards(RolesGuard)
+  async reset() {
+    await this.sheetsService.resetAll();
+    return { message: 'All sheets deleted' };
+  }
   @Delete(':id')
   @Roles('accountant', 'admin')
   remove(@Param('id', ParseIntPipe) id: number) {

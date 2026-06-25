@@ -30,11 +30,16 @@ export class UsersService {
       nid: true,
       photoUrl: true,
       isVerified: true,
+      isApproved: true,
       createdAt: true,
     },
     order: { createdAt: 'DESC' },
   });
 }
+
+  async countUsers(): Promise<number> {
+    return this.userRepo.count();
+  }
 
   async create(data: Partial<User>): Promise<User> {
     const user = this.userRepo.create(data);

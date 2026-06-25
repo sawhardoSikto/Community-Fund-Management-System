@@ -248,9 +248,9 @@ export default function SecretaryDashboard() {
         {/* Members */}
         {tab === 'members' && (
           <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
-            <h2 className="text-base font-bold text-white mb-4">সদস্য তালিকা ({allUsers.length})</h2>
+            <h2 className="text-base font-bold text-white mb-4">সদস্য তালিকা ({allUsers.filter(u => u.isApproved).length})</h2>
             <div className="space-y-2">
-              {allUsers.map(u => (
+              {allUsers.filter(u => u.isApproved).map(u => (
                 <div key={u.id} className="flex items-center justify-between px-4 py-3 bg-slate-800/50 rounded-xl">
                   <div className="flex items-center gap-3">
                     <UserAvatar user={u} className="w-9 h-9 rounded-xl overflow-hidden shrink-0 text-sm" gradient="from-amber-400 to-orange-500" />

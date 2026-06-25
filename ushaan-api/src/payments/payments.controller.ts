@@ -123,14 +123,14 @@ getMyTotalPaid(@Request() req) {
   return this.paymentsService.getMemberTotalPaid(req.user.id);
 }
 @Delete('reset')
-@Roles('admin')
+@Roles('admin', 'accountant')
 async resetPayments() {
   await this.paymentsService.resetAll();
   return { message: 'All payments deleted' };
 }
 
 @Delete('opening-balances/reset')
-@Roles('admin')
+@Roles('admin', 'accountant')
 async resetOpeningBalances() {
   await this.paymentsService.resetOpeningBalances();
   return { message: 'All opening balances deleted' };
