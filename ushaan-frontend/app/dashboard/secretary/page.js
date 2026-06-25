@@ -257,6 +257,11 @@ export default function SecretaryDashboard() {
                     <div>
                       <p className="text-sm font-bold text-white">{u.name}</p>
                       <p className="text-xs text-slate-400">{u.phone || u.email}</p>
+                      {u.dueAmount > 0 ? (
+                        <p className="text-xs font-bold text-rose-400 mt-0.5">বকেয়া: {u.dueAmount} ৳</p>
+                      ) : (
+                        <p className="text-xs font-bold text-emerald-400 mt-0.5">বকেয়া নেই</p>
+                      )}
                     </div>
                   </div>
                   <div className="text-right">

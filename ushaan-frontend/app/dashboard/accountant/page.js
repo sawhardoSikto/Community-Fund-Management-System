@@ -538,8 +538,8 @@ const handleCreateProject = async (e) => {
     try {
       await api.post('/settings/opening-balance', {
         openingCashInHand: parseFloat(settingsForm.openingCashInHand) || 0,
-        openingTotalInvested: parseFloat(settingsForm.openingTotalInvested) || 0,
-        openingTotalProfit: parseFloat(settingsForm.openingTotalProfit) || 0,
+        openingTotalInvested: 0,
+        openingTotalProfit: 0,
         openingMonth: parseInt(settingsForm.openingMonth),
         openingYear: parseInt(settingsForm.openingYear),
       });
@@ -951,7 +951,7 @@ const handleCreateProject = async (e) => {
                     <option value="">সদস্য নির্বাচন করুন</option>
                     {allUsers.map((u) => (
                       <option key={u.id} value={u.id}>
-                        {u.name} ({u.role} · {u.monthlyAmount} ৳)
+                        {u.name} ({u.role} · {u.monthlyAmount} ৳/মাস · বকেয়া: {u.dueAmount || 0} ৳)
                       </option>
                     ))}
                   </select>
@@ -1725,8 +1725,6 @@ const handleCreateProject = async (e) => {
                     </p>
                     <div className="flex gap-4 mt-2">
                       <span className="text-xs text-slate-400">নগদ: <span className="text-white font-semibold">{Number(currentSettings.openingCashInHand).toFixed(0)} ৳</span></span>
-                      <span className="text-xs text-slate-400">বিনিয়োগ: <span className="text-white font-semibold">{Number(currentSettings.openingTotalInvested).toFixed(0)} ৳</span></span>
-                      <span className="text-xs text-slate-400">মুনাফা: <span className="text-white font-semibold">{Number(currentSettings.openingTotalProfit).toFixed(0)} ৳</span></span>
                     </div>
                     <p className="text-xs text-slate-500 mt-1">{MONTH_NAMES[(currentSettings.openingMonth || 1) - 1]} {currentSettings.openingYear} থেকে শুরু</p>
                   </div>
@@ -1738,20 +1736,6 @@ const handleCreateProject = async (e) => {
                     <input type="number" value={settingsForm.openingCashInHand}
                       onChange={e => setSettingsForm(f => ({ ...f, openingCashInHand: e.target.value }))}
                       placeholder="যেমন: 21028"
-                      className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-amber-400/50 transition-all" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-400 mb-1.5">মোট বিনিয়োগকৃত (৳)</label>
-                    <input type="number" value={settingsForm.openingTotalInvested}
-                      onChange={e => setSettingsForm(f => ({ ...f, openingTotalInvested: e.target.value }))}
-                      placeholder="যেমন: 13195"
-                      className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-amber-400/50 transition-all" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-400 mb-1.5">মোট মুনাফা (৳)</label>
-                    <input type="number" value={settingsForm.openingTotalProfit}
-                      onChange={e => setSettingsForm(f => ({ ...f, openingTotalProfit: e.target.value }))}
-                      placeholder="যেমন: 600"
                       className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-amber-400/50 transition-all" />
                   </div>
                   <div className="grid grid-cols-2 gap-3">

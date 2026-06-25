@@ -462,7 +462,15 @@ export default function AdminDashboard() {
                       <UserAvatar user={u} className="w-9 h-9 rounded-xl overflow-hidden shrink-0 text-sm" gradient="from-amber-400 to-orange-500" />
                       <div>
                         <p className="text-sm font-bold text-white">{u.name}</p>
-                        <p className="text-xs text-slate-400">{u.email}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-xs text-slate-400">{u.email}</p>
+                          <span className="text-xs text-amber-400 font-semibold">{u.monthlyAmount} ৳/মাস</span>
+                        </div>
+                        {u.dueAmount > 0 ? (
+                          <p className="text-xs font-bold text-rose-400 mt-0.5">বকেয়া: {u.dueAmount} ৳</p>
+                        ) : (
+                          <p className="text-xs font-bold text-emerald-400 mt-0.5">বকেয়া নেই</p>
+                        )}
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -489,6 +497,11 @@ export default function AdminDashboard() {
                           <p className="text-xs text-slate-400">{u.phone || u.email}</p>
                           <span className="text-xs text-amber-400 font-semibold">{u.monthlyAmount} ৳/মাস</span>
                         </div>
+                        {u.dueAmount > 0 ? (
+                          <p className="text-xs font-bold text-rose-400 mt-0.5">বকেয়া: {u.dueAmount} ৳</p>
+                        ) : (
+                          <p className="text-xs font-bold text-emerald-400 mt-0.5">বকেয়া নেই</p>
+                        )}
                       </div>
                     </div>
                     <div className="flex items-center gap-1">

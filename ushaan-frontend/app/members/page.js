@@ -102,6 +102,11 @@ export default function MembersPage() {
                     </div>
                     <p className="text-xs text-slate-400 mt-0.5">{u.email}</p>
                     {u.phone && <p className="text-xs text-slate-500">{u.phone}</p>}
+                    {u.dueAmount > 0 ? (
+                      <p className="text-xs font-bold text-rose-400 mt-1">বকেয়া: {u.dueAmount} ৳</p>
+                    ) : (
+                      <p className="text-xs font-bold text-emerald-400 mt-1">বকেয়া নেই</p>
+                    )}
                   </div>
                 </div>
                 <div className="text-right shrink-0">
