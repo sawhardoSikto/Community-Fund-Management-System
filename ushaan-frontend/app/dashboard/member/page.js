@@ -205,8 +205,92 @@ export default function MemberDashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
           {/* Left Column (2/3 width - High Importance) */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 space-y-6">
             <NoticeBoard user={user} />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* সদস্যদের বকেয়া তালিকা */}
+              <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
+                <h2 className="text-base font-bold text-white mb-4 flex items-center gap-2">
+                  <span className="w-7 h-7 rounded-lg bg-red-500/10 flex items-center justify-center text-red-400 text-sm">
+                    ⚠️
+                  </span>
+                  সদস্যদের বকেয়া তালিকা
+                </h2>
+                <div className="space-y-2.5 max-h-64 overflow-y-auto pr-1">
+                  {allUsers
+                    .filter(u => u.isApproved && u.dueAmount > 0)
+                    .sort((a, b) => b.dueAmount - a.dueAmount)
+                    .map(u => (
+                      <div key={u.id} className="flex items-center justify-between p-3 bg-slate-800/30 rounded-xl border border-white/5">
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 rounded-md bg-rose-500/10 flex items-center justify-center text-rose-400 text-xs font-bold shrink-0">
+                            {u.name ? u.name[0] : '👥'}
+                          </div>
+                          <span className="text-xs font-bold text-slate-200">{u.name}</span>
+                        </div>
+                        <span className="text-xs font-black text-rose-400">{u.dueAmount} ৳</span>
+                      </div>
+                    ))}
+                  {allUsers.filter(u => u.isApproved && u.dueAmount > 0).length === 0 && (
+                    <p className="text-xs text-slate-500 text-center py-4">কারো কোনো বকেয়া নেই! 🎉</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Projects List */}
+              <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-base font-bold text-white flex items-center gap-2">
+                    <span className="w-7 h-7 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-400 text-sm">
+                      <svg className="w-4 h-4 text-purple-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                      </svg>
+                    </span>
+                    প্রজেক্টসমূহ
+                  </h2>
+                  <Link href="/projects" className="text-xs text-amber-400 hover:text-amber-300 font-semibold flex items-center gap-0.5">
+                    সব দেখুন 
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </Link>
+                </div>
+                {projects.length === 0 ? (
+                  <div className="text-center py-8 text-slate-500 text-sm">কোনো প্রজেক্ট নেই</div>
+                ) : (
+                  <div className="space-y-3">
+                    {projects.slice(0, 3).map(project => (
+                      <Link key={project.id} href={`/projects/${project.id}`}
+                        className="flex items-center justify-between px-4 py-3 bg-slate-800/50 hover:bg-slate-800/80 border border-white/0 hover:border-white/5 rounded-xl transition-all">
+                        <div>
+                          <p className="text-sm font-semibold text-white">{project.name}</p>
+                          <p className="text-xs text-slate-500 mt-0.5">বিনিয়োগ: {Number(project.totalInvested).toFixed(0)} ৳</p>
+                        </div>
+                        <div className="text-right">
+                          {project.status === 'active' ? (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-lg border bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
+                              <span className="w-1.5 h-1.5 bg-emerald-400 animate-pulse" />
+                              সক্রিয়
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-lg border bg-slate-800 text-slate-400 border-white/5">
+                              <svg className="w-2.5 h-2.5 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                              </svg>
+                              সম্পন্ন
+                            </span>
+                          )}
+                          {project.summary && (
+                            <p className="text-xs text-amber-400 mt-1">মুনাফা: {Number(project.summary.totalProfit).toFixed(0)} ৳</p>
+                          )}
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
 
           {/* Right Column (1/3 width - Secondary Importance) */}
@@ -238,89 +322,6 @@ export default function MemberDashboard() {
                 </div>
               </div>
             )}
-
-            {/* সদস্যদের বকেয়া তালিকা */}
-            <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
-              <h2 className="text-base font-bold text-white mb-4 flex items-center gap-2">
-                <span className="w-7 h-7 rounded-lg bg-red-500/10 flex items-center justify-center text-red-400 text-sm">
-                  ⚠️
-                </span>
-                সদস্যদের বকেয়া তালিকা
-              </h2>
-              <div className="space-y-2.5 max-h-64 overflow-y-auto pr-1">
-                {allUsers
-                  .filter(u => u.isApproved && u.dueAmount > 0)
-                  .sort((a, b) => b.dueAmount - a.dueAmount)
-                  .map(u => (
-                    <div key={u.id} className="flex items-center justify-between p-3 bg-slate-800/30 rounded-xl border border-white/5">
-                      <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-md bg-rose-500/10 flex items-center justify-center text-rose-400 text-xs font-bold shrink-0">
-                          {u.name ? u.name[0] : '👥'}
-                        </div>
-                        <span className="text-xs font-bold text-slate-200">{u.name}</span>
-                      </div>
-                      <span className="text-xs font-black text-rose-400">{u.dueAmount} ৳</span>
-                    </div>
-                  ))}
-                {allUsers.filter(u => u.isApproved && u.dueAmount > 0).length === 0 && (
-                  <p className="text-xs text-slate-500 text-center py-4">কারো কোনো বকেয়া নেই! 🎉</p>
-                )}
-              </div>
-            </div>
-
-            {/* Projects List */}
-            <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-base font-bold text-white flex items-center gap-2">
-                  <span className="w-7 h-7 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-400 text-sm">
-                    <svg className="w-4 h-4 text-purple-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-                    </svg>
-                  </span>
-                  প্রজেক্টসমূহ
-                </h2>
-                <Link href="/projects" className="text-xs text-amber-400 hover:text-amber-300 font-semibold flex items-center gap-0.5">
-                  সব দেখুন 
-                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                  </svg>
-                </Link>
-              </div>
-              {projects.length === 0 ? (
-                <div className="text-center py-8 text-slate-500 text-sm">কোনো প্রজেক্ট নেই</div>
-              ) : (
-                <div className="space-y-3">
-                  {projects.slice(0, 3).map(project => (
-                    <Link key={project.id} href={`/projects/${project.id}`}
-                      className="flex items-center justify-between px-4 py-3 bg-slate-800/50 hover:bg-slate-800/80 border border-white/0 hover:border-white/5 rounded-xl transition-all">
-                      <div>
-                        <p className="text-sm font-semibold text-white">{project.name}</p>
-                        <p className="text-xs text-slate-500 mt-0.5">বিনিয়োগ: {Number(project.totalInvested).toFixed(0)} ৳</p>
-                      </div>
-                      <div className="text-right">
-                        {project.status === 'active' ? (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-lg border bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
-                            <span className="w-1 h-1 rounded-full bg-emerald-400 animate-pulse" />
-                            সক্রিয়
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-lg border bg-slate-800 text-slate-400 border-white/5">
-                            <svg className="w-2.5 h-2.5 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                            </svg>
-                            সম্পন্ন
-                          </span>
-                        )}
-                        {project.summary && (
-                          <p className="text-xs text-amber-400 mt-1">মুনাফা: {Number(project.summary.totalProfit).toFixed(0)} ৳</p>
-                        )}
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
-
           </div>
         </div>
       </div>
