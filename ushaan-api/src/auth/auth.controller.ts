@@ -12,43 +12,8 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { IsPublic } from './public.decorator';
-import { diskStorage } from 'multer';
-import { extname } from 'path';
 import { FileInterceptor } from '@nestjs/platform-express';
-
-const multerConfig = {
-  storage: diskStorage({
-    destination: './uploads',
-    filename: (req, file, cb) => {
-      const uniqueSuffix =
-        Date.now() + '-' + Math.round(Math.random() * 1e9);
-
-      cb(
-        null,
-        uniqueSuffix + extname(file.originalname),
-      );
-    },
-  }),
-
-  fileFilter: (req, file, cb) => {
-    if (
-      !file.mimetype.match(
-        /\/(jpg|jpeg|png|gif|webp)$/
-      )
-    ) {
-      return cb(
-        new Error('Only image files are allowed!'),
-        false,
-      );
-    }
-
-    cb(null, true);
-  },
-
-  limits: {
-    fileSize: 5 * 1024 * 1024,
-  },
-};
+import { multerConfig } from '../common/multer.config';
 
 @Controller('auth')
 export class AuthController {

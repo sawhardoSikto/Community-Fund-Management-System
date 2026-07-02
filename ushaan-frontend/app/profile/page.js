@@ -13,6 +13,8 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({ name: '', phone: '', nid: '' });
+  const [photoFile, setPhotoFile] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState(null);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState({ show: false, msg: '', success: true });
   const [totalPaid, setTotalPaid] = useState(null);
@@ -50,15 +52,44 @@ export default function ProfilePage() {
     finally { setLoading(false); }
   };
 
+  const handlePhotoChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setPhotoFile(file);
+      setPhotoPreview(URL.createObjectURL(file));
+    }
+  };
+
   const handleSave = async () => {
     setSaving(true);
     try {
-      await api.patch(`/users/${profile.id}`, form);
-      const updatedUser = { ...user, name: form.name };
+      const formData = new FormData();
+      formData.append('name', form.name);
+      formData.append('phone', form.phone);
+      formData.append('nid', form.nid);
+      if (photoFile) {
+        formData.append('photo', photoFile);
+      }
+
+      const res = await api.patch('/users/profile', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      const updatedProfile = res.data.data;
+      const updatedUser = { 
+        ...user, 
+        name: updatedProfile.name,
+        photoUrl: updatedProfile.photoUrl
+      };
       localStorage.setItem('user', JSON.stringify(updatedUser));
       window.dispatchEvent(new Event('userChanged'));
+
       showToast('প্রোফাইল আপডেট হয়েছে!');
       setEditing(false);
+      setPhotoFile(null);
+      setPhotoPreview(null);
       fetchAll();
     } catch (err) {
       showToast(err.response?.data?.message || 'আপডেট ব্যর্থ হয়েছে', false);
@@ -124,6 +155,18 @@ export default function ProfilePage() {
           {editing ? (
             <div className="space-y-3">
               <div>
+                <label className="block text-xs font-semibold text-slate-400 mb-1.5">প্রোফাইল ছবি</label>
+                <div className="flex items-center gap-4 p-3 bg-slate-800/30 rounded-xl border border-white/5">
+                  {photoPreview ? (
+                    <img src={photoPreview} alt="Preview" className="w-16 h-16 rounded-2xl object-cover" />
+                  ) : (
+                    <UserAvatar user={profile} className="w-16 h-16 rounded-2xl overflow-hidden shrink-0 text-xl" />
+                  )}
+                  <input type="file" accept="image/*" onChange={handlePhotoChange}
+                    className="block w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-slate-200 hover:file:bg-slate-700 cursor-pointer" />
+                </div>
+              </div>
+              <div>
                 <label className="block text-xs font-semibold text-slate-400 mb-1.5">নাম</label>
                 <input type="text" value={form.name}
                   onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
@@ -144,7 +187,7 @@ export default function ProfilePage() {
                   className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-amber-400/50 transition-all" />
               </div>
               <div className="flex gap-2 pt-1">
-                <button onClick={() => setEditing(false)}
+                <button onClick={() => { setEditing(false); setPhotoFile(null); setPhotoPreview(null); }}
                   className="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-semibold rounded-xl transition-colors">
                   বাতিল
                 </button>
