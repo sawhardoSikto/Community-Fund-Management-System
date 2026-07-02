@@ -247,16 +247,14 @@ export default function SecretaryDashboard() {
 
         {/* Members */}
         {tab === 'members' && (
-          <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
-            <h2 className="text-base font-bold text-white mb-4">সদস্য তালিকা ({allUsers.filter(u => u.isApproved).length})</h2>
-            <div className="space-y-2">
+          <div className="space-y-3">
               {allUsers.filter(u => u.isApproved).map(u => (
-                <div key={u.id} className="flex items-center justify-between px-4 py-3 bg-slate-800/50 rounded-xl">
-                  <div className="flex items-center gap-3">
+                <div key={u.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3 bg-slate-800/50 rounded-xl">
+                  <div className="flex items-center gap-3 min-w-0 w-full">
                     <UserAvatar user={u} className="w-9 h-9 rounded-xl overflow-hidden shrink-0 text-sm" gradient="from-amber-400 to-orange-500" />
-                    <div>
-                      <p className="text-sm font-bold text-white">{u.name}</p>
-                      <p className="text-xs text-slate-400">{u.phone || u.email}</p>
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-white truncate">{u.name}</p>
+                      <p className="text-xs text-slate-400 truncate max-w-[150px] sm:max-w-xs">{u.phone || u.email}</p>
                       {u.dueAmount > 0 ? (
                         <p className="text-xs font-bold text-rose-400 mt-0.5">বকেয়া: {u.dueAmount} ৳</p>
                       ) : (
@@ -264,13 +262,12 @@ export default function SecretaryDashboard() {
                       )}
                     </div>
                   </div>
-                  <div className="text-right">
+                  <div className="flex items-center justify-between sm:justify-start sm:flex-col sm:items-end gap-2 w-full sm:w-auto shrink-0 border-t border-white/5 sm:border-0 pt-2 sm:pt-0">
                     <span className="text-xs font-semibold px-2 py-0.5 bg-amber-500/10 text-amber-400 rounded-lg">{ROLE_LABELS[u.role]}</span>
-                    <p className="text-xs text-slate-400 mt-1">{u.monthlyAmount} ৳/মাস</p>
+                    <p className="text-xs text-slate-400">{u.monthlyAmount} ৳/মাস</p>
                   </div>
                 </div>
               ))}
-            </div>
           </div>
         )}
 
@@ -304,7 +301,7 @@ export default function SecretaryDashboard() {
                 {project.summary && (
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                     {[
-                      { label: 'বিনিয়োগ', value: `${Number(project.summary.totalExpense).toFixed(0)} ৳`, color: 'text-red-400' },
+                      { label: 'বিনিয়োগ', value: `${Number(project.totalInvested || 0).toFixed(0)} ৳`, color: 'text-red-400' },
                       { label: 'মুনাফা', value: `${Number(project.summary.totalProfit).toFixed(0)} ৳`, color: 'text-emerald-400' },
                       { label: 'ফেরত', value: `${Number(project.summary.capitalReturn).toFixed(0)} ৳`, color: 'text-blue-400' },
                       { label: 'বাইরে', value: `${Number(project.summary.stillOutside).toFixed(0)} ৳`, color: 'text-amber-400' },

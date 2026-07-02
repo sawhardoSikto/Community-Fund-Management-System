@@ -1448,7 +1448,7 @@ const handleToggleProjectStatus = async (project) => {
                   {project.summary && (
                     <Link href={`/projects/${project.id}`} className="grid grid-cols-2 gap-2 mb-3 block hover:opacity-90 transition-opacity">
                       {[
-                        { label: 'বিনিয়োগ', value: `${Number(project.summary.totalExpense).toFixed(0)} ৳`, color: 'text-red-400' },
+                        { label: 'বিনিয়োগ', value: `${Number(project.totalInvested || 0).toFixed(0)} ৳`, color: 'text-red-400' },
                         { label: 'মুনাফা', value: `${Number(project.summary.totalProfit).toFixed(0)} ৳`, color: 'text-emerald-400' },
                         { label: 'ফেরত', value: `${Number(project.summary.capitalReturn).toFixed(0)} ৳`, color: 'text-blue-400' },
                         { label: 'বাইরে', value: `${Number(project.summary.stillOutside).toFixed(0)} ৳`, color: 'text-amber-400' },

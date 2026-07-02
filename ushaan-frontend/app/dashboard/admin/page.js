@@ -357,24 +357,24 @@ export default function AdminDashboard() {
                 </h2>
                 <div className="space-y-2">
                   {pendingMembers.map(u => (
-                    <div key={u.id} className="flex items-center justify-between px-4 py-3 bg-amber-500/5 border border-amber-500/10 rounded-xl">
-                      <div className="flex items-center gap-3">
+                    <div key={u.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3 bg-amber-500/5 border border-amber-500/10 rounded-xl">
+                      <div className="flex items-center gap-3 min-w-0 w-full">
                         <UserAvatar user={u} className="w-9 h-9 rounded-xl overflow-hidden shrink-0 text-sm" gradient="from-amber-400/20 to-orange-500/20" />
-                        <div>
-                          <p className="text-sm font-bold text-white">{u.name}</p>
-                          <div className="flex items-center gap-2">
-                            <p className="text-xs text-slate-400">{u.phone || u.email}</p>
-                            <span className="text-xs text-amber-400/80 font-semibold">{u.monthlyAmount} ৳/মাস</span>
+                        <div className="min-w-0">
+                          <p className="text-sm font-bold text-white truncate">{u.name}</p>
+                          <div className="flex flex-wrap items-center gap-2 mt-0.5">
+                            <p className="text-xs text-slate-400 truncate">{u.phone || u.email}</p>
+                            <span className="text-[10px] sm:text-xs text-amber-400/80 font-semibold bg-amber-500/10 px-1.5 py-0.5 rounded-lg shrink-0">{u.monthlyAmount} ৳/মাস</span>
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 w-full sm:w-auto shrink-0 justify-end sm:justify-start">
                         <button onClick={() => handleUserApprove(u.id)} disabled={processing === u.id}
-                          className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-1">
+                          className="flex-1 sm:flex-initial justify-center px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-1">
                           {processing === u.id ? <span className="loading loading-spinner loading-xs" /> : "অনুমোদন"}
                         </button>
                         <button onClick={() => handleUserDelete(u.id)} disabled={processing === u.id}
-                          className="px-3 py-1.5 bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white text-xs font-bold border border-red-500/20 rounded-lg transition-all cursor-pointer disabled:opacity-50">
+                          className="flex-1 sm:flex-initial justify-center px-3 py-1.5 bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white text-xs font-bold border border-red-500/20 rounded-lg transition-all cursor-pointer disabled:opacity-50">
                           প্রত্যাখ্যান
                         </button>
                       </div>
@@ -388,14 +388,14 @@ export default function AdminDashboard() {
               <h2 className="text-sm font-bold text-amber-400 mb-3">পদস্থ সদস্য ({staffs.length})</h2>
               <div className="space-y-2">
                 {staffs.map(u => (
-                  <div key={u.id} className="flex items-center justify-between px-4 py-3 bg-slate-800/50 rounded-xl">
-                    <div className="flex items-center gap-3">
+                  <div key={u.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3 bg-slate-800/50 rounded-xl">
+                    <div className="flex items-center gap-3 min-w-0 w-full">
                       <UserAvatar user={u} className="w-9 h-9 rounded-xl overflow-hidden shrink-0 text-sm" gradient="from-amber-400 to-orange-500" />
-                      <div>
-                        <p className="text-sm font-bold text-white">{u.name}</p>
-                        <div className="flex items-center gap-2">
-                          <p className="text-xs text-slate-400">{u.email}</p>
-                          <span className="text-xs text-amber-400 font-semibold">{u.monthlyAmount} ৳/মাস</span>
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold text-white truncate">{u.name}</p>
+                        <div className="flex flex-wrap items-center gap-2 mt-0.5">
+                          <p className="text-xs text-slate-400 truncate max-w-[140px] sm:max-w-xs">{u.email}</p>
+                          <span className="text-[10px] sm:text-xs text-amber-400 font-semibold bg-amber-500/10 px-1.5 py-0.5 rounded-lg shrink-0">{u.monthlyAmount} ৳/মাস</span>
                         </div>
                         {u.dueAmount > 0 ? (
                           <p className="text-xs font-bold text-rose-400 mt-0.5">বকেয়া: {u.dueAmount} ৳</p>
@@ -404,7 +404,7 @@ export default function AdminDashboard() {
                         )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-between sm:justify-start gap-2 w-full sm:w-auto shrink-0 border-t border-white/5 sm:border-0 pt-2 sm:pt-0">
                       <span className="text-xs font-semibold px-2 py-0.5 bg-amber-500/10 text-amber-400 rounded-lg">{ROLE_LABELS[u.role]}</span>
                       <button onClick={() => { setEditingUser(u); setUserForm({ name: u.name, email: u.email, phone: u.phone || '', nid: u.nid || '', role: u.role, monthlyAmount: u.monthlyAmount?.toString() || '200' }); }}
                         className="p-1.5 rounded-lg text-slate-400 hover:text-amber-400 hover:bg-amber-500/10 transition-colors">
@@ -419,14 +419,14 @@ export default function AdminDashboard() {
               <h2 className="text-sm font-bold text-slate-300 mb-3">সাধারণ সদস্য ({members.length})</h2>
               <div className="space-y-2">
                 {members.map(u => (
-                  <div key={u.id} className="flex items-center justify-between px-4 py-3 bg-slate-800/50 rounded-xl">
-                    <div className="flex items-center gap-3">
+                  <div key={u.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3 bg-slate-800/50 rounded-xl">
+                    <div className="flex items-center gap-3 min-w-0 w-full">
                       <UserAvatar user={u} className="w-9 h-9 rounded-xl overflow-hidden shrink-0 text-sm" gradient="from-slate-600 to-slate-700" />
-                      <div>
-                        <p className="text-sm font-bold text-white">{u.name}</p>
-                        <div className="flex items-center gap-2">
-                          <p className="text-xs text-slate-400">{u.phone || u.email}</p>
-                          <span className="text-xs text-amber-400 font-semibold">{u.monthlyAmount} ৳/মাস</span>
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold text-white truncate">{u.name}</p>
+                        <div className="flex flex-wrap items-center gap-2 mt-0.5">
+                          <p className="text-xs text-slate-400 truncate max-w-[140px] sm:max-w-xs">{u.phone || u.email}</p>
+                          <span className="text-[10px] sm:text-xs text-amber-400 font-semibold bg-amber-500/10 px-1.5 py-0.5 rounded-lg shrink-0">{u.monthlyAmount} ৳/মাস</span>
                         </div>
                         {u.dueAmount > 0 ? (
                           <p className="text-xs font-bold text-rose-400 mt-0.5">বকেয়া: {u.dueAmount} ৳</p>
@@ -435,7 +435,7 @@ export default function AdminDashboard() {
                         )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center justify-end gap-1 w-full sm:w-auto shrink-0 border-t border-white/5 sm:border-0 pt-2 sm:pt-0">
                       <button onClick={() => { setEditingUser(u); setUserForm({ name: u.name, email: u.email, phone: u.phone || '', nid: u.nid || '', role: u.role, monthlyAmount: u.monthlyAmount?.toString() || '200' }); }}
                         className="p-1.5 rounded-lg text-slate-400 hover:text-amber-400 hover:bg-amber-500/10 transition-colors">
                         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" /></svg>
@@ -502,7 +502,7 @@ export default function AdminDashboard() {
                       {project.summary && (
                         <Link href={`/projects/${project.id}`} className="grid grid-cols-2 gap-2 mb-3 mt-4 block hover:opacity-90 transition-opacity">
                           {[
-                            { label: 'বিনিয়োগ', value: `${Number(project.summary.totalExpense).toFixed(0)} ৳`, color: 'text-red-400' },
+                            { label: 'বিনিয়োগ', value: `${Number(project.totalInvested || 0).toFixed(0)} ৳`, color: 'text-red-400' },
                             { label: 'মুনাফা', value: `${Number(project.summary.totalProfit).toFixed(0)} ৳`, color: 'text-emerald-400' },
                             { label: 'ফেরত', value: `${Number(project.summary.capitalReturn).toFixed(0)} ৳`, color: 'text-blue-400' },
                             { label: 'বাইরে', value: `${Number(project.summary.stillOutside).toFixed(0)} ৳`, color: 'text-amber-400' },

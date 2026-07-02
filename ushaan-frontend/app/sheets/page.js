@@ -59,16 +59,17 @@ export default function SheetsPage() {
                   <p className="text-base font-bold text-white group-hover:text-amber-400 transition-colors">
                     {MONTH_NAMES[sheet.month - 1]} {sheet.year}
                   </p>
-                  <div className="flex gap-3 mt-1.5">
-                    <span className="text-xs text-emerald-400">আয়: {(Number(sheet.totalMemberIncome) + Number(sheet.totalProjectIncome)).toFixed(0)} ৳</span>
-                    <span className="text-xs text-red-400">ব্যয়: {(Number(sheet.totalSalary) + Number(sheet.totalProjectExpense || 0)).toFixed(0)} ৳</span>
-                    <span className="text-xs text-amber-400">হাতে: {Number(sheet.cashInHand).toFixed(0)} ৳</span>
-                  </div>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-4">
                   <div className="text-right">
                     <p className="text-sm font-black text-white">{Number(sheet.totalAsset).toFixed(0)} ৳</p>
-                    <p className="text-xs text-slate-400">মোট সম্পদ</p>
+                    <p className="text-xs text-slate-400 mt-0.5">মোট সম্পদ</p>
+                  </div>
+                  <div className="px-3 py-1.5 bg-amber-500/10 text-amber-400 text-xs font-bold rounded-xl transition-all group-hover:bg-amber-500 group-hover:text-white flex items-center gap-1 shrink-0">
+                    <span>দেখুন</span>
+                    <svg className="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
                   </div>
                 </div>
               </Link>

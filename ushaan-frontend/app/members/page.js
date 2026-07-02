@@ -90,18 +90,18 @@ export default function MembersPage() {
         ) : (
           <div className="space-y-2">
             {filtered.map(u => (
-              <div key={u.id} className="flex items-center justify-between bg-slate-900/50 border border-white/5 rounded-2xl p-4 hover:border-white/10 transition-colors">
-                <div className="flex items-center gap-3">
+              <div key={u.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-900/50 border border-white/5 rounded-2xl p-4 hover:border-white/10 transition-colors">
+                <div className="flex items-center gap-3 min-w-0 w-full">
                   <UserAvatar user={u} className="w-11 h-11 rounded-xl overflow-hidden shrink-0 text-base" />
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-bold text-white">{u.name}</p>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="text-sm font-bold text-white truncate">{u.name}</p>
                       {!u.isVerified && (
-                        <span className="text-[10px] px-1.5 py-0.5 bg-red-500/10 text-red-400 rounded border border-red-500/20">অযাচাইকৃত</span>
+                        <span className="text-[10px] px-1.5 py-0.5 bg-red-500/10 text-red-400 rounded border border-red-500/20 shrink-0">অযাচাইকৃত</span>
                       )}
                     </div>
-                    <p className="text-xs text-slate-400 mt-0.5">{u.email}</p>
-                    {u.phone && <p className="text-xs text-slate-500">{u.phone}</p>}
+                    <p className="text-xs text-slate-400 mt-0.5 truncate max-w-[150px] sm:max-w-xs">{u.email}</p>
+                    {u.phone && <p className="text-xs text-slate-500 truncate">{u.phone}</p>}
                     {u.dueAmount > 0 ? (
                       <p className="text-xs font-bold text-rose-400 mt-1">বকেয়া: {u.dueAmount} ৳</p>
                     ) : (
@@ -109,7 +109,7 @@ export default function MembersPage() {
                     )}
                   </div>
                 </div>
-                <div className="text-right shrink-0">
+                <div className="flex items-center justify-between sm:justify-start sm:flex-col sm:items-end gap-2 w-full sm:w-auto shrink-0 border-t border-white/5 sm:border-0 pt-2 sm:pt-0">
                   <span className={`text-xs font-semibold px-2 py-0.5 rounded-lg ${
                     u.role === 'admin' ? 'bg-amber-500/10 text-amber-400' :
                     u.role === 'accountant' ? 'bg-blue-500/10 text-blue-400' :
@@ -118,7 +118,7 @@ export default function MembersPage() {
                   }`}>
                     {ROLE_LABELS[u.role]}
                   </span>
-                  <p className="text-xs text-slate-400 mt-1">{u.monthlyAmount} ৳/মাস</p>
+                  <p className="text-xs text-slate-400">{u.monthlyAmount} ৳/মাস</p>
                 </div>
               </div>
             ))}
