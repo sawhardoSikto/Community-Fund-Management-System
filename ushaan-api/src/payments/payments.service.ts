@@ -26,6 +26,7 @@ constructor(
   private notificationsService: NotificationsService,
   @Inject(forwardRef(() => SheetsService))
   private sheetsService: SheetsService,
+  private settingsService: SettingsService,
 ) {}
 
   async onModuleInit() {
@@ -91,6 +92,9 @@ async getDueStartMonthAndYear(
   joinDate: Date,
 ): Promise<{ month: number; year: number }> {
   const opening = await this.openingBalanceRepo.findOne({ where: { userId } });
+  let startMonth = joinDate.getMonth() + 1;
+  let startYear = joinDate.getFullYear();
+
   if (opening) {
     let nextMonth = Number(opening.upToMonth) + 1;
     let nextYear = Number(opening.upToYear);
@@ -98,12 +102,25 @@ async getDueStartMonthAndYear(
       nextMonth = 1;
       nextYear += 1;
     }
-    return { month: nextMonth, year: nextYear };
+    startMonth = nextMonth;
+    startYear = nextYear;
   }
-  return {
-    month: joinDate.getMonth() + 1,
-    year: joinDate.getFullYear(),
-  };
+
+  // Respect system settings opening balance start month/year
+  const settings = await this.settingsService.getSettings();
+  if (settings) {
+    const systemStartMonth = Number(settings.openingMonth) || 1;
+    const systemStartYear = Number(settings.openingYear) || 2024;
+    if (
+      startYear < systemStartYear ||
+      (startYear === systemStartYear && startMonth < systemStartMonth)
+    ) {
+      startMonth = systemStartMonth;
+      startYear = systemStartYear;
+    }
+  }
+
+  return { month: startMonth, year: startYear };
 }
 
 // Due months calculate করো

@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 import { Payment, PaymentStatus } from '../payments/entities/payment.entity';
 import { MemberOpeningBalance } from '../payments/entities/member-opening-balance.entity';
+import { SettingsService } from '../settings/settings.service';
 
 @Injectable()
 export class UsersService {
@@ -14,6 +15,7 @@ export class UsersService {
     private paymentRepo: Repository<Payment>,
     @InjectRepository(MemberOpeningBalance)
     private openingBalanceRepo: Repository<MemberOpeningBalance>,
+    private settingsService: SettingsService,
   ) {}
 
   async findByEmail(email: string): Promise<User | null> {
@@ -52,6 +54,19 @@ export class UsersService {
       }
       startMonth = nextMonth;
       startYear = nextYear;
+    }
+
+    const settings = await this.settingsService.getSettings();
+    if (settings) {
+      const systemStartMonth = Number(settings.openingMonth) || 1;
+      const systemStartYear = Number(settings.openingYear) || 2024;
+      if (
+        startYear < systemStartYear ||
+        (startYear === systemStartYear && startMonth < systemStartMonth)
+      ) {
+        startMonth = systemStartMonth;
+        startYear = systemStartYear;
+      }
     }
 
     const dueList: { month: number; year: number }[] = [];

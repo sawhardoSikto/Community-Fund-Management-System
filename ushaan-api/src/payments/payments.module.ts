@@ -9,6 +9,7 @@ import { MonthlySheet } from 'src/sheets/entities/monthly-sheet.entity';
 import { NotificationsModule } from 'src/notifications/notifications.module';
 import { PaymentReminderService } from './payment-reminder.service';
 import { SheetsModule } from 'src/sheets/sheets.module';
+import { SettingsModule } from 'src/settings/settings.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { SheetsModule } from 'src/sheets/sheets.module';
     UsersModule, 
     NotificationsModule,
     forwardRef(() => SheetsModule),
+    SettingsModule,
   ], 
   controllers: [PaymentsController],
   providers: [PaymentsService, PaymentReminderService],

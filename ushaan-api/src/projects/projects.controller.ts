@@ -24,9 +24,9 @@ export class ProjectsController {
     return this.projectsService.findOne(id);
   }
 
-  // ✅ শুধু admin
+  // ✅ শুধু accountant/admin
   @Post()
-  @Roles('admin')
+  @Roles('accountant', 'admin')
   create(@Body() dto: CreateProjectDto) {
     return this.projectsService.create(dto);
   }
@@ -38,9 +38,9 @@ export class ProjectsController {
     return this.projectsService.update(id, dto);
   }
 
-  // ✅ শুধু admin
+  // ✅ শুধু accountant/admin
   @Delete(':id')
-  @Roles('admin')
+  @Roles('accountant', 'admin')
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.projectsService.remove(id);
   }
