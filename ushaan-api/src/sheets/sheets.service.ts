@@ -364,7 +364,7 @@ const totalGeneralExpense = await this.expensesService.getTotalExpenseByMonth(
 
     // সব users এর payment status
     const allUsers = await this.usersService.findAll();
-    const users = allUsers;
+    const users = allUsers.filter(u => u.isApproved);
 
     // Member payment status এ due months দেখাও
     const memberPaymentStatus = await Promise.all(
@@ -374,6 +374,7 @@ const totalGeneralExpense = await this.expensesService.getTotalExpenseByMonth(
 
         const paidDues: { month: number; year: number }[] = [];
         const unpaidDues: { month: number; year: number }[] = [];
+        const paidDuesInThisSheet: { month: number; year: number }[] = [];
 
         // Trace from member join date to this sheet's month/year (exclusive)
         const start = await this.paymentsService.getDueStartMonthAndYear(member.id, new Date(member.createdAt));
@@ -392,6 +393,9 @@ const totalGeneralExpense = await this.expensesService.getTotalExpenseByMonth(
             // If captured on or before the sheet date, consider it paid for that month
             if (capYear < sheet.year || (capYear === sheet.year && capMonth <= sheet.month)) {
               paidDues.push({ month: checkMonth, year: checkYear });
+              if (capYear === sheet.year && capMonth === sheet.month) {
+                paidDuesInThisSheet.push({ month: checkMonth, year: checkYear });
+              }
             } else {
               // Captured after the sheet date, still unpaid for this month
               unpaidDues.push({ month: checkMonth, year: checkYear });
@@ -428,7 +432,7 @@ const totalGeneralExpense = await this.expensesService.getTotalExpenseByMonth(
             const coveredMonths = p.coveredMonths
               ? (typeof p.coveredMonths === 'string' ? JSON.parse(p.coveredMonths) : p.coveredMonths)
               : [];
-            const monthlyAmountVal = p.user?.monthlyAmount || 200;
+            const monthlyAmountVal = Number(member.monthlyAmount || 200);
             const monthlyTotal = coveredMonths.length * monthlyAmountVal;
             const finePart = Number(p.amount) - monthlyTotal;
             if (finePart > 0) {
@@ -454,8 +458,8 @@ const totalGeneralExpense = await this.expensesService.getTotalExpenseByMonth(
             displayAmount = `বকেয়া পরিশোধিত (${capMonth}/${capYear} শিটে)`;
           } else if (isCapturedEarlier) {
             displayAmount = 'অগ্রিম পরিশোধিত';
-          } else if (paidDues.length > 0) {
-            displayAmount = `${member.monthlyAmount} × ${paidDues.length} due + ${member.monthlyAmount} current = ${(paidDues.length + 1) * member.monthlyAmount} ৳`;
+          } else if (paidDuesInThisSheet.length > 0) {
+            displayAmount = `${member.monthlyAmount} × ${paidDuesInThisSheet.length} due + ${member.monthlyAmount} current = ${(paidDuesInThisSheet.length + 1) * member.monthlyAmount} ৳`;
           } else {
             displayAmount = `${member.monthlyAmount} current = ${member.monthlyAmount} ৳`;
           }

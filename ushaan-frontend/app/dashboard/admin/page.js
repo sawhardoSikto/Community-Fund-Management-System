@@ -583,8 +583,10 @@ export default function AdminDashboard() {
                       className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
                     >
                       <option value="">সদস্য সিলেক্ট করুন</option>
-                      {allUsers.filter(u => u.isApproved && u.role === 'member').map(u => (
-                        <option key={u.id} value={u.id}>{u.name} ({u.email})</option>
+                      {allUsers.filter(u => u.isApproved).map(u => (
+                        <option key={u.id} value={u.id}>
+                          {u.name} ({u.email}) - {u.role === 'admin' ? 'এডমিন' : u.role === 'accountant' ? 'হিসাবরক্ষক' : u.role === 'secretary' ? 'সেক্রেটারি' : 'সদস্য'}
+                        </option>
                       ))}
                     </select>
                   </div>
