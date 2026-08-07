@@ -194,13 +194,15 @@ export class SheetsService implements OnModuleInit {
   }
 
   // Sheet generate করো (draft)
- async generateSheet(dto: CreateSheetDto, accountantId: number) {
-  const existing = await this.sheetRepo.findOne({
-    where: { month: dto.month, year: dto.year },
-  });
-  if (existing) throw new BadRequestException(
-    `Sheet for ${dto.month}/${dto.year} already exists`
-  );
+  async generateSheet(dto: CreateSheetDto, accountantId: number) {
+    const existing = await this.sheetRepo.findOne({
+      where: { month: dto.month, year: dto.year },
+    });
+    if (existing) {
+      await this.recalculateSheetCascade(dto.month, dto.year);
+      const updated = await this.sheetRepo.findOne({ where: { month: dto.month, year: dto.year } });
+      return { message: 'Sheet updated successfully', data: updated };
+    }
 
   // ১. Member payments
   const payments = await this.paymentsService.getApprovedPaymentsCapturedInMonth(
