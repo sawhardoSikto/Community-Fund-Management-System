@@ -585,7 +585,7 @@ export default function AdminDashboard() {
                       <option value="">সদস্য সিলেক্ট করুন</option>
                       {allUsers.filter(u => u.isApproved).map(u => (
                         <option key={u.id} value={u.id}>
-                          {u.name} ({u.email}) - {u.role === 'admin' ? 'এডমিন' : u.role === 'accountant' ? 'হিসাবরক্ষক' : u.role === 'secretary' ? 'সেক্রেটারি' : 'সদস্য'}
+                          {u.name} — {u.role === 'admin' ? 'এডমিন' : u.role === 'accountant' ? 'হিসাবরক্ষক' : u.role === 'secretary' ? 'সেক্রেটারি' : 'সদস্য'}
                         </option>
                       ))}
                     </select>
