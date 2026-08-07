@@ -43,6 +43,12 @@ const getTabIcon = (key, isActive) => {
           <path strokeLinecap="round" strokeLinejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
         </svg>
       );
+    case 'fines':
+      return (
+        <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+      );
     default:
       return null;
   }
@@ -59,6 +65,8 @@ export default function AdminDashboard() {
   const [projects, setProjects] = useState([]);
   const [overallStatus, setOverallStatus] = useState(null);
   const [sheets, setSheets] = useState([]);
+  const [fines, setFines] = useState([]);
+  const [fineForm, setFineForm] = useState({ userId: '', amount: '', reason: '', customReason: '' });
 
   const [userForm, setUserForm] = useState({ name: '', email: '', phone: '', nid: '', role: 'member', monthlyAmount: '200' });
   const [editingUser, setEditingUser] = useState(null);
@@ -85,23 +93,59 @@ export default function AdminDashboard() {
   const fetchAll = async () => {
     setLoading(true);
     try {
-      const [usersRes, projectsRes, overallRes, sheetsRes] = await Promise.all([
+      const [usersRes, projectsRes, overallRes, sheetsRes, finesRes] = await Promise.all([
         api.get('/users'),
         api.get('/projects'),
         api.get('/sheets/overall-status'),
         api.get('/sheets'),
+        api.get('/fines'),
       ]);
       setAllUsers(usersRes.data || []);
       setProjects(projectsRes.data.data || []);
       setOverallStatus(overallRes.data.data);
       setSheets(sheetsRes.data.data || []);
+      setFines(finesRes.data || []);
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
   };
 
+  const handleFineSubmit = async (e) => {
+    e.preventDefault();
+    if (!fineForm.userId) return showToast('সদস্য সিলেক্ট করুন', false);
+    const amountNum = Number(fineForm.amount);
+    if (isNaN(amountNum) || amountNum <= 0) return showToast('সদস্যের জন্য সঠিক জরিমানার পরিমাণ লিখুন', false);
+    const finalReason = fineForm.reason === 'অন্যান্য' ? fineForm.customReason : fineForm.reason;
+    if (!finalReason) return showToast('জরিমানার কারণ লিখুন', false);
 
+    setSubmitting(true);
+    try {
+      await api.post('/fines', {
+        userId: Number(fineForm.userId),
+        amount: amountNum,
+        reason: finalReason,
+      });
+      showToast('জরিমানা সফলভাবে ধার্য করা হয়েছে');
+      setFineForm({ userId: '', amount: '', reason: '', customReason: '' });
+      fetchAll();
+    } catch (err) {
+      console.error(err);
+      showToast(err.response?.data?.message || 'জরিমানা করতে ব্যর্থ হয়েছে', false);
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
-
+  const handleFineDelete = async (id) => {
+    if (!confirm('আপনি কি নিশ্চিত যে জরিমানাটি বাতিল করতে চান?')) return;
+    try {
+      await api.delete(`/fines/${id}`);
+      showToast('জরিমানা বাতিল করা হয়েছে');
+      fetchAll();
+    } catch (err) {
+      console.error(err);
+      showToast(err.response?.data?.message || 'জরিমানা বাতিল করতে ব্যর্থ হয়েছে', false);
+    }
+  };
 
   const handleUserUpdate = async (e) => {
     e.preventDefault();
@@ -159,6 +203,7 @@ export default function AdminDashboard() {
     { key: 'members', label: 'সদস্য', count: pendingMembers.length },
     { key: 'my-payment', label: 'আমার পেমেন্ট' },
     { key: 'projects', label: 'প্রজেক্ট' },
+    { key: 'fines', label: 'জরিমানা' },
   ];
 
   return (
@@ -519,6 +564,131 @@ export default function AdminDashboard() {
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {/* Fines */}
+        {tab === 'fines' && (
+          <div className="space-y-6 max-w-4xl">
+            {/* Create Fine Form */}
+            <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
+              <h2 className="text-base font-bold text-white mb-4">নতুন জরিমানা ধার্য করুন</h2>
+              <form onSubmit={handleFineSubmit} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-400 mb-1.5">সদস্য নির্বাচন করুন</label>
+                    <select
+                      value={fineForm.userId}
+                      onChange={(e) => setFineForm({ ...fineForm, userId: e.target.value })}
+                      className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+                    >
+                      <option value="">সদস্য সিলেক্ট করুন</option>
+                      {allUsers.filter(u => u.isApproved && u.role === 'member').map(u => (
+                        <option key={u.id} value={u.id}>{u.name} ({u.email})</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-400 mb-1.5">জরিমানার পরিমাণ (৳)</label>
+                    <input
+                      type="number"
+                      placeholder="যেমন: ১০০"
+                      value={fineForm.amount}
+                      onChange={(e) => setFineForm({ ...fineForm, amount: e.target.value })}
+                      className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-400 mb-1.5">জরিমানার कारण</label>
+                    <select
+                      value={fineForm.reason}
+                      onChange={(e) => setFineForm({ ...fineForm, reason: e.target.value, customReason: '' })}
+                      className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+                    >
+                      <option value="">কারণ সিলেক্ট করুন</option>
+                      <option value="মিটিং অনুপস্থিতি">মিটিং অনুপস্থিতি</option>
+                      <option value="দেরিতে ফি প্রদান">দেরিতে ফি প্রদান</option>
+                      <option value="অন্যান্য">অন্যান্য (নিজে লিখুন)</option>
+                    </select>
+                  </div>
+                </div>
+
+                {fineForm.reason === 'অন্যান্য' && (
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-400 mb-1.5">অন্যান্য কারণ লিখুন</label>
+                    <input
+                      type="text"
+                      placeholder="কারণ লিখুন..."
+                      value={fineForm.customReason}
+                      onChange={(e) => setFineForm({ ...fineForm, customReason: e.target.value })}
+                      className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+                    />
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 disabled:bg-amber-500/50 text-white font-bold text-xs rounded-xl shadow-lg shadow-amber-500/20 transition-all"
+                >
+                  {submitting ? 'প্রক্রিয়াধীন...' : 'জরিমানা ধার্য করুন'}
+                </button>
+              </form>
+            </div>
+
+            {/* Fines List */}
+            <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
+              <h2 className="text-base font-bold text-white mb-4">সকল জরিমানা তালিকা ({fines.length})</h2>
+              {fines.length === 0 ? (
+                <p className="text-center text-slate-500 py-12 text-sm">কোনো জরিমানা নেই</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="border-b border-white/5 text-slate-400 font-semibold">
+                        <th className="py-3 px-4">সদস্য</th>
+                        <th className="py-3 px-4">অ্যামাউন্ট</th>
+                        <th className="py-3 px-4">কারণ</th>
+                        <th className="py-3 px-4">তারিখ</th>
+                        <th className="py-3 px-4">স্ট্যাটাস</th>
+                        <th className="py-3 px-4 text-right">অ্যাকশন</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {fines.map((fine) => (
+                        <tr key={fine.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                          <td className="py-3 px-4 text-white font-medium">{fine.user?.name || `User ID: ${fine.userId}`}</td>
+                          <td className="py-3 px-4 text-rose-400 font-bold">{Number(fine.amount).toFixed(0)} ৳</td>
+                          <td className="py-3 px-4 text-slate-300">{fine.reason}</td>
+                          <td className="py-3 px-4 text-slate-400">{new Date(fine.createdAt).toLocaleDateString('bn-BD')}</td>
+                          <td className="py-3 px-4">
+                            {fine.status === 'paid' ? (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold">
+                                পরিশোধিত
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-red-500/10 text-red-400 border border-red-500/20 font-semibold">
+                                বকেয়া
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-3 px-4 text-right">
+                            {fine.status === 'pending' && (
+                              <button
+                                onClick={() => handleFineDelete(fine.id)}
+                                className="px-2 py-1 bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white rounded border border-red-500/20 transition-all font-semibold"
+                              >
+                                বাতিল
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
           </div>
         )}
 

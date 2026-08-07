@@ -24,4 +24,11 @@ export class CreatePaymentDto {
   @IsString()
   @IsOptional()
   note?: string;
+
+  @IsString()
+  @IsOptional()
+  type?: 'monthly' | 'fine';
+
+  @IsOptional()
+  fineIds?: number[];
 }

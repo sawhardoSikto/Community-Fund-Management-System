@@ -82,6 +82,7 @@ export class SheetsService implements OnModuleInit {
         month,
         year,
         totalMemberIncome: 0,
+        totalFineIncome: 0,
         totalProjectIncome: 0,
         totalProjectExpense: 0,
         totalSalary: 0,
@@ -114,9 +115,22 @@ export class SheetsService implements OnModuleInit {
       ? Number(previousSheet.cashInHand)
       : Number((await this.settingsService.getSettings()).openingCashInHand);
 
-    // ২. মেম্বার পেমেন্ট
+    // ২. মেম্বার পেমেন্ট ও জরিমানা আদায়
     const payments = await this.paymentsService.getApprovedPaymentsCapturedInMonth(month, year);
-    const totalMemberIncome = payments.reduce((sum, p) => sum + Number(p.amount), 0);
+    let totalMemberIncome = 0;
+    let totalFineIncome = 0;
+
+    for (const p of payments) {
+      const coveredMonths = p.coveredMonths ? JSON.parse(p.coveredMonths) : [];
+      const monthlyAmount = p.user?.monthlyAmount || 200;
+      const monthlyTotal = coveredMonths.length * monthlyAmount;
+      const finePart = Number(p.amount) - monthlyTotal;
+
+      totalMemberIncome += monthlyTotal;
+      if (finePart > 0) {
+        totalFineIncome += finePart;
+      }
+    }
 
     // ৩. প্রজেক্ট প্রফিট
     const projectIncomes = await this.projectsService.getProjectIncomeByMonth(month, year);
@@ -140,6 +154,7 @@ export class SheetsService implements OnModuleInit {
     // ৮. হিসাব
     const cashInHand = previousBalance
       + totalMemberIncome
+      + totalFineIncome
       + totalProjectIncome
       + totalCapitalReturn
       - totalSalary
@@ -153,6 +168,7 @@ export class SheetsService implements OnModuleInit {
     // ৯. আপডেট করো
     sheet.previousBalance = previousBalance;
     sheet.totalMemberIncome = totalMemberIncome;
+    sheet.totalFineIncome = totalFineIncome;
     sheet.totalProjectIncome = totalProjectIncome;
     sheet.totalCapitalReturn = totalCapitalReturn;
     sheet.totalProjectExpense = totalProjectExpense;
@@ -406,6 +422,26 @@ const totalGeneralExpense = await this.expensesService.getTotalExpenseByMonth(
         );
         const paidInThisSheetAmount = paymentsInThisSheet.reduce((sum, p) => sum + Number(p.amount), 0);
 
+        let fineIncomeInThisSheetForUser = 0;
+        for (const p of paymentsInThisSheet) {
+          try {
+            const coveredMonths = p.coveredMonths
+              ? (typeof p.coveredMonths === 'string' ? JSON.parse(p.coveredMonths) : p.coveredMonths)
+              : [];
+            const monthlyAmountVal = p.user?.monthlyAmount || 200;
+            const monthlyTotal = coveredMonths.length * monthlyAmountVal;
+            const finePart = Number(p.amount) - monthlyTotal;
+            if (finePart > 0) {
+              fineIncomeInThisSheetForUser += finePart;
+            }
+          } catch {
+            // Ignore parse errors
+          }
+        }
+
+        const pendingFines = await this.paymentsService.getPendingFinesForUser(member.id);
+        const pendingFinesSum = pendingFines.reduce((sum, f) => sum + Number(f.amount), 0);
+
         // Construct displayAmount
         let displayAmount = '';
         if (paidCurrent) {
@@ -429,6 +465,12 @@ const totalGeneralExpense = await this.expensesService.getTotalExpenseByMonth(
           } else {
             displayAmount = `${member.monthlyAmount} ৳ due`;
           }
+        }
+
+        if (fineIncomeInThisSheetForUser > 0) {
+          displayAmount += ` (+ জরিমানা: ${fineIncomeInThisSheetForUser} ৳)`;
+        } else if (pendingFinesSum > 0) {
+          displayAmount += ` (+ বকেয়া জরিমানা: ${pendingFinesSum} ৳)`;
         }
 
         return {

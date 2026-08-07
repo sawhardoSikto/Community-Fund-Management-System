@@ -59,4 +59,6 @@ totalProjectExpense: number; // ✅ নতুন
 totalGeneralExpense: number; // ✅ নতুন
 @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
 totalCapitalReturn: number; // ✅ নতুন
+@Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+totalFineIncome: number;
 }

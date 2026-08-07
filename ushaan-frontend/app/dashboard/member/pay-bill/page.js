@@ -22,6 +22,8 @@ export default function MemberPayBill() {
   const [toast, setToast] = useState({ show: false, msg: '', success: true });
   const [dueInfo, setDueInfo] = useState(null);
   const monthlyAmount = user?.monthlyAmount || 200;
+  const [pendingFines, setPendingFines] = useState([]);
+  const [selectedFineIds, setSelectedFineIds] = useState([]);
 
   const showToast = (msg, success = true) => {
     setToast({ show: true, msg, success });
@@ -79,12 +81,16 @@ export default function MemberPayBill() {
   const fetchPaymentData = async () => {
     setLoading(true);
     try {
-      const [paymentsRes, duesRes] = await Promise.all([
+      const [paymentsRes, duesRes, finesRes] = await Promise.all([
         api.get('/payments/my'),
         api.get('/payments/my/dues'),
+        api.get('/fines/my/pending'),
       ]);
       setMyPayments(paymentsRes.data.data || []);
       setMyDues(duesRes.data.data || []);
+      const pendingFinesData = finesRes.data || [];
+      setPendingFines(pendingFinesData);
+      setSelectedFineIds(pendingFinesData.map(f => f.id));
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
   };
@@ -93,7 +99,11 @@ export default function MemberPayBill() {
     e.preventDefault();
     setSubmitting(true);
     try {
-      await api.post('/payments', paymentForm);
+      await api.post('/payments', {
+        ...paymentForm,
+        type: selectedFineIds.length > 0 ? 'fine' : 'monthly',
+        fineIds: selectedFineIds,
+      });
       showToast('পেমেন্ট জমা হয়েছে! অনুমোদনের অপেক্ষায়।');
       
       // Fetch next unpaid to default the form for the next payment
@@ -290,52 +300,70 @@ export default function MemberPayBill() {
               </div>
             </div>
 
+            {/* Pending Fines Selection */}
+            {pendingFines.length > 0 && (
+              <div className="bg-slate-800/40 border border-white/5 rounded-xl p-4">
+                <h3 className="text-xs font-bold text-slate-300 mb-3 flex items-center gap-1.5">
+                  ⚠️ বকেয়া জরিমানা পরিশোধ করুন (ঐচ্ছিক)
+                </h3>
+                <div className="space-y-2">
+                  {pendingFines.map(fine => {
+                    const isChecked = selectedFineIds.includes(fine.id);
+                    return (
+                      <label key={fine.id} className="flex items-center justify-between p-2.5 bg-slate-950/40 hover:bg-slate-950 rounded-lg border border-white/5 cursor-pointer transition-colors">
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={() => {
+                              if (isChecked) {
+                                setSelectedFineIds(selectedFineIds.filter(id => id !== fine.id));
+                              } else {
+                                setSelectedFineIds([...selectedFineIds, fine.id]);
+                              }
+                            }}
+                            className="checkbox checkbox-amber checkbox-xs rounded shrink-0"
+                          />
+                          <div className="text-left">
+                            <p className="text-xs font-bold text-white">{fine.reason}</p>
+                            <p className="text-[10px] text-slate-500 mt-0.5">{new Date(fine.createdAt).toLocaleDateString('bn-BD')}</p>
+                          </div>
+                        </div>
+                        <span className="text-xs font-black text-rose-400">+{Number(fine.amount).toFixed(0)} ৳</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {/* Amount Info */}
             <div className="bg-amber-500/5 border border-amber-500/10 rounded-xl p-4 space-y-2">
-              {dueInfo && dueInfo.length > 0 && (
-                <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3">
-                  <p className="text-xs font-bold text-red-400 mb-2 flex items-center gap-1">
-                    <svg className="w-3.5 h-3.5 text-red-400 shrink-0 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
-                    {dueInfo.length} মাস বকেয়া আছে!
-                  </p>
-                  <p className="text-xs text-slate-400 mb-2">
-                    <span className="text-amber-400 font-bold">
-                      {monthlyAmount} × {dueInfo.length} due + {monthlyAmount} current = {(dueInfo.length + 1) * monthlyAmount} ৳
-                    </span>
-                  </p>
-                  <div className="space-y-1">
-                    {dueInfo.map((d, i) => (
-                      <div key={i} className="flex justify-between">
-                        <span className="text-xs text-slate-400">
-                          {MONTH_NAMES[d.month - 1]} {d.year} (বকেয়া)
-                        </span>
-                        <span className="text-xs font-bold text-red-400">{d.amount} ৳</span>
-                      </div>
-                    ))}
-                    <div className="flex justify-between pt-1.5 border-t border-red-500/20">
-                      <span className="text-xs text-slate-400">
-                        {MONTH_NAMES[paymentForm.month - 1]} {paymentForm.year} (এই মাস)
-                      </span>
-                      <span className="text-xs font-bold text-white">{user?.monthlyAmount} ৳</span>
-                    </div>
-                  </div>
-                  <div className="flex justify-between mt-3 pt-3 border-t border-red-500/20">
-                    <span className="text-xs font-bold text-white">মোট দিতে হবে</span>
-                    <span className="text-sm font-black text-amber-400">
-                      {(dueInfo.length + 1) * monthlyAmount} ৳
-                    </span>
-                  </div>
+              <div className="bg-slate-800/30 rounded-lg p-3 space-y-1.5">
+                <div className="flex justify-between">
+                  <span className="text-xs text-slate-400">চলতি মাস চাঁদা ({MONTH_NAMES[paymentForm.month - 1]} {paymentForm.year})</span>
+                  <span className="text-xs font-bold text-white">{monthlyAmount} ৳</span>
                 </div>
-              )}
-
-              {(!dueInfo || dueInfo.length === 0) && (
-                <p className="text-xs text-slate-400">
-                  পরিমাণ: <span className="text-amber-400 font-bold">{monthlyAmount} current = {monthlyAmount} ৳</span>
-                </p>
-              )}
-              <p className="text-xs text-slate-500">পেমেন্ট করার পর এই ফর্ম পূরণ করুন</p>
+                {dueInfo && dueInfo.length > 0 && (
+                  <div className="flex justify-between text-red-400">
+                    <span className="text-xs">বকেয়া চাঁদা ({dueInfo.length} মাস)</span>
+                    <span className="text-xs font-bold">{dueInfo.length * monthlyAmount} ৳</span>
+                  </div>
+                )}
+                {pendingFines.filter(f => selectedFineIds.includes(f.id)).length > 0 && (
+                  <div className="flex justify-between text-rose-400">
+                    <span className="text-xs">নির্বাচিত জরিমানা ({pendingFines.filter(f => selectedFineIds.includes(f.id)).length}টি)</span>
+                    <span className="text-xs font-bold">+{pendingFines.filter(f => selectedFineIds.includes(f.id)).reduce((sum, f) => sum + Number(f.amount), 0)} ৳</span>
+                  </div>
+                )}
+                <div className="flex justify-between pt-1.5 border-t border-white/5">
+                  <span className="text-xs font-bold text-white">সর্বমোট প্রদেয়</span>
+                  <span className="text-sm font-black text-amber-400">
+                    {((dueInfo ? dueInfo.length : 0) + 1) * monthlyAmount + pendingFines.filter(f => selectedFineIds.includes(f.id)).reduce((sum, f) => sum + Number(f.amount), 0)} ৳
+                  </span>
+                </div>
+              </div>
+              <p className="text-xs text-slate-500">বিকাশ/নগদে সর্বমোট টাকা পেমেন্ট করার পর এই ফর্মটি সাবমিট করুন</p>
             </div>
 
             {/* Submit Button */}

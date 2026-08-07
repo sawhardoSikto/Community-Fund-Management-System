@@ -77,4 +77,10 @@ export class Payment {
 
   @Column({ type: 'int', nullable: true })
   capturedInYear!: number | null;
+
+  @Column({ type: 'varchar', default: 'monthly' })
+  type!: 'monthly' | 'fine';
+
+  @Column({ type: 'text', nullable: true })
+  fineIds!: string | null; // JSON array of fine IDs [1, 2, ...]
 }

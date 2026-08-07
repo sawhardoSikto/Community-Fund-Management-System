@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException, OnModuleInit, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import { SheetsService } from 'src/sheets/sheets.service';
 import { Payment, PaymentStatus } from './entities/payment.entity';
 import { CreatePaymentDto } from './dto/create-payment.dto';
@@ -13,6 +13,8 @@ import { User } from '../users/entities/user.entity';
 import { MonthlySheet, SheetStatus } from 'src/sheets/entities/monthly-sheet.entity';
 import { SettingsService } from 'src/settings/settings.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { Fine, FineStatus } from '../fines/entities/fine.entity';
+
 @Injectable()
 export class PaymentsService implements OnModuleInit {
 constructor(
@@ -22,6 +24,8 @@ constructor(
   private openingBalanceRepo: Repository<MemberOpeningBalance>,
   @InjectRepository(MonthlySheet)  // ✅ add করো
   private sheetRepo: Repository<MonthlySheet>,
+  @InjectRepository(Fine)
+  private fineRepo: Repository<Fine>,
   private usersService: UsersService,
   private notificationsService: NotificationsService,
   @Inject(forwardRef(() => SheetsService))
@@ -51,7 +55,27 @@ async createPayment(userId: number, dto: CreatePaymentDto) {
     ...dueMonths,
     { month: dto.month, year: dto.year },
   ];
-  const totalAmount = user.monthlyAmount * coveredMonths.length;
+  let totalAmount = user.monthlyAmount * coveredMonths.length;
+
+  let finesTotal = 0;
+  let fineIdsStr: string | null = null;
+  let fineNoteSuffix = '';
+
+  if (dto.fineIds && dto.fineIds.length > 0) {
+    const fines = await this.fineRepo.find({
+      where: {
+        id: In(dto.fineIds),
+        userId,
+        status: FineStatus.PENDING,
+      },
+    });
+    finesTotal = fines.reduce((sum, f) => sum + Number(f.amount), 0);
+    totalAmount += finesTotal;
+    fineIdsStr = JSON.stringify(fines.map(f => f.id));
+    if (fines.length > 0) {
+      fineNoteSuffix = ` Fines covered: ${fines.map(f => `${f.reason} (${f.amount} ৳)`).join(', ')}`;
+    }
+  }
 
   // ২. Current month already paid?
   const existing = await this.paymentRepo.findOne({
@@ -71,11 +95,13 @@ async createPayment(userId: number, dto: CreatePaymentDto) {
     amount: totalAmount,
     paymentMethod: dto.paymentMethod,
     transactionNumber: dto.transactionNumber,
-    note: dueMonths.length > 0
+    note: `${dueMonths.length > 0
       ? `${dto.note ? `${dto.note}. ` : ''}Due months covered: ${dueMonths.map(d => `${d.month}/${d.year}`).join(', ')}`
-      : dto.note,
+      : dto.note || ''}${fineNoteSuffix}`,
     status: PaymentStatus.PENDING,
     coveredMonths: JSON.stringify(coveredMonths),
+    type: dto.type || 'monthly',
+    fineIds: fineIdsStr,
   });
   await this.paymentRepo.save(payment);
 
@@ -219,6 +245,23 @@ private async getDueMonths(
       }
     }
 
+    if (oldStatus === PaymentStatus.APPROVED && dto.status !== PaymentStatus.APPROVED) {
+      if (payment.fineIds) {
+        try {
+          const fineIds: number[] = JSON.parse(payment.fineIds);
+          if (Array.isArray(fineIds) && fineIds.length > 0) {
+            await this.fineRepo.update({ id: In(fineIds) }, {
+              status: FineStatus.PENDING,
+              paidAt: null,
+              paymentId: null,
+            });
+          }
+        } catch (err) {
+          console.error('Failed to revert fine statuses to pending', err);
+        }
+      }
+    }
+
     if (dto.status === PaymentStatus.PENDING) {
       payment.status = PaymentStatus.PENDING;
       payment.capturedInMonth = null;
@@ -233,6 +276,21 @@ private async getDueMonths(
         const capture = await this.getCaptureMonthAndYear();
         payment.capturedInMonth = capture.month;
         payment.capturedInYear = capture.year;
+
+        if (payment.fineIds) {
+          try {
+            const fineIds: number[] = JSON.parse(payment.fineIds);
+            if (Array.isArray(fineIds) && fineIds.length > 0) {
+              await this.fineRepo.update({ id: In(fineIds) }, {
+                status: FineStatus.PAID,
+                paidAt: new Date(),
+                paymentId: payment.id,
+              });
+            }
+          } catch (err) {
+            console.error('Failed to update fine statuses to paid', err);
+          }
+        }
       }
     }
 
@@ -501,6 +559,9 @@ async getMemberDuesUpToMonth(userId: number, month: number, year: number) {
 }
 
 paymentCoversMonth(payment: Payment, month: number, year: number) {
+  if (payment.type === 'fine') {
+    return false;
+  }
   if (payment.status !== PaymentStatus.APPROVED && payment.status !== PaymentStatus.PENDING) {
     return false;
   }
@@ -568,5 +629,11 @@ async getNextUnpaidMonthAndYear(userId: number): Promise<{ month: number; year: 
       checkYear++;
     }
   }
+}
+
+async getPendingFinesForUser(userId: number): Promise<Fine[]> {
+  return this.fineRepo.find({
+    where: { userId, status: FineStatus.PENDING },
+  });
 }
 }

@@ -10,10 +10,11 @@ import { NotificationsModule } from 'src/notifications/notifications.module';
 import { PaymentReminderService } from './payment-reminder.service';
 import { SheetsModule } from 'src/sheets/sheets.module';
 import { SettingsModule } from 'src/settings/settings.module';
+import { Fine } from '../fines/entities/fine.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Payment, MemberOpeningBalance, MonthlySheet]), 
+    TypeOrmModule.forFeature([Payment, MemberOpeningBalance, MonthlySheet, Fine]), 
     UsersModule, 
     NotificationsModule,
     forwardRef(() => SheetsModule),

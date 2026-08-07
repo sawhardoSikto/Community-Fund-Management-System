@@ -78,6 +78,9 @@ export class UsersService {
       (checkYear === currentYear && checkMonth <= currentMonth)
     ) {
       const paid = payments.find((p) => {
+        if (p.type === 'fine') {
+          return false;
+        }
         if (p.status !== PaymentStatus.APPROVED && p.status !== PaymentStatus.PENDING) {
           return false;
         }

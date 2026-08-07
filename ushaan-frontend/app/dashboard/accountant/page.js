@@ -157,9 +157,17 @@ const formatCoveredMonths = (coveredMonths) =>
 
 const formatPaymentBreakdown = (payment) => {
   const coveredMonths = parseCoveredMonths(payment.coveredMonths);
-  const monthlyAmount = payment.user?.monthlyAmount || (payment.amount && coveredMonths.length > 0
-    ? Math.round(Number(payment.amount) / coveredMonths.length)
-    : Number(payment.amount || 0));
+  const monthlyAmount = payment.user?.monthlyAmount || 200;
+
+  const hasFines = payment.type === 'fine' || payment.fineIds;
+
+  if (hasFines) {
+    const monthlyTotal = coveredMonths.length * monthlyAmount;
+    const finePart = Number(payment.amount || 0) - monthlyTotal;
+    if (finePart > 0) {
+      return `মাসিক চাঁদা: ${monthlyTotal} ৳ (${coveredMonths.length} মাস) + জরিমানা: ${finePart} ৳ = ${Number(payment.amount).toFixed(0)} ৳`;
+    }
+  }
 
   if (coveredMonths.length <= 1) {
     return `${monthlyAmount} current = ${Number(payment.amount || monthlyAmount).toFixed(0)} ৳`;

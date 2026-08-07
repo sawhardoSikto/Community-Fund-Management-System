@@ -15,6 +15,7 @@ import { SettingsModule } from './settings/settings.module';
 import { ExpensesModule } from './expenses/expenses.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { NoticesModule } from './notices/notices.module';
+import { FinesModule } from './fines/fines.module';
 
 
 @Module({
@@ -49,6 +50,7 @@ import { NoticesModule } from './notices/notices.module';
     ExpensesModule,
     NotificationsModule,
     NoticesModule,
+    FinesModule,
   ],
   providers: [
     {

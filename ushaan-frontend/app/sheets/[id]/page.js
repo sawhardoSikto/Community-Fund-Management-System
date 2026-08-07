@@ -62,6 +62,7 @@ const handleDownloadPDF = useReactToPrint({
 
  const totalIncome =
   Number(sheet.totalMemberIncome) +
+  Number(sheet.totalFineIncome || 0) +
   Number(sheet.totalProjectIncome) +
   Number(sheet.totalCapitalReturn || 0);
 const totalExpense =
@@ -196,6 +197,15 @@ const totalExpense =
       </td>
     </tr>
 
+    {Number(sheet.totalFineIncome || 0) > 0 && (
+      <tr>
+        <td className="border p-2">জরিমানা আদায়</td>
+        <td className="border p-2 text-right">
+          +{Number(sheet.totalFineIncome).toFixed(0)} ৳
+        </td>
+      </tr>
+    )}
+
     <tr>
       <td className="border p-2">প্রজেক্ট আয়</td>
       <td className="border p-2 text-right">
@@ -236,6 +246,7 @@ const totalExpense =
 
       <td className="border p-2 text-right font-bold">
         {(Number(sheet.totalMemberIncome)
+          + Number(sheet.totalFineIncome || 0)
           + Number(sheet.totalProjectIncome)
           + Number(sheet.totalCapitalReturn || 0)
           - Number(sheet.totalProjectExpense || 0)
@@ -437,43 +448,55 @@ const totalExpense =
           <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
             <h2 className="text-base font-bold text-white mb-4">📊 মাসিক সারসংক্ষেপ</h2>
             <div className="space-y-2">
-              {[
-  {
-    label: 'সদস্য চাঁদা',
-    value: `+${Number(sheet.totalMemberIncome).toFixed(0)} ৳`,
-    color: 'text-emerald-400'
-  },
-  {
-    label: 'প্রজেক্ট আয়',
-    value: `+${Number(sheet.totalProjectIncome).toFixed(0)} ৳`,
-    color: 'text-emerald-400'
-  },
-  {
-    label: 'মূলধন ফেরত',
-    value: `+${Number(sheet.totalCapitalReturn || 0).toFixed(0)} ৳`,
-    color: 'text-blue-400'
-  },
-  {
-    label: 'প্রজেক্ট বিনিয়োগ',
-    value: `-${Number(sheet.totalProjectExpense || 0).toFixed(0)} ৳`,
-    color: 'text-red-400'
-  },
-  {
-    label: 'বেতন',
-    value: `-${Number(sheet.totalSalary).toFixed(0)} ৳`,
-    color: 'text-red-400'
-  },
-  {
-    label: 'সাধারণ খরচ',
-    value: `-${Number(sheet.totalGeneralExpense || 0).toFixed(0)} ৳`,
-    color: 'text-red-400'
-  },
-].map((item, i) => (
-                <div key={i} className="flex justify-between px-4 py-2 bg-slate-800/50 rounded-xl">
-                  <span className="text-sm text-slate-300">{item.label}</span>
-                  <span className={`text-sm font-bold ${item.color}`}>{item.value}</span>
-                </div>
-              ))}
+              {(() => {
+                const summaryItems = [
+                  {
+                    label: 'সদস্য চাঁদা',
+                    value: `+${Number(sheet.totalMemberIncome).toFixed(0)} ৳`,
+                    color: 'text-emerald-400'
+                  }
+                ];
+                if (Number(sheet.totalFineIncome || 0) > 0) {
+                  summaryItems.push({
+                    label: 'জরিমানা আদায়',
+                    value: `+${Number(sheet.totalFineIncome).toFixed(0)} ৳`,
+                    color: 'text-emerald-400'
+                  });
+                }
+                summaryItems.push(
+                  {
+                    label: 'প্রজেক্ট আয়',
+                    value: `+${Number(sheet.totalProjectIncome).toFixed(0)} ৳`,
+                    color: 'text-emerald-400'
+                  },
+                  {
+                    label: 'মূলধন ফেরত',
+                    value: `+${Number(sheet.totalCapitalReturn || 0).toFixed(0)} ৳`,
+                    color: 'text-blue-400'
+                  },
+                  {
+                    label: 'প্রজেক্ট বিনিয়োগ',
+                    value: `-${Number(sheet.totalProjectExpense || 0).toFixed(0)} ৳`,
+                    color: 'text-red-400'
+                  },
+                  {
+                    label: 'বেতন',
+                    value: `-${Number(sheet.totalSalary).toFixed(0)} ৳`,
+                    color: 'text-red-400'
+                  },
+                  {
+                    label: 'সাধারণ খরচ',
+                    value: `-${Number(sheet.totalGeneralExpense || 0).toFixed(0)} ৳`,
+                    color: 'text-red-400'
+                  }
+                );
+                return summaryItems.map((item, i) => (
+                  <div key={i} className="flex justify-between px-4 py-2 bg-slate-800/50 rounded-xl">
+                    <span className="text-sm text-slate-300">{item.label}</span>
+                    <span className={`text-sm font-bold ${item.color}`}>{item.value}</span>
+                  </div>
+                ));
+              })()}
               <div className="flex justify-between px-4 py-3 bg-slate-700/50 rounded-xl border border-white/10 mt-2">
                 <span className="text-sm font-bold text-white">নিট এই মাসে</span>
                 <span className={`text-sm font-black ${totalIncome - totalExpense >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>

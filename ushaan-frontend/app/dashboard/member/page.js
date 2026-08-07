@@ -17,16 +17,18 @@ export default function MemberDashboard() {
   const [projects, setProjects] = useState([]);
   const [overallStatus, setOverallStatus] = useState(null);
   const [allUsers, setAllUsers] = useState([]);
+  const [pendingFines, setPendingFines] = useState([]);
   const fetchAll = async () => {
     setLoading(true);
     try {
-      const [paymentsRes, duesRes, projectsRes, overallRes, totalPaidRes, usersRes] = await Promise.all([
+      const [paymentsRes, duesRes, projectsRes, overallRes, totalPaidRes, usersRes, finesRes] = await Promise.all([
         api.get('/payments/my'),
         api.get('/payments/my/dues'),
         api.get('/projects'),
         api.get('/sheets/overall-status'),
         api.get('/payments/my/total-paid'),
         api.get('/users'),
+        api.get('/fines/my/pending'),
       ]);
       setMyPayments(paymentsRes.data.data || []);
       setMyDues(duesRes.data.data || []);
@@ -34,6 +36,7 @@ export default function MemberDashboard() {
       setOverallStatus(overallRes.data.data);
       setOverview(totalPaidRes.data);
       setAllUsers(usersRes.data || []);
+      setPendingFines(finesRes.data || []);
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
   };
@@ -133,6 +136,38 @@ export default function MemberDashboard() {
               <h3 className="text-sm font-bold text-white">আপনার কোনো বকেয়া নেই!</h3>
               <p className="text-xs text-slate-400 mt-0.5">সব পরিশোধিত করার জন্য আপনাকে ধন্যবাদ। 🎉 আপনি চাইলে পরবর্তী মাসের জন্য অগ্রিম চাঁদা দিতে পারেন।</p>
             </div>
+          </div>
+        )}
+
+        {/* Fines Alert Banner */}
+        {pendingFines.length > 0 && (
+          <div className="mb-6 bg-gradient-to-r from-amber-500/15 to-rose-500/5 border border-amber-500/20 rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <span className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-400 shrink-0 mt-0.5 animate-pulse">
+                ⚠️
+              </span>
+              <div>
+                <h3 className="text-sm font-bold text-white">আপনার জরিমানা বকেয়া রয়েছে</h3>
+                <div className="text-xs text-slate-400 mt-1 space-y-1">
+                  <p>
+                    আপনার মোট <span className="text-amber-400 font-bold">{pendingFines.length}টি</span> জরিমানা বকেয়া আছে (মোট জরিমানা: <span className="text-rose-400 font-bold">{pendingFines.reduce((acc, curr) => acc + Number(curr.amount), 0)} ৳</span>)।
+                  </p>
+                  <ul className="list-disc pl-4 mt-1 space-y-1 text-slate-400">
+                    {pendingFines.map(f => (
+                      <li key={f.id}>{f.reason}: <span className="text-rose-400 font-semibold">{Number(f.amount).toFixed(0)} ৳</span> ({new Date(f.createdAt).toLocaleDateString('bn-BD')})</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
+            <button 
+              onClick={() => {
+                router.push('/dashboard/member/pay-bill');
+              }}
+              className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-xl transition-all shadow-lg shadow-amber-500/25 shrink-0 self-start sm:self-center font-bold"
+            >
+              পরিশোধ করুন
+            </button>
           </div>
         )}
 
