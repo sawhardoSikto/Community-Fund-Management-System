@@ -1792,6 +1792,56 @@ const handleToggleProjectStatus = async (project) => {
         {/* ── Sheets Tab ── */}
         {tab === "sheets" && (
           <div className="space-y-6">
+            {/* Generate / Update Sheet Form */}
+            <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5 max-w-xl">
+              <h2 className="text-base font-bold text-white mb-2 flex items-center gap-2">
+                <span className="w-7 h-7 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-400 text-sm">
+                  📋
+                </span>
+                নতুন শিট তৈরি বা আপডেট করুন
+              </h2>
+              <p className="text-xs text-slate-400 mb-4">
+                যেকোনো মাসের আর্থিক হিসাব পুনরায় হিসাব (Recalculate) করতে বা নতুন শিট জেনারেট করতে ব্যবহার করুন।
+              </p>
+              <div className="flex items-center gap-3">
+                <select
+                  value={sheetForm.month}
+                  onChange={(e) =>
+                    setSheetForm((f) => ({
+                      ...f,
+                      month: parseInt(e.target.value),
+                    }))
+                  }
+                  className="flex-1 px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-amber-400/50 transition-all"
+                >
+                  {MONTH_NAMES.map((m, i) => (
+                    <option key={i} value={i + 1}>
+                      {m}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  type="number"
+                  value={sheetForm.year}
+                  onChange={(e) =>
+                    setSheetForm((f) => ({
+                      ...f,
+                      year: parseInt(e.target.value),
+                    }))
+                  }
+                  className="w-28 px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-amber-400/50 transition-all"
+                />
+                <button
+                  onClick={handleGenerateSheet}
+                  disabled={submitting}
+                  className="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white text-xs font-bold rounded-xl transition-all shadow-lg shadow-amber-500/25 shrink-0 flex items-center gap-1.5"
+                >
+                  {submitting && <span className="loading loading-spinner loading-xs" />}
+                  জেনারেট / আপডেট
+                </button>
+              </div>
+            </div>
+
             {/* Sheets List */}
             <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
               <h2 className="text-base font-bold text-white mb-4">
