@@ -197,14 +197,12 @@ const totalExpense =
       </td>
     </tr>
 
-    {Number(sheet.totalFineIncome || 0) > 0 && (
-      <tr>
-        <td className="border p-2">জরিমানা আদায়</td>
-        <td className="border p-2 text-right">
-          +{Number(sheet.totalFineIncome).toFixed(0)} ৳
-        </td>
-      </tr>
-    )}
+    <tr>
+      <td className="border p-2">জরিমানা আদায়</td>
+      <td className="border p-2 text-right">
+        +{Number(sheet.totalFineIncome || 0).toFixed(0)} ৳
+      </td>
+    </tr>
 
     <tr>
       <td className="border p-2">প্রজেক্ট আয়</td>
@@ -454,15 +452,13 @@ const totalExpense =
                     label: 'সদস্য চাঁদা',
                     value: `+${Number(sheet.totalMemberIncome).toFixed(0)} ৳`,
                     color: 'text-emerald-400'
+                  },
+                  {
+                    label: 'জরিমানা আদায়',
+                    value: `+${Number(sheet.totalFineIncome || 0).toFixed(0)} ৳`,
+                    color: 'text-emerald-400'
                   }
                 ];
-                if (Number(sheet.totalFineIncome || 0) > 0) {
-                  summaryItems.push({
-                    label: 'জরিমানা আদায়',
-                    value: `+${Number(sheet.totalFineIncome).toFixed(0)} ৳`,
-                    color: 'text-emerald-400'
-                  });
-                }
                 summaryItems.push(
                   {
                     label: 'প্রজেক্ট আয়',
