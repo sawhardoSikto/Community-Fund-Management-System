@@ -1,4 +1,4 @@
-import { IsInt, IsNotEmpty, IsString, Min, Max, IsEnum, IsOptional,IsPositive } from 'class-validator';
+import { IsInt, IsNotEmpty, IsString, Min, Max, IsEnum, IsOptional, IsPositive } from 'class-validator';
 import { Type } from 'class-transformer';
 import { PaymentMethod } from '../entities/payment.entity';
 

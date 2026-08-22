@@ -7,7 +7,7 @@ import { RolesGuard } from '../auth/roles.guard';
 @Controller('fines')
 @UseGuards(RolesGuard)
 export class FinesController {
-  constructor(private readonly finesService: FinesService) {}
+  constructor(private readonly finesService: FinesService) { }
 
   @Post()
   @Roles('admin')

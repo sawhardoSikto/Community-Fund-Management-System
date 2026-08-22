@@ -11,4 +11,4 @@ import { FinesService } from './fines.service';
   providers: [FinesService],
   exports: [FinesService, TypeOrmModule],
 })
-export class FinesModule {}
+export class FinesModule { }

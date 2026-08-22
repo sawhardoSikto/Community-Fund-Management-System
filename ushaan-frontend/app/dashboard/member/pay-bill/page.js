@@ -101,7 +101,7 @@ export default function MemberPayBill() {
     try {
       await api.post('/payments', {
         ...paymentForm,
-        type: selectedFineIds.length > 0 ? 'fine' : 'monthly',
+        type: 'monthly',
         fineIds: selectedFineIds,
       });
       showToast('পেমেন্ট জমা হয়েছে! অনুমোদনের অপেক্ষায়।');

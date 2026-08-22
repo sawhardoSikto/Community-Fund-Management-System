@@ -12,7 +12,7 @@ export class FinesService {
     private readonly fineRepo: Repository<Fine>,
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
-  ) {}
+  ) { }
 
   async create(dto: CreateFineDto): Promise<Fine> {
     const user = await this.userRepo.findOne({ where: { id: dto.userId } });

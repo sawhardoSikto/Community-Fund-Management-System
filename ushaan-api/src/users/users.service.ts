@@ -16,7 +16,7 @@ export class UsersService {
     @InjectRepository(MemberOpeningBalance)
     private openingBalanceRepo: Repository<MemberOpeningBalance>,
     private settingsService: SettingsService,
-  ) {}
+  ) { }
 
   async findByEmail(email: string): Promise<User | null> {
     const cleanEmail = email ? email.trim().toLowerCase() : '';
@@ -78,11 +78,21 @@ export class UsersService {
       (checkYear === currentYear && checkMonth <= currentMonth)
     ) {
       const paid = payments.find((p) => {
-        if (p.type === 'fine') {
-          return false;
-        }
         if (p.status !== PaymentStatus.APPROVED && p.status !== PaymentStatus.PENDING) {
           return false;
+        }
+        if (p.type === 'fine') {
+          if (!p.coveredMonths) {
+            return false;
+          }
+          try {
+            const covered = JSON.parse(p.coveredMonths);
+            if (!Array.isArray(covered) || covered.length === 0) {
+              return false;
+            }
+          } catch {
+            return false;
+          }
         }
         if (p.month === checkMonth && p.year === checkYear) {
           return true;

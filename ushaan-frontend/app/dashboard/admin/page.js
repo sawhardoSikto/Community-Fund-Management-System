@@ -322,377 +322,377 @@ export default function AdminDashboard() {
           <div className="lg:col-span-2 space-y-6">
             {/* Tabs */}
             <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 bg-slate-900/50 border border-white/5 p-1.5 rounded-2xl">
-          {TABS.map(t => {
-            const isActive = tab === t.key;
-            return (
-              <button key={t.key} onClick={() => setTab(t.key)}
-                className={`flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold transition-all group ${isActive ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/20' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}>
-                {getTabIcon(t.key, isActive)}
-                <span>{t.label}</span>
-                {t.count > 0 && <span className="w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-black shrink-0">{t.count}</span>}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Overview */}
-        {tab === 'overview' && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
-              <h2 className="text-base font-bold text-white mb-4">সাম্প্রতিক শিট</h2>
-              {sheets.length === 0 ? <p className="text-slate-500 text-sm py-6 text-center">কোনো শিট নেই</p> : (
-                <div className="space-y-2">
-                  {sheets.slice(0, 5).map(sheet => (
-                    <div key={sheet.id} className="flex items-center justify-between px-4 py-3 bg-slate-800/50 rounded-xl">
-                      <div>
-                        <p className="text-sm font-bold text-white">{MONTH_NAMES[sheet.month - 1]} {sheet.year}</p>
-                        <p className="text-xs text-slate-400">হাতে: {Number(sheet.cashInHand).toFixed(0)} ৳</p>
-                      </div>
-                       <div className="flex items-center gap-2">
-                        <Link href={`/sheets/${sheet.id}`} className="px-2.5 py-1 bg-slate-700 hover:bg-slate-600 text-white text-xs rounded-lg transition-colors">দেখুন</Link>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+              {TABS.map(t => {
+                const isActive = tab === t.key;
+                return (
+                  <button key={t.key} onClick={() => setTab(t.key)}
+                    className={`flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold transition-all group ${isActive ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/20' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}>
+                    {getTabIcon(t.key, isActive)}
+                    <span>{t.label}</span>
+                    {t.count > 0 && <span className="w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-black shrink-0">{t.count}</span>}
+                  </button>
+                );
+              })}
             </div>
-            <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
-              <h2 className="text-base font-bold text-white mb-4">প্রজেক্ট সারসংক্ষেপ</h2>
-              {projects.length === 0 ? <p className="text-slate-500 text-sm py-6 text-center">কোনো প্রজেক্ট নেই</p> : (
-                <div className="space-y-2">
-                  {projects.map(project => (
-                    <Link key={project.id} href={`/projects/${project.id}`}
-                      className="block px-4 py-3 bg-slate-800/50 hover:bg-slate-800/80 border border-white/0 hover:border-white/5 rounded-xl transition-all">
-                      <div className="flex items-center justify-between mb-1">
-                        <p className="text-sm font-bold text-white">{project.name}</p>
-                        {project.status === 'active' ? (
-                          <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-lg border bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                            সক্রিয়
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-lg border bg-slate-800 text-slate-400 border-white/5">
-                            <svg className="w-3 h-3 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                            </svg>
-                            সম্পন্ন
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex gap-3">
-                        <span className="text-xs text-red-400">বিনিয়োগ: {Number(project.totalInvested).toFixed(0)} ৳</span>
-                        {project.summary && <span className="text-xs text-emerald-400">মুনাফা: {Number(project.summary.totalProfit).toFixed(0)} ৳</span>}
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
 
-        {/* Members */}
-        {tab === 'members' && (
-          <div className="space-y-4">
-            {pendingMembers.length > 0 && (
-              <div className="bg-slate-900/50 border border-amber-500/20 rounded-2xl p-5">
-                <h2 className="text-sm font-bold text-amber-400 mb-3 flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-                  অনুমোদনের অপেক্ষায় থাকা সদস্য ({pendingMembers.length})
-                </h2>
-                <div className="space-y-2">
-                  {pendingMembers.map(u => (
-                    <div key={u.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3 bg-amber-500/5 border border-amber-500/10 rounded-xl">
-                      <div className="flex items-center gap-3 min-w-0 w-full">
-                        <UserAvatar user={u} className="w-9 h-9 rounded-xl overflow-hidden shrink-0 text-sm" gradient="from-amber-400/20 to-orange-500/20" />
-                        <div className="min-w-0">
-                          <p className="text-sm font-bold text-white truncate">{u.name}</p>
-                          <div className="flex flex-wrap items-center gap-2 mt-0.5">
-                            <p className="text-xs text-slate-400 truncate">{u.phone || u.email}</p>
-                            <span className="text-[10px] sm:text-xs text-amber-400/80 font-semibold bg-amber-500/10 px-1.5 py-0.5 rounded-lg shrink-0">{u.monthlyAmount} ৳/মাস</span>
+            {/* Overview */}
+            {tab === 'overview' && (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
+                  <h2 className="text-base font-bold text-white mb-4">সাম্প্রতিক শিট</h2>
+                  {sheets.length === 0 ? <p className="text-slate-500 text-sm py-6 text-center">কোনো শিট নেই</p> : (
+                    <div className="space-y-2">
+                      {sheets.slice(0, 5).map(sheet => (
+                        <div key={sheet.id} className="flex items-center justify-between px-4 py-3 bg-slate-800/50 rounded-xl">
+                          <div>
+                            <p className="text-sm font-bold text-white">{MONTH_NAMES[sheet.month - 1]} {sheet.year}</p>
+                            <p className="text-xs text-slate-400">হাতে: {Number(sheet.cashInHand).toFixed(0)} ৳</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Link href={`/sheets/${sheet.id}`} className="px-2.5 py-1 bg-slate-700 hover:bg-slate-600 text-white text-xs rounded-lg transition-colors">দেখুন</Link>
                           </div>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-2 w-full sm:w-auto shrink-0 justify-end sm:justify-start">
-                        <button onClick={() => handleUserApprove(u.id)} disabled={processing === u.id}
-                          className="flex-1 sm:flex-initial justify-center px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-1">
-                          {processing === u.id ? <span className="loading loading-spinner loading-xs" /> : "অনুমোদন"}
-                        </button>
-                        <button onClick={() => handleUserDelete(u.id)} disabled={processing === u.id}
-                          className="flex-1 sm:flex-initial justify-center px-3 py-1.5 bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white text-xs font-bold border border-red-500/20 rounded-lg transition-all cursor-pointer disabled:opacity-50">
-                          প্রত্যাখ্যান
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
-              <h2 className="text-sm font-bold text-amber-400 mb-3">পদস্থ সদস্য ({staffs.length})</h2>
-              <div className="space-y-2">
-                {staffs.map(u => (
-                  <div key={u.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3 bg-slate-800/50 rounded-xl">
-                    <div className="flex items-center gap-3 min-w-0 w-full">
-                      <UserAvatar user={u} className="w-9 h-9 rounded-xl overflow-hidden shrink-0 text-sm" gradient="from-amber-400 to-orange-500" />
-                      <div className="min-w-0">
-                        <p className="text-sm font-bold text-white truncate">{u.name}</p>
-                        <div className="flex flex-wrap items-center gap-2 mt-0.5">
-                          <p className="text-xs text-slate-400 truncate max-w-[140px] sm:max-w-xs">{u.email}</p>
-                          <span className="text-[10px] sm:text-xs text-amber-400 font-semibold bg-amber-500/10 px-1.5 py-0.5 rounded-lg shrink-0">{u.monthlyAmount} ৳/মাস</span>
-                        </div>
-                        {u.dueAmount > 0 ? (
-                          <p className="text-xs font-bold text-rose-400 mt-0.5">বকেয়া: {u.dueAmount} ৳</p>
-                        ) : (
-                          <p className="text-xs font-bold text-emerald-400 mt-0.5">বকেয়া নেই</p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between sm:justify-start gap-2 w-full sm:w-auto shrink-0 border-t border-white/5 sm:border-0 pt-2 sm:pt-0">
-                      <span className="text-xs font-semibold px-2 py-0.5 bg-amber-500/10 text-amber-400 rounded-lg">{ROLE_LABELS[u.role]}</span>
-                      <button onClick={() => { setEditingUser(u); setUserForm({ name: u.name, email: u.email, phone: u.phone || '', nid: u.nid || '', role: u.role, monthlyAmount: u.monthlyAmount?.toString() || '200' }); }}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-amber-400 hover:bg-amber-500/10 transition-colors">
-                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" /></svg>
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
-              <h2 className="text-sm font-bold text-slate-300 mb-3">সাধারণ সদস্য ({members.length})</h2>
-              <div className="space-y-2">
-                {members.map(u => (
-                  <div key={u.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3 bg-slate-800/50 rounded-xl">
-                    <div className="flex items-center gap-3 min-w-0 w-full">
-                      <UserAvatar user={u} className="w-9 h-9 rounded-xl overflow-hidden shrink-0 text-sm" gradient="from-slate-600 to-slate-700" />
-                      <div className="min-w-0">
-                        <p className="text-sm font-bold text-white truncate">{u.name}</p>
-                        <div className="flex flex-wrap items-center gap-2 mt-0.5">
-                          <p className="text-xs text-slate-400 truncate max-w-[140px] sm:max-w-xs">{u.phone || u.email}</p>
-                          <span className="text-[10px] sm:text-xs text-amber-400 font-semibold bg-amber-500/10 px-1.5 py-0.5 rounded-lg shrink-0">{u.monthlyAmount} ৳/মাস</span>
-                        </div>
-                        {u.dueAmount > 0 ? (
-                          <p className="text-xs font-bold text-rose-400 mt-0.5">বকেয়া: {u.dueAmount} ৳</p>
-                        ) : (
-                          <p className="text-xs font-bold text-emerald-400 mt-0.5">বকেয়া নেই</p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-end gap-1 w-full sm:w-auto shrink-0 border-t border-white/5 sm:border-0 pt-2 sm:pt-0">
-                      <button onClick={() => { setEditingUser(u); setUserForm({ name: u.name, email: u.email, phone: u.phone || '', nid: u.nid || '', role: u.role, monthlyAmount: u.monthlyAmount?.toString() || '200' }); }}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-amber-400 hover:bg-amber-500/10 transition-colors">
-                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" /></svg>
-                      </button>
-                      <button onClick={() => handleUserDelete(u.id)} disabled={processing === u.id}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-colors disabled:opacity-50">
-                        {processing === u.id ? <span className="loading loading-spinner loading-xs" /> : <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>}
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-
-
-        {/* My Payment */}
-        {tab === 'my-payment' && (
-          <div className="max-w-md">
-            <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
-              <h2 className="text-base font-bold text-white mb-4 flex items-center gap-2">
-                <span className="w-7 h-7 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-400 text-sm">💰</span>
-                আমার মাসিক পেমেন্ট
-              </h2>
-              <PaymentForm user={user} onSuccess={(msg) => showToast(msg)} />
-            </div>
-          </div>
-        )}
-
-        {/* Projects */}
-        {tab === 'projects' && (
-          <div className="space-y-4 max-w-4xl">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-bold text-white">সব প্রজেক্ট ({projects.length})</h2>
-            </div>
-            {projects.length === 0 ? (
-              <p className="text-center text-slate-500 py-12 bg-slate-900/50 border border-white/5 rounded-2xl">কোনো প্রজেক্ট নেই</p>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {projects.map(project => (
-                  <div key={project.id} className="bg-slate-900/50 border border-white/5 rounded-2xl p-5 hover:border-white/10 transition-all flex flex-col justify-between">
-                    <div>
-                      <div className="flex items-start justify-between gap-4 mb-3">
-                        <Link href={`/projects/${project.id}`} className="group flex-1">
-                          <h3 className="text-base font-bold text-white group-hover:text-amber-400 transition-colors flex items-center gap-1.5">
-                            {project.name}
-                            <span className="text-xs font-normal text-amber-500/80 group-hover:text-amber-400">→</span>
-                          </h3>
-                          {project.description && <p className="text-xs text-slate-400 mt-0.5">{project.description}</p>}
-                        </Link>
-                        {project.status === 'active' ? (
-                          <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-lg border bg-emerald-500/10 text-emerald-400 border-emerald-500/20 shrink-0">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                            সক্রিয়
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-lg border bg-slate-800 text-slate-400 border-white/5 shrink-0">
-                            সম্পন্ন
-                          </span>
-                        )}
-                      </div>
-                      {project.summary && (
-                        <Link href={`/projects/${project.id}`} className="grid grid-cols-2 gap-2 mb-3 mt-4 block hover:opacity-90 transition-opacity">
-                          {[
-                            { label: 'বিনিয়োগ', value: `${Number(project.totalInvested || 0).toFixed(0)} ৳`, color: 'text-red-400' },
-                            { label: 'মুনাফা', value: `${Number(project.summary.totalProfit).toFixed(0)} ৳`, color: 'text-emerald-400' },
-                            { label: 'ফেরত', value: `${Number(project.summary.capitalReturn).toFixed(0)} ৳`, color: 'text-blue-400' },
-                            { label: 'বাইরে', value: `${Number(project.summary.stillOutside).toFixed(0)} ৳`, color: 'text-amber-400' },
-                          ].map((s, i) => (
-                            <div key={i} className="bg-slate-800/50 rounded-xl p-2.5 text-center">
-                              <p className={`text-sm font-black ${s.color}`}>{s.value}</p>
-                              <p className="text-[10px] text-slate-500 mt-0.5">{s.label}</p>
-                            </div>
-                          ))}
-                        </Link>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Fines */}
-        {tab === 'fines' && (
-          <div className="space-y-6 max-w-4xl">
-            {/* Create Fine Form */}
-            <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
-              <h2 className="text-base font-bold text-white mb-4">নতুন জরিমানা ধার্য করুন</h2>
-              <form onSubmit={handleFineSubmit} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-400 mb-1.5">সদস্য নির্বাচন করুন</label>
-                    <select
-                      value={fineForm.userId}
-                      onChange={(e) => setFineForm({ ...fineForm, userId: e.target.value })}
-                      className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
-                    >
-                      <option value="">সদস্য সিলেক্ট করুন</option>
-                      {allUsers.filter(u => u.isApproved).map(u => (
-                        <option key={u.id} value={u.id}>
-                          {u.name} — {u.role === 'admin' ? 'এডমিন' : u.role === 'accountant' ? 'হিসাবরক্ষক' : u.role === 'secretary' ? 'সেক্রেটারি' : 'সদস্য'}
-                        </option>
                       ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-400 mb-1.5">জরিমানার পরিমাণ (৳)</label>
-                    <input
-                      type="number"
-                      placeholder="যেমন: ১০০"
-                      value={fineForm.amount}
-                      onChange={(e) => setFineForm({ ...fineForm, amount: e.target.value })}
-                      className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-400 mb-1.5">জরিমানার कारण</label>
-                    <select
-                      value={fineForm.reason}
-                      onChange={(e) => setFineForm({ ...fineForm, reason: e.target.value, customReason: '' })}
-                      className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
-                    >
-                      <option value="">কারণ সিলেক্ট করুন</option>
-                      <option value="মিটিং অনুপস্থিতি">মিটিং অনুপস্থিতি</option>
-                      <option value="দেরিতে ফি প্রদান">দেরিতে ফি প্রদান</option>
-                      <option value="অন্যান্য">অন্যান্য (নিজে লিখুন)</option>
-                    </select>
-                  </div>
+                    </div>
+                  )}
                 </div>
+                <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
+                  <h2 className="text-base font-bold text-white mb-4">প্রজেক্ট সারসংক্ষেপ</h2>
+                  {projects.length === 0 ? <p className="text-slate-500 text-sm py-6 text-center">কোনো প্রজেক্ট নেই</p> : (
+                    <div className="space-y-2">
+                      {projects.map(project => (
+                        <Link key={project.id} href={`/projects/${project.id}`}
+                          className="block px-4 py-3 bg-slate-800/50 hover:bg-slate-800/80 border border-white/0 hover:border-white/5 rounded-xl transition-all">
+                          <div className="flex items-center justify-between mb-1">
+                            <p className="text-sm font-bold text-white">{project.name}</p>
+                            {project.status === 'active' ? (
+                              <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-lg border bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                                সক্রিয়
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-lg border bg-slate-800 text-slate-400 border-white/5">
+                                <svg className="w-3 h-3 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                </svg>
+                                সম্পন্ন
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex gap-3">
+                            <span className="text-xs text-red-400">বিনিয়োগ: {Number(project.totalInvested).toFixed(0)} ৳</span>
+                            {project.summary && <span className="text-xs text-emerald-400">মুনাফা: {Number(project.summary.totalProfit).toFixed(0)} ৳</span>}
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
-                {fineForm.reason === 'অন্যান্য' && (
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-400 mb-1.5">অন্যান্য কারণ লিখুন</label>
-                    <input
-                      type="text"
-                      placeholder="কারণ লিখুন..."
-                      value={fineForm.customReason}
-                      onChange={(e) => setFineForm({ ...fineForm, customReason: e.target.value })}
-                      className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
-                    />
+            {/* Members */}
+            {tab === 'members' && (
+              <div className="space-y-4">
+                {pendingMembers.length > 0 && (
+                  <div className="bg-slate-900/50 border border-amber-500/20 rounded-2xl p-5">
+                    <h2 className="text-sm font-bold text-amber-400 mb-3 flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                      অনুমোদনের অপেক্ষায় থাকা সদস্য ({pendingMembers.length})
+                    </h2>
+                    <div className="space-y-2">
+                      {pendingMembers.map(u => (
+                        <div key={u.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3 bg-amber-500/5 border border-amber-500/10 rounded-xl">
+                          <div className="flex items-center gap-3 min-w-0 w-full">
+                            <UserAvatar user={u} className="w-9 h-9 rounded-xl overflow-hidden shrink-0 text-sm" gradient="from-amber-400/20 to-orange-500/20" />
+                            <div className="min-w-0">
+                              <p className="text-sm font-bold text-white truncate">{u.name}</p>
+                              <div className="flex flex-wrap items-center gap-2 mt-0.5">
+                                <p className="text-xs text-slate-400 truncate">{u.phone || u.email}</p>
+                                <span className="text-[10px] sm:text-xs text-amber-400/80 font-semibold bg-amber-500/10 px-1.5 py-0.5 rounded-lg shrink-0">{u.monthlyAmount} ৳/মাস</span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 w-full sm:w-auto shrink-0 justify-end sm:justify-start">
+                            <button onClick={() => handleUserApprove(u.id)} disabled={processing === u.id}
+                              className="flex-1 sm:flex-initial justify-center px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-1">
+                              {processing === u.id ? <span className="loading loading-spinner loading-xs" /> : "অনুমোদন"}
+                            </button>
+                            <button onClick={() => handleUserDelete(u.id)} disabled={processing === u.id}
+                              className="flex-1 sm:flex-initial justify-center px-3 py-1.5 bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white text-xs font-bold border border-red-500/20 rounded-lg transition-all cursor-pointer disabled:opacity-50">
+                              প্রত্যাখ্যান
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
 
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 disabled:bg-amber-500/50 text-white font-bold text-xs rounded-xl shadow-lg shadow-amber-500/20 transition-all"
-                >
-                  {submitting ? 'প্রক্রিয়াধীন...' : 'জরিমানা ধার্য করুন'}
-                </button>
-              </form>
-            </div>
+                <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
+                  <h2 className="text-sm font-bold text-amber-400 mb-3">পদস্থ সদস্য ({staffs.length})</h2>
+                  <div className="space-y-2">
+                    {staffs.map(u => (
+                      <div key={u.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3 bg-slate-800/50 rounded-xl">
+                        <div className="flex items-center gap-3 min-w-0 w-full">
+                          <UserAvatar user={u} className="w-9 h-9 rounded-xl overflow-hidden shrink-0 text-sm" gradient="from-amber-400 to-orange-500" />
+                          <div className="min-w-0">
+                            <p className="text-sm font-bold text-white truncate">{u.name}</p>
+                            <div className="flex flex-wrap items-center gap-2 mt-0.5">
+                              <p className="text-xs text-slate-400 truncate max-w-[140px] sm:max-w-xs">{u.email}</p>
+                              <span className="text-[10px] sm:text-xs text-amber-400 font-semibold bg-amber-500/10 px-1.5 py-0.5 rounded-lg shrink-0">{u.monthlyAmount} ৳/মাস</span>
+                            </div>
+                            {u.dueAmount > 0 ? (
+                              <p className="text-xs font-bold text-rose-400 mt-0.5">বকেয়া: {u.dueAmount} ৳</p>
+                            ) : (
+                              <p className="text-xs font-bold text-emerald-400 mt-0.5">বকেয়া নেই</p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between sm:justify-start gap-2 w-full sm:w-auto shrink-0 border-t border-white/5 sm:border-0 pt-2 sm:pt-0">
+                          <span className="text-xs font-semibold px-2 py-0.5 bg-amber-500/10 text-amber-400 rounded-lg">{ROLE_LABELS[u.role]}</span>
+                          <button onClick={() => { setEditingUser(u); setUserForm({ name: u.name, email: u.email, phone: u.phone || '', nid: u.nid || '', role: u.role, monthlyAmount: u.monthlyAmount?.toString() || '200' }); }}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-amber-400 hover:bg-amber-500/10 transition-colors">
+                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" /></svg>
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
+                  <h2 className="text-sm font-bold text-slate-300 mb-3">সাধারণ সদস্য ({members.length})</h2>
+                  <div className="space-y-2">
+                    {members.map(u => (
+                      <div key={u.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3 bg-slate-800/50 rounded-xl">
+                        <div className="flex items-center gap-3 min-w-0 w-full">
+                          <UserAvatar user={u} className="w-9 h-9 rounded-xl overflow-hidden shrink-0 text-sm" gradient="from-slate-600 to-slate-700" />
+                          <div className="min-w-0">
+                            <p className="text-sm font-bold text-white truncate">{u.name}</p>
+                            <div className="flex flex-wrap items-center gap-2 mt-0.5">
+                              <p className="text-xs text-slate-400 truncate max-w-[140px] sm:max-w-xs">{u.phone || u.email}</p>
+                              <span className="text-[10px] sm:text-xs text-amber-400 font-semibold bg-amber-500/10 px-1.5 py-0.5 rounded-lg shrink-0">{u.monthlyAmount} ৳/মাস</span>
+                            </div>
+                            {u.dueAmount > 0 ? (
+                              <p className="text-xs font-bold text-rose-400 mt-0.5">বকেয়া: {u.dueAmount} ৳</p>
+                            ) : (
+                              <p className="text-xs font-bold text-emerald-400 mt-0.5">বকেয়া নেই</p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-end gap-1 w-full sm:w-auto shrink-0 border-t border-white/5 sm:border-0 pt-2 sm:pt-0">
+                          <button onClick={() => { setEditingUser(u); setUserForm({ name: u.name, email: u.email, phone: u.phone || '', nid: u.nid || '', role: u.role, monthlyAmount: u.monthlyAmount?.toString() || '200' }); }}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-amber-400 hover:bg-amber-500/10 transition-colors">
+                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" /></svg>
+                          </button>
+                          <button onClick={() => handleUserDelete(u.id)} disabled={processing === u.id}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-colors disabled:opacity-50">
+                            {processing === u.id ? <span className="loading loading-spinner loading-xs" /> : <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>}
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
 
-            {/* Fines List */}
-            <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
-              <h2 className="text-base font-bold text-white mb-4">সকল জরিমানা তালিকা ({fines.length})</h2>
-              {fines.length === 0 ? (
-                <p className="text-center text-slate-500 py-12 text-sm">কোনো জরিমানা নেই</p>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs border-collapse">
-                    <thead>
-                      <tr className="border-b border-white/5 text-slate-400 font-semibold">
-                        <th className="py-3 px-4">সদস্য</th>
-                        <th className="py-3 px-4">অ্যামাউন্ট</th>
-                        <th className="py-3 px-4">কারণ</th>
-                        <th className="py-3 px-4">তারিখ</th>
-                        <th className="py-3 px-4">স্ট্যাটাস</th>
-                        <th className="py-3 px-4 text-right">অ্যাকশন</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {fines.map((fine) => (
-                        <tr key={fine.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                          <td className="py-3 px-4 text-white font-medium">{fine.user?.name || `User ID: ${fine.userId}`}</td>
-                          <td className="py-3 px-4 text-rose-400 font-bold">{Number(fine.amount).toFixed(0)} ৳</td>
-                          <td className="py-3 px-4 text-slate-300">{fine.reason}</td>
-                          <td className="py-3 px-4 text-slate-400">{new Date(fine.createdAt).toLocaleDateString('bn-BD')}</td>
-                          <td className="py-3 px-4">
-                            {fine.status === 'paid' ? (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold">
-                                পরিশোধিত
+
+
+            {/* My Payment */}
+            {tab === 'my-payment' && (
+              <div className="max-w-md">
+                <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
+                  <h2 className="text-base font-bold text-white mb-4 flex items-center gap-2">
+                    <span className="w-7 h-7 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-400 text-sm">💰</span>
+                    আমার মাসিক পেমেন্ট
+                  </h2>
+                  <PaymentForm user={user} onSuccess={(msg) => showToast(msg)} />
+                </div>
+              </div>
+            )}
+
+            {/* Projects */}
+            {tab === 'projects' && (
+              <div className="space-y-4 max-w-4xl">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-base font-bold text-white">সব প্রজেক্ট ({projects.length})</h2>
+                </div>
+                {projects.length === 0 ? (
+                  <p className="text-center text-slate-500 py-12 bg-slate-900/50 border border-white/5 rounded-2xl">কোনো প্রজেক্ট নেই</p>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {projects.map(project => (
+                      <div key={project.id} className="bg-slate-900/50 border border-white/5 rounded-2xl p-5 hover:border-white/10 transition-all flex flex-col justify-between">
+                        <div>
+                          <div className="flex items-start justify-between gap-4 mb-3">
+                            <Link href={`/projects/${project.id}`} className="group flex-1">
+                              <h3 className="text-base font-bold text-white group-hover:text-amber-400 transition-colors flex items-center gap-1.5">
+                                {project.name}
+                                <span className="text-xs font-normal text-amber-500/80 group-hover:text-amber-400">→</span>
+                              </h3>
+                              {project.description && <p className="text-xs text-slate-400 mt-0.5">{project.description}</p>}
+                            </Link>
+                            {project.status === 'active' ? (
+                              <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-lg border bg-emerald-500/10 text-emerald-400 border-emerald-500/20 shrink-0">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                                সক্রিয়
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-red-500/10 text-red-400 border border-red-500/20 font-semibold">
-                                বকেয়া
+                              <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-lg border bg-slate-800 text-slate-400 border-white/5 shrink-0">
+                                সম্পন্ন
                               </span>
                             )}
-                          </td>
-                          <td className="py-3 px-4 text-right">
-                            {fine.status === 'pending' && (
-                              <button
-                                onClick={() => handleFineDelete(fine.id)}
-                                className="px-2 py-1 bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white rounded border border-red-500/20 transition-all font-semibold"
-                              >
-                                বাতিল
-                              </button>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                          </div>
+                          {project.summary && (
+                            <Link href={`/projects/${project.id}`} className="grid grid-cols-2 gap-2 mb-3 mt-4 block hover:opacity-90 transition-opacity">
+                              {[
+                                { label: 'বিনিয়োগ', value: `${Number(project.totalInvested || 0).toFixed(0)} ৳`, color: 'text-red-400' },
+                                { label: 'মুনাফা', value: `${Number(project.summary.totalProfit).toFixed(0)} ৳`, color: 'text-emerald-400' },
+                                { label: 'ফেরত', value: `${Number(project.summary.capitalReturn).toFixed(0)} ৳`, color: 'text-blue-400' },
+                                { label: 'বাইরে', value: `${Number(project.summary.stillOutside).toFixed(0)} ৳`, color: 'text-amber-400' },
+                              ].map((s, i) => (
+                                <div key={i} className="bg-slate-800/50 rounded-xl p-2.5 text-center">
+                                  <p className={`text-sm font-black ${s.color}`}>{s.value}</p>
+                                  <p className="text-[10px] text-slate-500 mt-0.5">{s.label}</p>
+                                </div>
+                              ))}
+                            </Link>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Fines */}
+            {tab === 'fines' && (
+              <div className="space-y-6 max-w-4xl">
+                {/* Create Fine Form */}
+                <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
+                  <h2 className="text-base font-bold text-white mb-4">নতুন জরিমানা ধার্য করুন</h2>
+                  <form onSubmit={handleFineSubmit} className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-400 mb-1.5">সদস্য নির্বাচন করুন</label>
+                        <select
+                          value={fineForm.userId}
+                          onChange={(e) => setFineForm({ ...fineForm, userId: e.target.value })}
+                          className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+                        >
+                          <option value="">সদস্য সিলেক্ট করুন</option>
+                          {allUsers.filter(u => u.isApproved).map(u => (
+                            <option key={u.id} value={u.id}>
+                              {u.name} — {u.role === 'admin' ? 'এডমিন' : u.role === 'accountant' ? 'হিসাবরক্ষক' : u.role === 'secretary' ? 'সেক্রেটারি' : 'সদস্য'}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-400 mb-1.5">জরিমানার পরিমাণ (৳)</label>
+                        <input
+                          type="number"
+                          placeholder="যেমন: ১০০"
+                          value={fineForm.amount}
+                          onChange={(e) => setFineForm({ ...fineForm, amount: e.target.value })}
+                          className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-400 mb-1.5">জরিমানার कारण</label>
+                        <select
+                          value={fineForm.reason}
+                          onChange={(e) => setFineForm({ ...fineForm, reason: e.target.value, customReason: '' })}
+                          className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+                        >
+                          <option value="">কারণ সিলেক্ট করুন</option>
+                          <option value="মিটিং অনুপস্থিতি">মিটিং অনুপস্থিতি</option>
+                          <option value="দেরিতে ফি প্রদান">দেরিতে ফি প্রদান</option>
+                          <option value="অন্যান্য">অন্যান্য (নিজে লিখুন)</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {fineForm.reason === 'অন্যান্য' && (
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-400 mb-1.5">অন্যান্য কারণ লিখুন</label>
+                        <input
+                          type="text"
+                          placeholder="কারণ লিখুন..."
+                          value={fineForm.customReason}
+                          onChange={(e) => setFineForm({ ...fineForm, customReason: e.target.value })}
+                          className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+                        />
+                      </div>
+                    )}
+
+                    <button
+                      type="submit"
+                      disabled={submitting}
+                      className="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 disabled:bg-amber-500/50 text-white font-bold text-xs rounded-xl shadow-lg shadow-amber-500/20 transition-all"
+                    >
+                      {submitting ? 'প্রক্রিয়াধীন...' : 'জরিমানা ধার্য করুন'}
+                    </button>
+                  </form>
                 </div>
-              )}
-            </div>
-          </div>
-        )}
+
+                {/* Fines List */}
+                <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
+                  <h2 className="text-base font-bold text-white mb-4">সকল জরিমানা তালিকা ({fines.length})</h2>
+                  {fines.length === 0 ? (
+                    <p className="text-center text-slate-500 py-12 text-sm">কোনো জরিমানা নেই</p>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-xs border-collapse">
+                        <thead>
+                          <tr className="border-b border-white/5 text-slate-400 font-semibold">
+                            <th className="py-3 px-4">সদস্য</th>
+                            <th className="py-3 px-4">অ্যামাউন্ট</th>
+                            <th className="py-3 px-4">কারণ</th>
+                            <th className="py-3 px-4">তারিখ</th>
+                            <th className="py-3 px-4">স্ট্যাটাস</th>
+                            <th className="py-3 px-4 text-right">অ্যাকশন</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {fines.map((fine) => (
+                            <tr key={fine.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                              <td className="py-3 px-4 text-white font-medium">{fine.user?.name || `User ID: ${fine.userId}`}</td>
+                              <td className="py-3 px-4 text-rose-400 font-bold">{Number(fine.amount).toFixed(0)} ৳</td>
+                              <td className="py-3 px-4 text-slate-300">{fine.reason}</td>
+                              <td className="py-3 px-4 text-slate-400">{new Date(fine.createdAt).toLocaleDateString('bn-BD')}</td>
+                              <td className="py-3 px-4">
+                                {fine.status === 'paid' ? (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold">
+                                    পরিশোধিত
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-red-500/10 text-red-400 border border-red-500/20 font-semibold">
+                                    বকেয়া
+                                  </span>
+                                )}
+                              </td>
+                              <td className="py-3 px-4 text-right">
+                                {fine.status === 'pending' && (
+                                  <button
+                                    onClick={() => handleFineDelete(fine.id)}
+                                    className="px-2 py-1 bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white rounded border border-red-500/20 transition-all font-semibold"
+                                  >
+                                    বাতিল
+                                  </button>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
 
           </div>

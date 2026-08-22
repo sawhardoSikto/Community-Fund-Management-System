@@ -116,7 +116,7 @@ export default function MemberDashboard() {
                 </p>
               </div>
             </div>
-            <button 
+            <button
               onClick={() => {
                 router.push('/dashboard/member/pay-bill');
               }}
@@ -160,7 +160,7 @@ export default function MemberDashboard() {
                 </div>
               </div>
             </div>
-            <button 
+            <button
               onClick={() => {
                 router.push('/dashboard/member/pay-bill');
               }}
@@ -174,53 +174,53 @@ export default function MemberDashboard() {
         {/* Stats Cards (Personal focus) */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
           {[
-            { 
-              label: 'মোট পরিশোধ', 
-              value: `${overview?.grandTotal || 0} ৳`, 
-              sub: `ওয়েবসাইট: ${overview?.websiteTotal || 0} ৳`, 
+            {
+              label: 'মোট পরিশোধ',
+              value: `${overview?.grandTotal || 0} ৳`,
+              sub: `ওয়েবসাইট: ${overview?.websiteTotal || 0} ৳`,
               icon: (
                 <svg className="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-              ), 
-              color: 'from-emerald-500/20 to-emerald-600/10 border-emerald-500/20', 
-              textColor: 'text-emerald-400' 
+              ),
+              color: 'from-emerald-500/20 to-emerald-600/10 border-emerald-500/20',
+              textColor: 'text-emerald-400'
             },
-            { 
-              label: 'বকেয়া মাস', 
-              value: `${myDues.length} মাস`, 
-              sub: myDues.length > 0 ? `বকেয়া: ${myDues.reduce((acc, curr) => acc + Number(curr.amount), 0)} ৳` : 'কোনো বকেয়া নেই', 
+            {
+              label: 'বকেয়া মাস',
+              value: `${myDues.length} মাস`,
+              sub: myDues.length > 0 ? `বকেয়া: ${myDues.reduce((acc, curr) => acc + Number(curr.amount), 0)} ৳` : 'কোনো বকেয়া নেই',
               icon: (
                 <svg className="w-5 h-5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
-              ), 
-              color: myDues.length > 0 ? 'from-red-500/20 to-red-600/10 border-red-500/20' : 'from-slate-800/50 to-slate-700/10 border-white/5', 
-              textColor: myDues.length > 0 ? 'text-red-400' : 'text-slate-400' 
+              ),
+              color: myDues.length > 0 ? 'from-red-500/20 to-red-600/10 border-red-500/20' : 'from-slate-800/50 to-slate-700/10 border-white/5',
+              textColor: myDues.length > 0 ? 'text-red-400' : 'text-slate-400'
             },
-            { 
-              label: 'মাসিক চাঁদা', 
-              value: `${user?.monthlyAmount || 200} ৳`, 
-              sub: 'প্রতি মাসে', 
+            {
+              label: 'মাসিক চাঁদা',
+              value: `${user?.monthlyAmount || 200} ৳`,
+              sub: 'প্রতি মাসে',
               icon: (
                 <svg className="w-5 h-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
-              ), 
-              color: 'from-blue-500/20 to-blue-600/10 border-blue-500/20', 
-              textColor: 'text-blue-400' 
+              ),
+              color: 'from-blue-500/20 to-blue-600/10 border-blue-500/20',
+              textColor: 'text-blue-400'
             },
-            { 
-              label: 'চলতি মাস', 
-              value: `${MONTH_NAMES[new Date().getMonth()]}`, 
-              sub: isCurrentMonthPaid ? 'পরিশোধিত' : isCurrentMonthPending ? 'অপেক্ষমাণ' : 'বকেয়া রয়েছে', 
+            {
+              label: 'চলতি মাস',
+              value: `${MONTH_NAMES[new Date().getMonth()]}`,
+              sub: isCurrentMonthPaid ? 'পরিশোধিত' : isCurrentMonthPending ? 'অপেক্ষমাণ' : 'বকেয়া রয়েছে',
               icon: (
                 <svg className={`w-5 h-5 ${isCurrentMonthPaid ? 'text-emerald-400' : isCurrentMonthPending ? 'text-amber-400' : 'text-slate-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                 </svg>
-              ), 
-              color: isCurrentMonthPaid ? 'from-emerald-500/20 to-emerald-600/10 border-emerald-500/20' : isCurrentMonthPending ? 'from-amber-500/20 to-amber-600/10 border-amber-500/20' : 'from-slate-800/50 to-slate-700/10 border-white/5', 
-              textColor: isCurrentMonthPaid ? 'text-emerald-400' : isCurrentMonthPending ? 'text-amber-400' : 'text-slate-400' 
+              ),
+              color: isCurrentMonthPaid ? 'from-emerald-500/20 to-emerald-600/10 border-emerald-500/20' : isCurrentMonthPending ? 'from-amber-500/20 to-amber-600/10 border-amber-500/20' : 'from-slate-800/50 to-slate-700/10 border-white/5',
+              textColor: isCurrentMonthPaid ? 'text-emerald-400' : isCurrentMonthPending ? 'text-amber-400' : 'text-slate-400'
             },
           ].map((stat, i) => (
             <div key={i} className={`bg-gradient-to-br ${stat.color} border rounded-2xl p-4 flex items-center justify-between`}>
@@ -285,7 +285,7 @@ export default function MemberDashboard() {
                     প্রজেক্টসমূহ
                   </h2>
                   <Link href="/projects" className="text-xs text-amber-400 hover:text-amber-300 font-semibold flex items-center gap-0.5">
-                    সব দেখুন 
+                    সব দেখুন
                     <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                     </svg>

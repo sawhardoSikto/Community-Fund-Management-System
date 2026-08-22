@@ -29,7 +29,7 @@ export class SheetsService implements OnModuleInit {
     @Inject(forwardRef(() => ExpensesService))
     private expensesService: ExpensesService, // ✅ নতুন
     private notificationsService: NotificationsService, // ✅ নতুন
-  ) {}
+  ) { }
 
   isMonthLocked(month: number, year: number): boolean {
     const now = new Date();
@@ -204,92 +204,92 @@ export class SheetsService implements OnModuleInit {
       return { message: 'Sheet updated successfully', data: updated };
     }
 
-  // ১. Member payments
-  const payments = await this.paymentsService.getApprovedPaymentsCapturedInMonth(
-    dto.month, dto.year
-  );
-  const totalMemberIncome = payments.reduce(
-    (sum, p) => sum + Number(p.amount), 0
-  );
+    // ১. Member payments
+    const payments = await this.paymentsService.getApprovedPaymentsCapturedInMonth(
+      dto.month, dto.year
+    );
+    const totalMemberIncome = payments.reduce(
+      (sum, p) => sum + Number(p.amount), 0
+    );
 
-  // ২. Project income (profit + capital_return)
-  const projectIncomes = await this.projectsService.getProjectIncomeByMonth(
-    dto.month, dto.year
-  );
-  const totalProjectIncome = projectIncomes.reduce(
-    (sum, t) => sum + Number(t.amount), 0
-  );
-  const capitalReturns = await this.projectsService.getCapitalReturnByMonth(
-  dto.month,
-  dto.year,
-);
+    // ২. Project income (profit + capital_return)
+    const projectIncomes = await this.projectsService.getProjectIncomeByMonth(
+      dto.month, dto.year
+    );
+    const totalProjectIncome = projectIncomes.reduce(
+      (sum, t) => sum + Number(t.amount), 0
+    );
+    const capitalReturns = await this.projectsService.getCapitalReturnByMonth(
+      dto.month,
+      dto.year,
+    );
 
-const totalCapitalReturn = capitalReturns.reduce(
-  (sum, t) => sum + Number(t.amount),
-  0,
-);
-  // ✅ ৩. Project expense (invest) — এই মাসে কত invest হয়েছে
-  const projectExpenses = await this.projectsService.getProjectExpenseByMonth(
-    dto.month, dto.year
-  );
-  const totalProjectExpense = projectExpenses.reduce(
-    (sum, t) => sum + Number(t.amount), 0
-  );
+    const totalCapitalReturn = capitalReturns.reduce(
+      (sum, t) => sum + Number(t.amount),
+      0,
+    );
+    // ✅ ৩. Project expense (invest) — এই মাসে কত invest হয়েছে
+    const projectExpenses = await this.projectsService.getProjectExpenseByMonth(
+      dto.month, dto.year
+    );
+    const totalProjectExpense = projectExpenses.reduce(
+      (sum, t) => sum + Number(t.amount), 0
+    );
 
-  // ৪. Salary
-  const salaries = await this.salariesService.getSalariesByMonth(
-    dto.month, dto.year
-  );
-  const totalSalary = salaries.reduce(
-    (sum, s) => sum + Number(s.amount), 0
-  );
-  // ✅ General Expense
-const totalGeneralExpense = await this.expensesService.getTotalExpenseByMonth(
-  dto.month, dto.year
-);
+    // ৪. Salary
+    const salaries = await this.salariesService.getSalariesByMonth(
+      dto.month, dto.year
+    );
+    const totalSalary = salaries.reduce(
+      (sum, s) => sum + Number(s.amount), 0
+    );
+    // ✅ General Expense
+    const totalGeneralExpense = await this.expensesService.getTotalExpenseByMonth(
+      dto.month, dto.year
+    );
 
-  // ৫. Previous balance
-  const previousSheet = await this.getPreviousSheet(dto.month, dto.year);
-  const previousBalance = previousSheet
-    ? Number(previousSheet.cashInHand)
-    : Number((await this.settingsService.getSettings()).openingCashInHand);
+    // ৫. Previous balance
+    const previousSheet = await this.getPreviousSheet(dto.month, dto.year);
+    const previousBalance = previousSheet
+      ? Number(previousSheet.cashInHand)
+      : Number((await this.settingsService.getSettings()).openingCashInHand);
 
-  // ✅ ৬. Cash in Hand = previous + member + project income - salary - project expense
-  const cashInHand = previousBalance
-  + totalMemberIncome
-  + totalProjectIncome
-  + totalCapitalReturn
-  - totalSalary
-  - totalProjectExpense
-  - totalGeneralExpense;
+    // ✅ ৬. Cash in Hand = previous + member + project income - salary - project expense
+    const cashInHand = previousBalance
+      + totalMemberIncome
+      + totalProjectIncome
+      + totalCapitalReturn
+      - totalSalary
+      - totalProjectExpense
+      - totalGeneralExpense;
 
-  // ✅ ৭. Total Invested = সব project এ stillOutside
-  const totalInvested = await this.projectsService.getOverallInvestedAmount();
-  const activeInvested = await this.projectsService.getActiveInvestedAmount();
+    // ✅ ৭. Total Invested = সব project এ stillOutside
+    const totalInvested = await this.projectsService.getOverallInvestedAmount();
+    const activeInvested = await this.projectsService.getActiveInvestedAmount();
 
-  // ✅ ৮. Total Asset
-  const totalAsset = cashInHand + activeInvested;
+    // ✅ ৮. Total Asset
+    const totalAsset = cashInHand + activeInvested;
 
-  const sheet = this.sheetRepo.create({
-    month: dto.month,
-    year: dto.year,
-    totalMemberIncome,
-    totalProjectIncome,
-    totalProjectExpense, // ✅
-    totalSalary,
-    previousBalance,
-    totalGeneralExpense, // ✅
-    cashInHand,
-    totalInvested,
-    totalAsset,
-    status: SheetStatus.PUBLISHED,
-    publishedBy: accountantId,
-    totalCapitalReturn, // ✅
-  });
-  await this.sheetRepo.save(sheet);
+    const sheet = this.sheetRepo.create({
+      month: dto.month,
+      year: dto.year,
+      totalMemberIncome,
+      totalProjectIncome,
+      totalProjectExpense, // ✅
+      totalSalary,
+      previousBalance,
+      totalGeneralExpense, // ✅
+      cashInHand,
+      totalInvested,
+      totalAsset,
+      status: SheetStatus.PUBLISHED,
+      publishedBy: accountantId,
+      totalCapitalReturn, // ✅
+    });
+    await this.sheetRepo.save(sheet);
 
-  return { message: 'Sheet generated (published)', data: sheet };
-}
+    return { message: 'Sheet generated (published)', data: sheet };
+  }
 
   // Sheet publish করো
   async publishSheet(id: number, accountantId: number) {
@@ -455,7 +455,7 @@ const totalGeneralExpense = await this.expensesService.getTotalExpenseByMonth(
           const capMonth = currentPayment.capturedInMonth ?? currentPayment.month;
           const isCapturedLater = capYear > sheet.year || (capYear === sheet.year && capMonth > sheet.month);
           const isCapturedEarlier = capYear < sheet.year || (capYear === sheet.year && capMonth < sheet.month);
-          
+
           if (isCapturedLater) {
             displayAmount = `বকেয়া পরিশোধিত (${capMonth}/${capYear} শিটে)`;
           } else if (isCapturedEarlier) {
@@ -515,135 +515,135 @@ const totalGeneralExpense = await this.expensesService.getTotalExpenseByMonth(
   }
 
   // Overall Fund Status
-async getOverallStatus() {
-  await this.ensureCurrentMonthSheet(); // ✅ সর্বদা চলতি মাসের শিট নিশ্চিত করো
-  const settings = await this.settingsService.getSettings();
-  const openingCashInHand = Number(settings.openingCashInHand || 0);
-  const openingTotalProfit = Number(settings.openingTotalProfit || 0);
+  async getOverallStatus() {
+    await this.ensureCurrentMonthSheet(); // ✅ সর্বদা চলতি মাসের শিট নিশ্চিত করো
+    const settings = await this.settingsService.getSettings();
+    const openingCashInHand = Number(settings.openingCashInHand || 0);
+    const openingTotalProfit = Number(settings.openingTotalProfit || 0);
 
-  // ০. Find all published sheets to get their month and year
-  const publishedSheets = await this.sheetRepo.find({
-    where: { status: SheetStatus.PUBLISHED }
-  });
-  const publishedKeys = new Set(publishedSheets.map(s => `${s.month}-${s.year}`));
+    // ০. Find all published sheets to get their month and year
+    const publishedSheets = await this.sheetRepo.find({
+      where: { status: SheetStatus.PUBLISHED }
+    });
+    const publishedKeys = new Set(publishedSheets.map(s => `${s.month}-${s.year}`));
 
-  // ১. Approved member payments captured in published sheets
-  const paymentsRes = await this.paymentsService.getAllPayments();
-  const approvedPayments = (paymentsRes?.data || []).filter(p => 
-    p.status === 'approved' &&
-    p.capturedInMonth !== null &&
-    p.capturedInYear !== null &&
-    publishedKeys.has(`${p.capturedInMonth}-${p.capturedInYear}`)
-  );
-  const totalMemberIncome = approvedPayments.reduce((sum, p) => sum + Number(p.amount), 0);
-
-  // ২. Project statistics captured in published sheets
-  const projectsRes = await this.projectsService.findAll();
-  const projects = projectsRes?.data || [];
-  
-  let totalProjectProfit = 0;
-  let totalCapitalReturn = 0;
-  let totalProjectExpense = 0;
-  let totalInvested = 0;
-  let activeInvested = 0;
-  let totalCapitalLoss = 0;
-
-  for (const p of projects) {
-    const openingInvested = Number(p.openingInvested || 0);
-    const txs = (p.transactions || []).filter(t => 
-      t.capturedInMonth !== null && 
-      t.capturedInYear !== null && 
-      publishedKeys.has(`${t.capturedInMonth}-${t.capturedInYear}`)
+    // ১. Approved member payments captured in published sheets
+    const paymentsRes = await this.paymentsService.getAllPayments();
+    const approvedPayments = (paymentsRes?.data || []).filter(p =>
+      p.status === 'approved' &&
+      p.capturedInMonth !== null &&
+      p.capturedInYear !== null &&
+      publishedKeys.has(`${p.capturedInMonth}-${p.capturedInYear}`)
     );
+    const totalMemberIncome = approvedPayments.reduce((sum, p) => sum + Number(p.amount), 0);
 
-    const totalExpense = txs
-      .filter(t => t.type === 'expense')
-      .reduce((sum, t) => sum + Number(t.amount), 0);
+    // ২. Project statistics captured in published sheets
+    const projectsRes = await this.projectsService.findAll();
+    const projects = projectsRes?.data || [];
 
-    const totalProfit = txs
-      .filter(t => t.type === 'profit')
-      .reduce((sum, t) => sum + Number(t.amount), 0);
+    let totalProjectProfit = 0;
+    let totalCapitalReturn = 0;
+    let totalProjectExpense = 0;
+    let totalInvested = 0;
+    let activeInvested = 0;
+    let totalCapitalLoss = 0;
 
-    const capitalReturn = txs
-      .filter(t => t.type === 'capital_return')
-      .reduce((sum, t) => sum + Number(t.amount), 0);
+    for (const p of projects) {
+      const openingInvested = Number(p.openingInvested || 0);
+      const txs = (p.transactions || []).filter(t =>
+        t.capturedInMonth !== null &&
+        t.capturedInYear !== null &&
+        publishedKeys.has(`${t.capturedInMonth}-${t.capturedInYear}`)
+      );
 
-    totalProjectProfit += totalProfit;
-    totalCapitalReturn += capitalReturn;
-    totalProjectExpense += totalExpense;
+      const totalExpense = txs
+        .filter(t => t.type === 'expense')
+        .reduce((sum, t) => sum + Number(t.amount), 0);
 
-    const stillOutside = openingInvested + totalExpense - capitalReturn;
-    if (stillOutside > 0) {
-      totalInvested += stillOutside;
-      if (p.status === 'active') {
-        activeInvested += stillOutside;
-      } else if (p.status === 'completed') {
-        totalCapitalLoss += stillOutside;
+      const totalProfit = txs
+        .filter(t => t.type === 'profit')
+        .reduce((sum, t) => sum + Number(t.amount), 0);
+
+      const capitalReturn = txs
+        .filter(t => t.type === 'capital_return')
+        .reduce((sum, t) => sum + Number(t.amount), 0);
+
+      totalProjectProfit += totalProfit;
+      totalCapitalReturn += capitalReturn;
+      totalProjectExpense += totalExpense;
+
+      const stillOutside = openingInvested + totalExpense - capitalReturn;
+      if (stillOutside > 0) {
+        totalInvested += stillOutside;
+        if (p.status === 'active') {
+          activeInvested += stillOutside;
+        } else if (p.status === 'completed') {
+          totalCapitalLoss += stillOutside;
+        }
       }
     }
+
+    // ৩. Salaries captured in published sheets
+    const salariesRes = await this.salariesService.findAll();
+    const approvedSalaries = (salariesRes?.data || []).filter(s =>
+      s.capturedInMonth !== null &&
+      s.capturedInYear !== null &&
+      publishedKeys.has(`${s.capturedInMonth}-${s.capturedInYear}`)
+    );
+    const totalSalary = approvedSalaries.reduce((sum, s) => sum + Number(s.amount), 0);
+
+    // ৪. General Expenses captured in published sheets
+    const expenses = await this.expensesService.findAll();
+    const approvedExpenses = (expenses || []).filter(e =>
+      e.capturedInMonth !== null &&
+      e.capturedInYear !== null &&
+      publishedKeys.has(`${e.capturedInMonth}-${e.capturedInYear}`)
+    );
+    const totalGeneralExpense = approvedExpenses.reduce((sum, e) => sum + Number(e.amount), 0);
+
+    // ৫. Real-time calculations
+    const cashInHand = openingCashInHand
+      + totalMemberIncome
+      + totalProjectProfit
+      + totalCapitalReturn
+      - totalSalary
+      - totalProjectExpense
+      - totalGeneralExpense;
+
+    const totalProfit = openingTotalProfit + totalProjectProfit - totalCapitalLoss;
+    const totalAsset = cashInHand + activeInvested;
+
+    return {
+      message: 'Overall fund status',
+      data: {
+        cashInHand: cashInHand.toFixed(2),
+        totalInvested: totalInvested.toFixed(2),
+        totalProfit: totalProfit.toFixed(2),
+        totalAsset: totalAsset.toFixed(2),
+      },
+    };
   }
-
-  // ৩. Salaries captured in published sheets
-  const salariesRes = await this.salariesService.findAll();
-  const approvedSalaries = (salariesRes?.data || []).filter(s =>
-    s.capturedInMonth !== null &&
-    s.capturedInYear !== null &&
-    publishedKeys.has(`${s.capturedInMonth}-${s.capturedInYear}`)
-  );
-  const totalSalary = approvedSalaries.reduce((sum, s) => sum + Number(s.amount), 0);
-
-  // ৪. General Expenses captured in published sheets
-  const expenses = await this.expensesService.findAll();
-  const approvedExpenses = (expenses || []).filter(e =>
-    e.capturedInMonth !== null &&
-    e.capturedInYear !== null &&
-    publishedKeys.has(`${e.capturedInMonth}-${e.capturedInYear}`)
-  );
-  const totalGeneralExpense = approvedExpenses.reduce((sum, e) => sum + Number(e.amount), 0);
-
-  // ৫. Real-time calculations
-  const cashInHand = openingCashInHand
-    + totalMemberIncome
-    + totalProjectProfit
-    + totalCapitalReturn
-    - totalSalary
-    - totalProjectExpense
-    - totalGeneralExpense;
-
-  const totalProfit = openingTotalProfit + totalProjectProfit - totalCapitalLoss;
-  const totalAsset = cashInHand + activeInvested;
-
-  return {
-    message: 'Overall fund status',
-    data: {
-      cashInHand: cashInHand.toFixed(2),
-      totalInvested: totalInvested.toFixed(2),
-      totalProfit: totalProfit.toFixed(2),
-      totalAsset: totalAsset.toFixed(2),
-    },
-  };
-}
   // Sheet delete করো (draft only)
-async remove(id: number) {
-  const sheet = await this.sheetRepo.findOne({
-    where: { id },
-  });
+  async remove(id: number) {
+    const sheet = await this.sheetRepo.findOne({
+      where: { id },
+    });
 
-  if (!sheet) {
-    throw new NotFoundException('Sheet not found');
+    if (!sheet) {
+      throw new NotFoundException('Sheet not found');
+    }
+
+    if (sheet.status === SheetStatus.PUBLISHED) {
+      throw new BadRequestException('Published sheet cannot be deleted');
+    }
+
+    await this.sheetRepo.delete(id);
+
+    return {
+      message: 'Sheet deleted',
+      id,
+    };
   }
-
-  if (sheet.status === SheetStatus.PUBLISHED) {
-    throw new BadRequestException('Published sheet cannot be deleted');
-  }
-
-  await this.sheetRepo.delete(id);
-
-  return {
-    message: 'Sheet deleted',
-    id,
-  };
-}
   // আগের মাসের sheet খোঁজো
   private async getPreviousSheet(month: number, year: number) {
     let prevMonth = month - 1;

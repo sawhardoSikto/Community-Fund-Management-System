@@ -75,8 +75,8 @@ export default function MemberPaymentHistory() {
                       <p className="text-sm font-semibold text-white">{MONTH_NAMES[payment.month - 1]} {payment.year}</p>
                       <p className="text-xs text-slate-500">
                         {payment.paymentMethod === 'bkash' ? 'বিকাশ' :
-                         payment.paymentMethod === 'nagad' ? 'নগদ' :
-                         payment.paymentMethod === 'cash' ? 'নগদ অর্থ' : 'কার্ড'}
+                          payment.paymentMethod === 'nagad' ? 'নগদ' :
+                            payment.paymentMethod === 'cash' ? 'নগদ অর্থ' : 'কার্ড'}
                       </p>
                       {payment.transactionNumber && (
                         <p className="text-xs text-amber-400 font-medium">📱 {payment.transactionNumber}</p>
