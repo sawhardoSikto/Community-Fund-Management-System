@@ -203,6 +203,7 @@ export default  function AccountantDashboard() {
   const [overallStatus, setOverallStatus] = useState(null);
   const [salaries, setSalaries] = useState([]);
   const [sheets, setSheets] = useState([]);
+  const [fines, setFines] = useState([]);
 
   // Forms
   const [manualPayment, setManualPayment] = useState({
@@ -356,7 +357,7 @@ export default  function AccountantDashboard() {
 const fetchAll = async () => {
   setLoading(true);
   try {
-    const [pendingRes, usersRes, projectsRes, overallRes, sheetsRes, expensesRes, allPaymentsRes, settingsRes] =
+    const [pendingRes, usersRes, projectsRes, overallRes, sheetsRes, expensesRes, allPaymentsRes, settingsRes, finesRes] =
       await Promise.all([
         api.get('/payments/pending'),
         api.get('/users'),
@@ -366,6 +367,7 @@ const fetchAll = async () => {
         api.get('/expenses'),
         api.get('/payments'), // ✅ approved history এর জন্য
         api.get('/settings'), // ✅ settings এর জন্য
+        api.get('/fines'),
       ]);
     setPendingPayments(pendingRes.data.data || []);
     setAllUsers(usersRes.data || []);
@@ -374,6 +376,7 @@ const fetchAll = async () => {
     setSheets(sheetsRes.data.data || []);
     setExpenses(expensesRes.data || []);
     setAllPayments(allPaymentsRes.data.data || []); // ✅
+    setFines(finesRes.data || []);
 
     const settings = settingsRes.data;
     setCurrentSettings(settings);
@@ -630,6 +633,7 @@ const handleToggleProjectStatus = async (project) => {
     { key: "projects", label: "প্রজেক্ট" },
     { key: "salary", label: "বেতন" },
     { key: "sheets", label: "শিট" },
+    { key: 'fines', label: 'জরিমানা', count: fines.filter(f => f.status === 'pending').length },
     { key: 'expenses', label: 'খরচ' },
     { key: 'settings', label: 'সেটিংস' },
   ];
@@ -1887,6 +1891,121 @@ const handleToggleProjectStatus = async (project) => {
                       </div>
                     </div>
                   ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── Fines Tab ── */}
+        {tab === 'fines' && (
+          <div className="space-y-6 max-w-4xl">
+            {/* Total Pending Fines Card */}
+            {fines.filter(f => f.status === 'pending').length > 0 && (
+              <div className="bg-rose-500/10 border border-rose-500/20 rounded-2xl p-5 flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-semibold text-rose-400">মোট বকেয়া জরিমানা</p>
+                  <h3 className="text-2xl font-black text-white mt-1">
+                    {fines.filter(f => f.status === 'pending').reduce((sum, f) => sum + Number(f.amount), 0).toFixed(0)} ৳
+                  </h3>
+                </div>
+                <div className="text-3xl">⚠️</div>
+              </div>
+            )}
+
+            {/* Pending Fines Table */}
+            <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
+              <h2 className="text-base font-bold text-white mb-4">
+                বকেয়া জরিমানা তালিকা ({fines.filter(f => f.status === 'pending').length})
+              </h2>
+              {fines.filter(f => f.status === 'pending').length === 0 ? (
+                <p className="text-center text-slate-500 py-6 text-sm">কোনো বকেয়া জরিমানা নেই</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="border-b border-white/5 text-slate-400 font-semibold">
+                        <th className="py-3 px-4">সদস্য</th>
+                        <th className="py-3 px-4">জরিমানার সংখ্যা</th>
+                        <th className="py-3 px-4">কারণসমূহ</th>
+                        <th className="py-3 px-4">মোট বকেয়া</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(() => {
+                        const pending = fines.filter(f => f.status === 'pending');
+                        const grouped = pending.reduce((acc, f) => {
+                          const uid = f.userId;
+                          if (!acc[uid]) {
+                            acc[uid] = {
+                              userName: f.user?.name || `সদস্য আইডি: ${uid}`,
+                              total: 0,
+                              items: []
+                            };
+                          }
+                          acc[uid].total += Number(f.amount);
+                          acc[uid].items.push(f);
+                          return acc;
+                        }, {});
+
+                        return Object.entries(grouped).map(([uid, data]) => (
+                          <tr key={uid} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                            <td className="py-3 px-4 text-white font-medium">{data.userName}</td>
+                            <td className="py-3 px-4 text-slate-400 font-bold">{data.items.length}টি</td>
+                            <td className="py-3 px-4 text-slate-300">
+                              <div className="space-y-1">
+                                {data.items.map((item) => (
+                                  <div key={item.id} className="text-[11px] text-slate-400">
+                                    • {item.reason} ({Number(item.amount).toFixed(0)} ৳)
+                                  </div>
+                                ))}
+                              </div>
+                            </td>
+                            <td className="py-3 px-4 text-rose-400 font-bold">{data.total.toFixed(0)} ৳</td>
+                          </tr>
+                        ));
+                      })()}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            {/* Paid Fines Table */}
+            <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
+              <h2 className="text-base font-bold text-white mb-4">
+                পরিশোধিত জরিমানা তালিকা ({fines.filter(f => f.status === 'paid').length})
+              </h2>
+              {fines.filter(f => f.status === 'paid').length === 0 ? (
+                <p className="text-center text-slate-500 py-6 text-sm">কোনো পরিশোধিত জরিমানা নেই</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="border-b border-white/5 text-slate-400 font-semibold">
+                        <th className="py-3 px-4">সদস্য</th>
+                        <th className="py-3 px-4">অ্যামাউন্ট</th>
+                        <th className="py-3 px-4">কারণ</th>
+                        <th className="py-3 px-4">তারিখ</th>
+                        <th className="py-3 px-4">স্ট্যাটাস</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {fines.filter(f => f.status === 'paid').map((fine) => (
+                        <tr key={fine.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                          <td className="py-3 px-4 text-white font-medium">{fine.user?.name || `User ID: ${fine.userId}`}</td>
+                          <td className="py-3 px-4 text-emerald-400 font-bold">{Number(fine.amount).toFixed(0)} ৳</td>
+                          <td className="py-3 px-4 text-slate-300">{fine.reason}</td>
+                          <td className="py-3 px-4 text-slate-400">{new Date(fine.createdAt).toLocaleDateString('bn-BD')}</td>
+                          <td className="py-3 px-4">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold">
+                              পরিশোধিত
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               )}
             </div>

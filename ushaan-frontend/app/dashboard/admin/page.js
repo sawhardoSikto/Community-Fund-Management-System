@@ -639,57 +639,136 @@ export default function AdminDashboard() {
                 </div>
 
                 {/* Fines List */}
-                <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
-                  <h2 className="text-base font-bold text-white mb-4">সকল জরিমানা তালিকা ({fines.length})</h2>
-                  {fines.length === 0 ? (
-                    <p className="text-center text-slate-500 py-12 text-sm">কোনো জরিমানা নেই</p>
-                  ) : (
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-left text-xs border-collapse">
-                        <thead>
-                          <tr className="border-b border-white/5 text-slate-400 font-semibold">
-                            <th className="py-3 px-4">সদস্য</th>
-                            <th className="py-3 px-4">অ্যামাউন্ট</th>
-                            <th className="py-3 px-4">কারণ</th>
-                            <th className="py-3 px-4">তারিখ</th>
-                            <th className="py-3 px-4">স্ট্যাটাস</th>
-                            <th className="py-3 px-4 text-right">অ্যাকশন</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {fines.map((fine) => (
-                            <tr key={fine.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                              <td className="py-3 px-4 text-white font-medium">{fine.user?.name || `User ID: ${fine.userId}`}</td>
-                              <td className="py-3 px-4 text-rose-400 font-bold">{Number(fine.amount).toFixed(0)} ৳</td>
-                              <td className="py-3 px-4 text-slate-300">{fine.reason}</td>
-                              <td className="py-3 px-4 text-slate-400">{new Date(fine.createdAt).toLocaleDateString('bn-BD')}</td>
-                              <td className="py-3 px-4">
-                                {fine.status === 'paid' ? (
+                <div className="space-y-6">
+                  {/* Total Pending Fines Card */}
+                  {fines.filter(f => f.status === 'pending').length > 0 && (
+                    <div className="bg-rose-500/10 border border-rose-500/20 rounded-2xl p-5 flex items-center justify-between">
+                      <div>
+                        <p className="text-xs font-semibold text-rose-400">মোট বকেয়া জরিমানা</p>
+                        <h3 className="text-2xl font-black text-white mt-1">
+                          {fines.filter(f => f.status === 'pending').reduce((sum, f) => sum + Number(f.amount), 0).toFixed(0)} ৳
+                        </h3>
+                      </div>
+                      <div className="text-3xl">⚠️</div>
+                    </div>
+                  )}
+
+                  {/* Pending Fines Table */}
+                  <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
+                    <h2 className="text-base font-bold text-white mb-4">
+                      বকেয়া জরিমানা তালিকা ({fines.filter(f => f.status === 'pending').length})
+                    </h2>
+                    {fines.filter(f => f.status === 'pending').length === 0 ? (
+                      <p className="text-center text-slate-500 py-6 text-sm">কোনো বকেয়া জরিমানা নেই</p>
+                    ) : (
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left text-xs border-collapse">
+                          <thead>
+                            <tr className="border-b border-white/5 text-slate-400 font-semibold">
+                              <th className="py-3 px-4">সদস্য</th>
+                              <th className="py-3 px-4">জরিমানার সংখ্যা</th>
+                              <th className="py-3 px-4">কারণসমূহ</th>
+                              <th className="py-3 px-4">মোট বকেয়া</th>
+                              <th className="py-3 px-4 text-right">অ্যাকশন</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {(() => {
+                              const pending = fines.filter(f => f.status === 'pending');
+                              const grouped = pending.reduce((acc, f) => {
+                                const uid = f.userId;
+                                if (!acc[uid]) {
+                                  acc[uid] = {
+                                    userName: f.user?.name || `সদস্য আইডি: ${uid}`,
+                                    total: 0,
+                                    items: []
+                                  };
+                                }
+                                acc[uid].total += Number(f.amount);
+                                acc[uid].items.push(f);
+                                return acc;
+                              }, {});
+                              
+                              return Object.entries(grouped).map(([uid, data]) => (
+                                <tr key={uid} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                                  <td className="py-3 px-4 text-white font-medium">{data.userName}</td>
+                                  <td className="py-3 px-4 text-slate-400 font-bold">{data.items.length}টি</td>
+                                  <td className="py-3 px-4 text-slate-300">
+                                    <div className="space-y-1">
+                                      {data.items.map((item) => (
+                                        <div key={item.id} className="flex items-center gap-1.5 text-[11px] text-slate-400">
+                                          <span>• {item.reason} ({Number(item.amount).toFixed(0)} ৳)</span>
+                                          <button
+                                            onClick={() => handleFineDelete(item.id)}
+                                            className="text-rose-400 hover:text-rose-500 font-semibold hover:underline"
+                                            title="এই জরিমানাটি বাতিল করুন"
+                                          >
+                                            [বাতিল]
+                                          </button>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </td>
+                                  <td className="py-3 px-4 text-rose-400 font-bold">{data.total.toFixed(0)} ৳</td>
+                                  <td className="py-3 px-4 text-right">
+                                    <button
+                                      onClick={() => {
+                                        if (confirm(`${data.userName} এর সকল (${data.items.length}টি) বকেয়া জরিমানা বাতিল করতে চান?`)) {
+                                          data.items.forEach(item => handleFineDelete(item.id));
+                                        }
+                                      }}
+                                      className="px-2 py-1 bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white rounded border border-red-500/20 transition-all font-semibold"
+                                    >
+                                      সব বাতিল
+                                    </button>
+                                  </td>
+                                </tr>
+                              ));
+                            })()}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Paid Fines Table */}
+                  <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
+                    <h2 className="text-base font-bold text-white mb-4">
+                      পরিশোধিত জরিমানা তালিকা ({fines.filter(f => f.status === 'paid').length})
+                    </h2>
+                    {fines.filter(f => f.status === 'paid').length === 0 ? (
+                      <p className="text-center text-slate-500 py-6 text-sm">কোনো পরিশোধিত জরিমানা নেই</p>
+                    ) : (
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left text-xs border-collapse">
+                          <thead>
+                            <tr className="border-b border-white/5 text-slate-400 font-semibold">
+                              <th className="py-3 px-4">সদস্য</th>
+                              <th className="py-3 px-4">অ্যামাউন্ট</th>
+                              <th className="py-3 px-4">কারণ</th>
+                              <th className="py-3 px-4">তারিখ</th>
+                              <th className="py-3 px-4">স্ট্যাটাস</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {fines.filter(f => f.status === 'paid').map((fine) => (
+                              <tr key={fine.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                                <td className="py-3 px-4 text-white font-medium">{fine.user?.name || `User ID: ${fine.userId}`}</td>
+                                <td className="py-3 px-4 text-emerald-400 font-bold">{Number(fine.amount).toFixed(0)} ৳</td>
+                                <td className="py-3 px-4 text-slate-300">{fine.reason}</td>
+                                <td className="py-3 px-4 text-slate-400">{new Date(fine.createdAt).toLocaleDateString('bn-BD')}</td>
+                                <td className="py-3 px-4">
                                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold">
                                     পরিশোধিত
                                   </span>
-                                ) : (
-                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-red-500/10 text-red-400 border border-red-500/20 font-semibold">
-                                    বকেয়া
-                                  </span>
-                                )}
-                              </td>
-                              <td className="py-3 px-4 text-right">
-                                {fine.status === 'pending' && (
-                                  <button
-                                    onClick={() => handleFineDelete(fine.id)}
-                                    className="px-2 py-1 bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white rounded border border-red-500/20 transition-all font-semibold"
-                                  >
-                                    বাতিল
-                                  </button>
-                                )}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
