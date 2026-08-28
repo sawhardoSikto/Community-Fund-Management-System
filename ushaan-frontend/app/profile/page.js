@@ -283,13 +283,9 @@ export default function ProfilePage() {
 
             {/* Visual Indicator of Deposit vs Entitlement */}
             <div className="relative z-10 bg-slate-900/50 p-6 rounded-2xl border border-white/5 mt-4">
-              <div className="flex justify-between items-center text-xs font-medium mb-8">
-                 <span className="text-slate-400">০ ৳</span>
-                 <span className="text-slate-400">সর্বোচ্চ মান</span>
-              </div>
               
               {/* Main Progress Bar Container */}
-              <div className="relative h-4 w-full bg-slate-800/50 rounded-full border border-slate-700 shadow-inner">
+              <div className="relative h-4 w-full bg-slate-800/50 rounded-full border border-slate-700 shadow-inner mt-10">
                 
                 {/* Entitlement Fill (The active value) */}
                 <div 
