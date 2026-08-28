@@ -118,16 +118,15 @@ export default function ProfilePage() {
     return sum + (amount / BASE_SHARE_AMOUNT);
   }, 0);
   
-  const myAmount = Number(profile?.monthlyAmount) || BASE_SHARE_AMOUNT;
-  const myShares = myAmount / BASE_SHARE_AMOUNT;
-  
-  const totalAsset = overallStatus?.totalAsset ? Number(overallStatus.totalAsset) : 0;
+  const myAmount = Number(profile?.monthlyAmount)   const totalAsset = overallStatus?.totalAsset ? Number(overallStatus.totalAsset) : 0;
   const valuePerShare = totalShares > 0 ? totalAsset / totalShares : 0;
   
   const myEntitlement = myShares * valuePerShare;
   const myDeposit = totalPaid?.grandTotal ? Number(totalPaid.grandTotal) : 0;
   
-  const entitlementProgress = myEntitlement > 0 ? (myDeposit / myEntitlement) * 100 : 0;
+  const maxAmount = Math.max(myDeposit, myEntitlement, 1);
+  const entitlementPercent = (myEntitlement / maxAmount) * 100;
+  const depositPercent = (myDeposit / maxAmount) * 100;
 
   return (
     <div className="min-h-screen bg-slate-950">
@@ -233,7 +232,7 @@ export default function ProfilePage() {
                 { label: 'মাসিক চাঁদা', value: `${profile?.monthlyAmount} ৳` },
                 { label: 'যোগদান', value: profile?.createdAt ? new Date(profile.createdAt).toLocaleDateString('bn-BD') : '—' },
               ].map((item, i) => (
-                <div key={i} className="bg-slate-800/50 rounded-xl px-4 py-3">
+               <div key={i} className="bg-slate-800/50 rounded-xl px-4 py-3">
                   <p className="text-xs text-slate-500">{item.label}</p>
                   <p className="text-sm font-semibold text-white mt-0.5">{item.value}</p>
                 </div>
@@ -279,31 +278,62 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            {/* Clean Progress Bar */}
-            <div className="relative z-10 bg-slate-900/50 p-5 rounded-2xl border border-white/5">
-              <div className="flex justify-between text-xs text-slate-400 font-semibold mb-3">
-                <div className="flex items-center gap-1.5">
-                  <div className="w-2 h-2 rounded-full bg-blue-500" />
-                  <span>জমা: {Number(myDeposit).toFixed(0)} ৳</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <span>লক্ষ্য (পাওনা): {Number(myEntitlement).toFixed(0)} ৳</span>
-                  <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                </div>
+            {/* Visual Indicator of Deposit vs Entitlement */}
+            <div className="relative z-10 bg-slate-900/50 p-6 rounded-2xl border border-white/5 mt-4">
+              <div className="flex justify-between items-center text-xs font-medium mb-8">
+                 <span className="text-slate-400">০ ৳</span>
+                 <span className="text-slate-400">সর্বোচ্চ মান</span>
               </div>
               
-              <div className="h-3 w-full bg-slate-950 rounded-full overflow-hidden border border-slate-800 shadow-inner">
+              {/* Main Progress Bar Container */}
+              <div className="relative h-4 w-full bg-slate-800/50 rounded-full border border-slate-700 shadow-inner">
+                
+                {/* Entitlement Fill (The active value) */}
                 <div 
-                  className="h-full bg-gradient-to-r from-blue-500 via-teal-400 to-emerald-400 rounded-full relative transition-all duration-1000 ease-out"
-                  style={{ width: `${Math.min(Math.max(entitlementProgress, 0), 100)}%` }}
+                  className={`absolute top-0 left-0 h-full rounded-full transition-all duration-1000 ease-out flex items-center justify-end pr-1
+                    ${myEntitlement >= myDeposit ? 'bg-gradient-to-r from-teal-500 to-emerald-400 shadow-[0_0_15px_rgba(52,211,153,0.3)]' : 'bg-gradient-to-r from-blue-600 to-blue-400 shadow-[0_0_15px_rgba(96,165,250,0.3)]'}
+                  `}
+                  style={{ width: `${entitlementPercent}%` }}
                 >
-                  <div className="absolute inset-0 w-full bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.3),transparent)] -translate-x-full animate-[shimmer_2s_infinite]" />
+                  <div className="absolute inset-0 w-full bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.3),transparent)] -translate-x-full animate-[shimmer_2s_infinite] rounded-full" />
+                  {/* Indicator Dot */}
+                  <div className="w-2.5 h-2.5 bg-white rounded-full shadow-md z-10" />
                 </div>
+                
+                {/* Deposit Target Marker (Always visible as a fixed point) */}
+                <div 
+                  className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 flex flex-col items-center z-20"
+                  style={{ left: `${depositPercent}%` }}
+                >
+                  <div className="w-1 h-8 bg-white/90 rounded-full shadow-[0_0_5px_rgba(0,0,0,0.5)] border border-slate-400" />
+                  <div className="absolute top-10 bg-slate-800 px-2 py-1 rounded-md border border-slate-700 shadow-lg flex flex-col items-center">
+                    <span className="text-[10px] text-slate-400 whitespace-nowrap">আপনার জমা</span>
+                    <span className="text-xs font-bold text-white">{Number(myDeposit).toFixed(0)} ৳</span>
+                  </div>
+                </div>
+                
+                {/* Entitlement Label (Floats near the end of the fill) */}
+                <div 
+                  className="absolute bottom-6 flex flex-col items-center z-10 transition-all duration-1000 -translate-x-1/2"
+                  style={{ left: `${entitlementPercent}%` }}
+                >
+                  <div className={`px-2 py-1 rounded-md shadow-lg border flex flex-col items-center
+                    ${myEntitlement >= myDeposit ? 'bg-emerald-950/80 border-emerald-500/30' : 'bg-blue-950/80 border-blue-500/30'}
+                  `}>
+                    <span className={`text-[10px] whitespace-nowrap ${myEntitlement >= myDeposit ? 'text-emerald-400/80' : 'text-blue-400/80'}`}>বর্তমান পাওনা</span>
+                    <span className={`text-xs font-bold ${myEntitlement >= myDeposit ? 'text-emerald-400' : 'text-blue-400'}`}>{Number(myEntitlement).toFixed(0)} ৳</span>
+                  </div>
+                </div>
+
               </div>
               
-              <div className="mt-4 flex items-center justify-between">
+              <div className="mt-14 pt-4 border-t border-white/5 flex items-center justify-between">
                 <span className="text-xs font-medium text-slate-500">
-                  {entitlementProgress.toFixed(1)}% পূর্ণ হয়েছে
+                  {myDeposit > 0 ? (
+                    ((myEntitlement / myDeposit) * 100).toFixed(1) + '% রিটার্ন'
+                  ) : (
+                    'কোনো জমা নেই'
+                  )}
                 </span>
                 {myEntitlement > myDeposit && (
                   <span className="text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-lg font-bold flex items-center gap-1">
@@ -318,7 +348,7 @@ export default function ProfilePage() {
                     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
                     </svg>
-                    {Number(myEntitlement - myDeposit).toFixed(0)} ৳ হ্রাস
+                    {Number(myDeposit - myEntitlement).toFixed(0)} ৳ হ্রাস
                   </span>
                 )}
               </div>
