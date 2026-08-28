@@ -35,19 +35,26 @@ export default function ProfilePage() {
     } catch { router.push('/login'); }
   }, []);
 
+  const [overallStatus, setOverallStatus] = useState(null);
+  const [allUsers, setAllUsers] = useState([]);
+
   const fetchAll = async () => {
     setLoading(true);
     try {
-      const [profileRes, totalPaidRes, duesRes] = await Promise.all([
+      const [profileRes, totalPaidRes, duesRes, overallRes, usersRes] = await Promise.all([
         api.get('/auth/me'),
         api.get('/payments/my/total-paid'),
         api.get('/payments/my/dues'),
+        api.get('/sheets/overall-status'),
+        api.get('/users')
       ]);
       const profileData = profileRes.data.data;
       setProfile(profileData);
       setForm({ name: profileData.name, phone: profileData.phone || '', nid: profileData.nid || '' });
       setTotalPaid(totalPaidRes.data);
       setMyDues(duesRes.data.data || []);
+      setOverallStatus(overallRes.data.data);
+      setAllUsers(usersRes.data || []);
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
   };
@@ -101,6 +108,26 @@ export default function ProfilePage() {
       <span className="loading loading-spinner loading-lg text-amber-400" />
     </div>
   );
+
+  // ✅ Share & Entitlement calculations (Fixed at 200 = 1x, 400 = 2x)
+  const BASE_SHARE_AMOUNT = 200;
+  const validUsers = allUsers.filter(u => u.isApproved);
+  
+  const totalShares = validUsers.reduce((sum, u) => {
+    const amount = Number(u.monthlyAmount) || BASE_SHARE_AMOUNT;
+    return sum + (amount / BASE_SHARE_AMOUNT);
+  }, 0);
+  
+  const myAmount = Number(profile?.monthlyAmount) || BASE_SHARE_AMOUNT;
+  const myShares = myAmount / BASE_SHARE_AMOUNT;
+  
+  const totalAsset = overallStatus?.totalAsset ? Number(overallStatus.totalAsset) : 0;
+  const valuePerShare = totalShares > 0 ? totalAsset / totalShares : 0;
+  
+  const myEntitlement = myShares * valuePerShare;
+  const myDeposit = totalPaid?.grandTotal ? Number(totalPaid.grandTotal) : 0;
+  
+  const entitlementProgress = myEntitlement > 0 ? (myDeposit / myEntitlement) * 100 : 0;
 
   return (
     <div className="min-h-screen bg-slate-950">
@@ -214,6 +241,60 @@ export default function ProfilePage() {
             </div>
           )}
         </div>
+
+        {/* Share & Asset Overview */}
+        {overallStatus && profile && (
+          <div className="mb-6 bg-slate-900/50 border border-white/5 rounded-2xl p-5 sm:p-6 overflow-hidden relative">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-4 relative z-10">
+              <div>
+                <h2 className="text-base font-bold text-white flex items-center gap-2">
+                  <span className="w-7 h-7 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-400 text-sm">
+                    💎
+                  </span>
+                  আমার শেয়ার ও পাওনা
+                </h2>
+                <p className="text-xs text-slate-400 mt-1">
+                  আপনার মোট শেয়ার: <span className="font-bold text-white">{myShares} টি</span> (মোট ফান্ড শেয়ার: <span className="text-slate-300">{totalShares} টি</span>)
+                </p>
+              </div>
+              <div className="text-left sm:text-right">
+                <p className="text-xs text-slate-400 mb-0.5">বর্তমান শেয়ার মূল্য</p>
+                <p className="text-sm font-black text-emerald-400">{Number(valuePerShare).toFixed(0)} ৳ <span className="text-[10px] text-slate-500 font-normal">/ শেয়ার</span></p>
+              </div>
+            </div>
+
+            {/* Progress Bar visualization */}
+            <div className="relative mt-12 mb-10 mx-4 sm:mx-8">
+              {/* Background track */}
+              <div className="h-4 sm:h-5 bg-slate-800 rounded-full overflow-hidden relative border border-white/5 shadow-inner">
+                <div 
+                  className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full relative transition-all duration-1000 ease-out"
+                  style={{ width: `${Math.min(Math.max(entitlementProgress, 0), 100)}%` }}
+                >
+                  <div className="absolute inset-0 w-full bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent)] -translate-x-full animate-[shimmer_2s_infinite]" />
+                </div>
+              </div>
+              
+              {/* Markers & Labels */}
+              {/* Deposit Marker */}
+              <div 
+                className="absolute top-6 flex flex-col items-center transition-all duration-1000 -translate-x-1/2"
+                style={{ left: `${Math.min(Math.max(entitlementProgress, 0), 100)}%` }}
+              >
+                <div className="w-0.5 h-6 bg-blue-400 absolute -top-[30px] rounded-full shadow-[0_0_8px_rgba(96,165,250,0.8)]" />
+                <span className="text-sm sm:text-base font-black text-white">{Number(myDeposit).toFixed(0)} ৳</span>
+                <span className="text-[10px] text-slate-400 whitespace-nowrap bg-slate-900/80 px-1.5 py-0.5 rounded-md mt-0.5">আমার জমা</span>
+              </div>
+              
+              {/* Entitlement Marker (End of bar) */}
+              <div className="absolute top-6 right-0 flex flex-col items-end translate-x-[15%] sm:translate-x-[10%]">
+                <div className="w-0.5 h-6 bg-emerald-500 absolute -top-[30px] right-0 sm:right-2 rounded-full shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+                <span className="text-sm sm:text-base font-black text-emerald-400">{Number(myEntitlement).toFixed(0)} ৳</span>
+                <span className="text-[10px] text-emerald-400/70 whitespace-nowrap bg-emerald-950/50 px-1.5 py-0.5 rounded-md mt-0.5 border border-emerald-500/20">শেয়ার থেকে পাওনা</span>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Payment Stats */}
         {totalPaid && (
