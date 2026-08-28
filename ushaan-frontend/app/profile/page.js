@@ -118,7 +118,10 @@ export default function ProfilePage() {
     return sum + (amount / BASE_SHARE_AMOUNT);
   }, 0);
   
-  const myAmount = Number(profile?.monthlyAmount)   const totalAsset = overallStatus?.totalAsset ? Number(overallStatus.totalAsset) : 0;
+  const myAmount = Number(profile?.monthlyAmount) || BASE_SHARE_AMOUNT;
+  const myShares = myAmount / BASE_SHARE_AMOUNT;
+  
+  const totalAsset = overallStatus?.totalAsset ? Number(overallStatus.totalAsset) : 0;
   const valuePerShare = totalShares > 0 ? totalAsset / totalShares : 0;
   
   const myEntitlement = myShares * valuePerShare;
