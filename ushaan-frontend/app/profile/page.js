@@ -244,53 +244,83 @@ export default function ProfilePage() {
 
         {/* Share & Asset Overview */}
         {overallStatus && profile && (
-          <div className="mb-6 bg-slate-900/50 border border-white/5 rounded-2xl p-5 sm:p-6 overflow-hidden relative">
-            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-4 relative z-10">
+          <div className="mb-6 bg-[#0f172a] border border-slate-800 rounded-3xl p-6 sm:p-8 overflow-hidden relative shadow-2xl">
+            {/* Soft background glow */}
+            <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-[80px] pointer-events-none -translate-y-1/2 translate-x-1/4" />
+            
+            <div className="flex flex-col sm:flex-row justify-between gap-6 relative z-10 mb-8">
+              {/* Left Area: Title and Shares */}
               <div>
-                <h2 className="text-base font-bold text-white flex items-center gap-2">
-                  <span className="w-7 h-7 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-400 text-sm">
-                    💎
-                  </span>
-                  আমার শেয়ার ও পাওনা
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-800/80 border border-slate-700 text-slate-300 text-xs font-bold mb-4">
+                  <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+                  আমার ফান্ড স্ট্যাটাস
+                </div>
+                <h2 className="text-xl sm:text-2xl font-black text-white mb-1.5">
+                  আপনার শেয়ার: <span className="text-blue-400">{myShares} টি</span>
                 </h2>
-                <p className="text-xs text-slate-400 mt-1">
-                  আপনার মোট শেয়ার: <span className="font-bold text-white">{myShares} টি</span> (মোট ফান্ড শেয়ার: <span className="text-slate-300">{totalShares} টি</span>)
-                </p>
-              </div>
-              <div className="text-left sm:text-right">
-                <p className="text-xs text-slate-400 mb-0.5">বর্তমান শেয়ার মূল্য</p>
-                <p className="text-sm font-black text-emerald-400">{Number(valuePerShare).toFixed(0)} ৳ <span className="text-[10px] text-slate-500 font-normal">/ শেয়ার</span></p>
-              </div>
-            </div>
-
-            {/* Progress Bar visualization */}
-            <div className="relative mt-12 mb-10 mx-4 sm:mx-8">
-              {/* Background track */}
-              <div className="h-4 sm:h-5 bg-slate-800 rounded-full overflow-hidden relative border border-white/5 shadow-inner">
-                <div 
-                  className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full relative transition-all duration-1000 ease-out"
-                  style={{ width: `${Math.min(Math.max(entitlementProgress, 0), 100)}%` }}
-                >
-                  <div className="absolute inset-0 w-full bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent)] -translate-x-full animate-[shimmer_2s_infinite]" />
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-400">
+                  <p>মোট ফান্ড শেয়ার: <span className="text-slate-200 font-semibold">{totalShares} টি</span></p>
+                  <span className="hidden sm:inline text-slate-700">•</span>
+                  <p>শেয়ার মূল্য: <span className="text-emerald-400 font-bold">{Number(valuePerShare).toFixed(0)} ৳</span></p>
                 </div>
               </div>
               
-              {/* Markers & Labels */}
-              {/* Deposit Marker */}
-              <div 
-                className="absolute top-6 flex flex-col items-center transition-all duration-1000 -translate-x-1/2"
-                style={{ left: `${Math.min(Math.max(entitlementProgress, 0), 100)}%` }}
-              >
-                <div className="w-0.5 h-6 bg-blue-400 absolute -top-[30px] rounded-full shadow-[0_0_8px_rgba(96,165,250,0.8)]" />
-                <span className="text-sm sm:text-base font-black text-white">{Number(myDeposit).toFixed(0)} ৳</span>
-                <span className="text-[10px] text-slate-400 whitespace-nowrap bg-slate-900/80 px-1.5 py-0.5 rounded-md mt-0.5">আমার জমা</span>
+              {/* Right Area: Deposit & Entitlement Numbers */}
+              <div className="flex items-center gap-5 sm:gap-6 bg-slate-800/40 p-4 rounded-2xl border border-white/5 self-start w-full sm:w-auto">
+                <div className="flex flex-col">
+                  <span className="text-xs text-slate-400 mb-1 font-medium">মোট জমা</span>
+                  <span className="text-lg font-black text-white">{Number(myDeposit).toFixed(0)} ৳</span>
+                </div>
+                <div className="w-px h-10 bg-slate-700" />
+                <div className="flex flex-col">
+                  <span className="text-xs text-emerald-400/80 mb-1 font-medium">বর্তমান পাওনা</span>
+                  <span className="text-lg font-black text-emerald-400">{Number(myEntitlement).toFixed(0)} ৳</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Clean Progress Bar */}
+            <div className="relative z-10 bg-slate-900/50 p-5 rounded-2xl border border-white/5">
+              <div className="flex justify-between text-xs text-slate-400 font-semibold mb-3">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full bg-blue-500" />
+                  <span>জমা: {Number(myDeposit).toFixed(0)} ৳</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span>লক্ষ্য (পাওনা): {Number(myEntitlement).toFixed(0)} ৳</span>
+                  <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                </div>
               </div>
               
-              {/* Entitlement Marker (End of bar) */}
-              <div className="absolute top-6 right-0 flex flex-col items-end translate-x-[15%] sm:translate-x-[10%]">
-                <div className="w-0.5 h-6 bg-emerald-500 absolute -top-[30px] right-0 sm:right-2 rounded-full shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
-                <span className="text-sm sm:text-base font-black text-emerald-400">{Number(myEntitlement).toFixed(0)} ৳</span>
-                <span className="text-[10px] text-emerald-400/70 whitespace-nowrap bg-emerald-950/50 px-1.5 py-0.5 rounded-md mt-0.5 border border-emerald-500/20">শেয়ার থেকে পাওনা</span>
+              <div className="h-3 w-full bg-slate-950 rounded-full overflow-hidden border border-slate-800 shadow-inner">
+                <div 
+                  className="h-full bg-gradient-to-r from-blue-500 via-teal-400 to-emerald-400 rounded-full relative transition-all duration-1000 ease-out"
+                  style={{ width: `${Math.min(Math.max(entitlementProgress, 0), 100)}%` }}
+                >
+                  <div className="absolute inset-0 w-full bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.3),transparent)] -translate-x-full animate-[shimmer_2s_infinite]" />
+                </div>
+              </div>
+              
+              <div className="mt-4 flex items-center justify-between">
+                <span className="text-xs font-medium text-slate-500">
+                  {entitlementProgress.toFixed(1)}% পূর্ণ হয়েছে
+                </span>
+                {myEntitlement > myDeposit && (
+                  <span className="text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-lg font-bold flex items-center gap-1">
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                    </svg>
+                    +{Number(myEntitlement - myDeposit).toFixed(0)} ৳ বৃদ্ধি
+                  </span>
+                )}
+                {myEntitlement < myDeposit && myDeposit > 0 && (
+                  <span className="text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 px-2.5 py-1 rounded-lg font-bold flex items-center gap-1">
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
+                    </svg>
+                    {Number(myEntitlement - myDeposit).toFixed(0)} ৳ হ্রাস
+                  </span>
+                )}
               </div>
             </div>
           </div>
