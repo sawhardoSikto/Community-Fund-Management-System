@@ -147,9 +147,12 @@ export default function ProfilePage() {
       <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6">
 
         {/* Profile Card */}
-        <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-6 mb-6">
-          <div className="flex items-start justify-between mb-6">
-            <div className="flex items-center gap-4">
+        <div className="bg-[#0f172a] border border-slate-800 rounded-3xl p-6 sm:p-8 mb-6 relative overflow-hidden shadow-2xl">
+          {/* Soft background glow */}
+          <div className="absolute top-0 left-0 w-64 h-64 bg-amber-500/10 rounded-full blur-[80px] pointer-events-none -translate-y-1/2 -translate-x-1/4" />
+          
+          <div className="flex items-start justify-between mb-8 relative z-10">
+            <div className="flex items-center gap-5">
               <UserAvatar user={profile} className="w-16 h-16 rounded-2xl overflow-hidden shrink-0 text-xl" />
               <div>
                 <h1 className="text-xl font-black text-white">{profile?.name}</h1>
@@ -235,9 +238,9 @@ export default function ProfilePage() {
                 { label: 'মাসিক চাঁদা', value: `${profile?.monthlyAmount} ৳` },
                 { label: 'যোগদান', value: profile?.createdAt ? new Date(profile.createdAt).toLocaleDateString('bn-BD') : '—' },
               ].map((item, i) => (
-               <div key={i} className="bg-slate-800/50 rounded-xl px-4 py-3">
-                  <p className="text-xs text-slate-500">{item.label}</p>
-                  <p className="text-sm font-semibold text-white mt-0.5">{item.value}</p>
+               <div key={i} className="bg-slate-800/40 border border-white/5 rounded-2xl px-5 py-4">
+                  <p className="text-xs text-slate-500 mb-1 font-medium">{item.label}</p>
+                  <p className="text-base font-bold text-white">{item.value}</p>
                 </div>
               ))}
             </div>
@@ -357,34 +360,52 @@ export default function ProfilePage() {
 
         {/* Payment Stats */}
         {totalPaid && (
-          <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5 mb-6">
-            <h2 className="text-base font-bold text-white mb-4">💰 পেমেন্ট সারসংক্ষেপ</h2>
-            <div className="grid grid-cols-3 gap-3">
-              {[
-                { label: 'পুরনো পরিশোধ', value: `${totalPaid.openingTotal || 0} ৳`, color: 'text-slate-300' },
-                { label: 'ওয়েবসাইটে', value: `${totalPaid.websiteTotal || 0} ৳`, color: 'text-blue-400' },
-                { label: 'সর্বমোট', value: `${totalPaid.grandTotal || 0} ৳`, color: 'text-emerald-400' },
-              ].map((s, i) => (
-                <div key={i} className="text-center bg-slate-800/50 rounded-xl p-3">
-                  <p className={`text-lg font-black ${s.color}`}>{s.value}</p>
-                  <p className="text-xs text-slate-500 mt-1">{s.label}</p>
-                </div>
-              ))}
+          <div className="bg-[#0f172a] border border-slate-800 rounded-3xl p-6 sm:p-8 mb-6 relative overflow-hidden shadow-2xl">
+            {/* Soft background glow */}
+            <div className="absolute top-1/2 left-1/2 w-64 h-64 bg-emerald-500/10 rounded-full blur-[80px] pointer-events-none -translate-y-1/2 -translate-x-1/2" />
+            
+            <div className="relative z-10">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-800/80 border border-slate-700 text-slate-300 text-xs font-bold mb-6">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                পেমেন্ট সারসংক্ষেপ
+              </div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {[
+                  { label: 'পুরনো পরিশোধ', value: `${totalPaid.openingTotal || 0} ৳`, color: 'text-slate-300', bg: 'bg-slate-800/40' },
+                  { label: 'ওয়েবসাইটে', value: `${totalPaid.websiteTotal || 0} ৳`, color: 'text-blue-400', bg: 'bg-blue-900/10 border-blue-500/10' },
+                  { label: 'সর্বমোট', value: `${totalPaid.grandTotal || 0} ৳`, color: 'text-emerald-400', bg: 'bg-emerald-900/10 border-emerald-500/10' },
+                ].map((s, i) => (
+                  <div key={i} className={`flex flex-col items-center justify-center rounded-2xl p-5 border border-white/5 ${s.bg}`}>
+                    <p className="text-xs text-slate-400 mb-1.5 font-medium">{s.label}</p>
+                    <p className={`text-xl sm:text-2xl font-black ${s.color}`}>{s.value}</p>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         )}
 
         {/* Dues */}
         {myDues.length > 0 && (
-          <div className="bg-red-500/5 border border-red-500/10 rounded-2xl p-5">
-            <h2 className="text-base font-bold text-red-400 mb-3">⚠️ বকেয়া তালিকা ({myDues.length} মাস)</h2>
-            <div className="space-y-2 max-h-48 overflow-y-auto">
-              {myDues.map((due, i) => (
-                <div key={i} className="flex items-center justify-between px-3 py-2 bg-red-500/5 rounded-lg">
-                  <span className="text-sm text-slate-300">{['January','February','March','April','May','June','July','August','September','October','November','December'][due.month - 1]} {due.year}</span>
-                  <span className="text-sm font-bold text-red-400">{due.amount} ৳</span>
-                </div>
-              ))}
+          <div className="bg-[#1a0f14] border border-rose-900/50 rounded-3xl p-6 sm:p-8 relative overflow-hidden shadow-2xl shadow-rose-900/10">
+            {/* Soft background glow */}
+            <div className="absolute top-0 right-0 w-64 h-64 bg-rose-500/10 rounded-full blur-[80px] pointer-events-none -translate-y-1/2 translate-x-1/4" />
+            
+            <div className="relative z-10">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-rose-950/80 border border-rose-900/50 text-rose-300 text-xs font-bold mb-6">
+                <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+                বকেয়া তালিকা ({myDues.length} মাস)
+              </div>
+              
+              <div className="space-y-3 max-h-64 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-rose-900/50 scrollbar-track-transparent">
+                {myDues.map((due, i) => (
+                  <div key={i} className="flex items-center justify-between px-5 py-4 bg-rose-950/30 border border-rose-900/30 rounded-2xl hover:bg-rose-950/50 transition-colors">
+                    <span className="text-sm font-medium text-slate-300">{['January','February','March','April','May','June','July','August','September','October','November','December'][due.month - 1]} {due.year}</span>
+                    <span className="text-lg font-black text-rose-400">{due.amount} ৳</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         )}
