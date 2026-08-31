@@ -25,10 +25,9 @@ export class ReportsService {
     const settings = await this.settingsService.getSettings();
     let openingBalance = Number(settings.openingCashInHand || 0);
 
-    // Fetch all records
     const allPayments = await this.paymentRepo.find({ 
       where: { status: PaymentStatus.APPROVED },
-      relations: ['user']
+      relations: { user: true }
     });
     const allExpenses = await this.expenseRepo.find();
     const allPtx = await this.ptxRepo.find();
