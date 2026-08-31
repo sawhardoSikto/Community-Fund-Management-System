@@ -26,7 +26,10 @@ export class ReportsService {
     let openingBalance = Number(settings.openingCashInHand || 0);
 
     // Fetch all records
-    const allPayments = await this.paymentRepo.find({ where: { status: PaymentStatus.APPROVED } });
+    const allPayments = await this.paymentRepo.find({ 
+      where: { status: PaymentStatus.APPROVED },
+      relations: ['user']
+    });
     const allExpenses = await this.expenseRepo.find();
     const allPtx = await this.ptxRepo.find();
     const allSalaries = await this.salaryRepo.find();
@@ -69,13 +72,25 @@ export class ReportsService {
 
     for (const p of incomesPeriod) {
       const coveredMonths = p.coveredMonths ? JSON.parse(p.coveredMonths) : [];
-      const monthlyAmount = p.user?.monthlyAmount || 200;
-      const monthlyTotal = coveredMonths.length * monthlyAmount;
-      const finePart = Number(p.amount) - monthlyTotal;
+      
+      if (coveredMonths.length > 0) {
+        const monthlyAmount = p.user?.monthlyAmount || 200;
+        const monthlyTotal = coveredMonths.length * monthlyAmount;
+        const finePart = Number(p.amount) - monthlyTotal;
 
-      monthlyIncome += monthlyTotal;
-      if (finePart > 0) {
-        fineIncome += finePart;
+        monthlyIncome += monthlyTotal;
+        if (finePart > 0) {
+          fineIncome += finePart;
+        }
+      } else {
+        // Fallback for old payments
+        if (p.type === 'monthly') {
+          monthlyIncome += Number(p.amount);
+        } else if (p.type === 'fine' || p.fineIds) {
+          fineIncome += Number(p.amount);
+        } else {
+          monthlyIncome += Number(p.amount); // Default to monthly if unknown
+        }
       }
     }
 

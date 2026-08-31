@@ -122,13 +122,25 @@ export class SheetsService implements OnModuleInit {
 
     for (const p of payments) {
       const coveredMonths = p.coveredMonths ? JSON.parse(p.coveredMonths) : [];
-      const monthlyAmount = p.user?.monthlyAmount || 200;
-      const monthlyTotal = coveredMonths.length * monthlyAmount;
-      const finePart = Number(p.amount) - monthlyTotal;
+      
+      if (coveredMonths.length > 0) {
+        const monthlyAmount = p.user?.monthlyAmount || 200;
+        const monthlyTotal = coveredMonths.length * monthlyAmount;
+        const finePart = Number(p.amount) - monthlyTotal;
 
-      totalMemberIncome += monthlyTotal;
-      if (finePart > 0) {
-        totalFineIncome += finePart;
+        totalMemberIncome += monthlyTotal;
+        if (finePart > 0) {
+          totalFineIncome += finePart;
+        }
+      } else {
+        // Fallback for old payments
+        if (p.type === 'monthly') {
+          totalMemberIncome += Number(p.amount);
+        } else if (p.type === 'fine' || p.fineIds) {
+          totalFineIncome += Number(p.amount);
+        } else {
+          totalMemberIncome += Number(p.amount);
+        }
       }
     }
 
