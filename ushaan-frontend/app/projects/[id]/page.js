@@ -112,7 +112,7 @@ export default function ProjectDetailPage() {
             { label: 'নতুন বিনিয়োগ', value: `${Number(s?.newExpense || 0).toFixed(0)} ৳`, color: 'text-red-400', bg: 'from-red-500/10 to-red-600/5 border-red-500/20' },
             { label: 'মোট মুনাফা', value: `${Number(s?.totalProfit || 0).toFixed(0)} ৳`, color: 'text-emerald-400', bg: 'from-emerald-500/10 to-emerald-600/5 border-emerald-500/20' },
             { label: 'মূলধন ফেরত', value: `${Number(s?.capitalReturn || 0).toFixed(0)} ৳`, color: 'text-blue-400', bg: 'from-blue-500/10 to-blue-600/5 border-blue-500/20' },
-            { label: 'এখনো বাইরে', value: `${Number(s?.stillOutside || 0).toFixed(0)} ৳`, color: 'text-amber-400', bg: 'from-amber-500/10 to-orange-500/5 border-amber-500/20' },
+            ...(!isCompleted ? [{ label: 'এখনো বাইরে', value: `${Number(s?.stillOutside || 0).toFixed(0)} ৳`, color: 'text-amber-400', bg: 'from-amber-500/10 to-orange-500/5 border-amber-500/20' }] : []),
           ].map((item, i) => (
             <div key={i} className={`bg-gradient-to-br ${item.bg} border rounded-2xl p-4`}>
               <p className={`text-lg sm:text-xl font-black ${item.color}`}>{item.value}</p>

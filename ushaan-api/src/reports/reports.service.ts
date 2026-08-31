@@ -93,8 +93,8 @@ export class ReportsService {
       }
     }
 
-    if (monthlyIncome > 0) groupedIncomes.push({ label: 'Service Charge / Subscription', amount: monthlyIncome });
-    if (fineIncome > 0) groupedIncomes.push({ label: 'Penalty / Fines', amount: fineIncome });
+    if (monthlyIncome > 0) groupedIncomes.push({ label: 'Monthly Subscription', amount: monthlyIncome });
+    if (fineIncome > 0) groupedIncomes.push({ label: 'Fines', amount: fineIncome });
 
     const projIncome = ptxPeriod.filter(p => p.type === TransactionType.PROFIT || p.type === TransactionType.CAPITAL_RETURN).reduce((sum, p) => sum + Number(p.amount), 0);
     if (projIncome > 0) groupedIncomes.push({ label: 'Project Returns & Profit', amount: projIncome });

@@ -517,7 +517,7 @@ export class PaymentsService implements OnModuleInit {
       month: d.month,
       year: d.year,
       amount: d.amount,
-      label: `Service Charge - ${new Date(d.year, d.month - 1).toLocaleString('default', { month: 'long' })} ${d.year}`,
+      label: `Monthly Subscription - ${new Date(d.year, d.month - 1).toLocaleString('default', { month: 'long' })} ${d.year}`,
     }));
 
     // 2. Get Fines
