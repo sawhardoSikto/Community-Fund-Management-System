@@ -64,10 +64,22 @@ export class ReportsService {
 
     // Group Incomes
     const groupedIncomes: { label: string; amount: number }[] = [];
-    const monthlyIncome = incomesPeriod.filter(p => p.type === 'monthly').reduce((sum, p) => sum + Number(p.amount), 0);
+    let monthlyIncome = 0;
+    let fineIncome = 0;
+
+    for (const p of incomesPeriod) {
+      const coveredMonths = p.coveredMonths ? JSON.parse(p.coveredMonths) : [];
+      const monthlyAmount = p.user?.monthlyAmount || 200;
+      const monthlyTotal = coveredMonths.length * monthlyAmount;
+      const finePart = Number(p.amount) - monthlyTotal;
+
+      monthlyIncome += monthlyTotal;
+      if (finePart > 0) {
+        fineIncome += finePart;
+      }
+    }
+
     if (monthlyIncome > 0) groupedIncomes.push({ label: 'Service Charge / Subscription', amount: monthlyIncome });
-    
-    const fineIncome = incomesPeriod.filter(p => p.type === 'fine' || p.fineIds).reduce((sum, p) => sum + Number(p.amount), 0);
     if (fineIncome > 0) groupedIncomes.push({ label: 'Penalty / Fines', amount: fineIncome });
 
     const projIncome = ptxPeriod.filter(p => p.type === TransactionType.PROFIT || p.type === TransactionType.CAPITAL_RETURN).reduce((sum, p) => sum + Number(p.amount), 0);

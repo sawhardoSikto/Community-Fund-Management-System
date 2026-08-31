@@ -121,7 +121,7 @@ export default function LedgerPage() {
 
           <div className="grid grid-cols-2 gap-8">
             {/* Left Column: Cash-in Flow */}
-            <div>
+            <div className="flex flex-col">
               <h2 className="text-center font-bold text-slate-800 mb-3 border-b-2 border-slate-800 pb-2">Cash-in Flow (Income)</h2>
               
               <table className="w-full text-sm border-collapse">
@@ -173,14 +173,14 @@ export default function LedgerPage() {
                 </tbody>
               </table>
 
-              <div className="mt-8 border-2 border-slate-800 flex justify-between p-2 font-black text-slate-900 bg-slate-50">
+              <div className="mt-auto border-2 border-slate-800 flex justify-between p-2 font-black text-slate-900 bg-slate-50">
                 <span>Total Balance</span>
                 <span>{Number(data.openingBalance + data.totalIncome).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
               </div>
             </div>
 
             {/* Right Column: Cash-out Flow */}
-            <div>
+            <div className="flex flex-col">
               <h2 className="text-center font-bold text-slate-800 mb-3 border-b-2 border-slate-800 pb-2">Cash-out Flow (Expenses)</h2>
               
               <table className="w-full text-sm border-collapse">
@@ -232,7 +232,7 @@ export default function LedgerPage() {
                 </tbody>
               </table>
 
-              <div className="mt-8 border-2 border-slate-800 flex justify-between p-2 font-black text-slate-900 bg-slate-50">
+              <div className="mt-auto border-2 border-slate-800 flex justify-between p-2 font-black text-slate-900 bg-slate-50">
                 <span>Total Balance</span>
                 <span>{Number(data.totalExpense + data.closingBalance).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
               </div>

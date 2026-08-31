@@ -1008,11 +1008,11 @@ const handleToggleProjectStatus = async (project) => {
 
                   {showBillDropdown && (
                     <div className="absolute z-10 w-full mt-1 bg-slate-800 border border-white/10 rounded-xl shadow-xl max-h-60 overflow-y-auto p-2 space-y-1">
-                      {manualBills.dues.length === 0 && manualBills.fines.length === 0 && manualBills.advances.length === 0 ? (
+                      {!(manualBills?.dues?.length) && !(manualBills?.fines?.length) && !(manualBills?.advances?.length) ? (
                         <div className="text-center text-xs text-slate-400 py-3">কোনো বিল পাওয়া যায়নি</div>
                       ) : (
                         <>
-                          {[...manualBills.dues, ...manualBills.fines, ...manualBills.advances].map((bill) => {
+                          {[...(manualBills?.dues || []), ...(manualBills?.fines || []), ...(manualBills?.advances || [])].map((bill) => {
                             const isSelected = selectedBills.some((b) => b.id === bill.id);
                             return (
                               <label
@@ -1148,52 +1148,6 @@ const handleToggleProjectStatus = async (project) => {
                   />
                 </div>
 
-                {manualPayment.userId && (
-                  <div className="bg-amber-500/5 border border-amber-500/10 rounded-xl p-3 space-y-2">
-                    {manualPaymentType === 'dues' ? (
-                      manualDueInfo.length > 0 ? (
-                        <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-2.5 space-y-1">
-                          <p className="text-xs font-bold text-red-400 flex items-center gap-1">
-                            <svg className="w-3.5 h-3.5 text-red-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                            </svg>
-                            {manualDueInfo.length} মাস বকেয়া আছে
-                          </p>
-                          <p className="text-xs text-slate-400">
-                            <span className="text-amber-400 font-bold">
-                              {(allUsers.find(u => u.id === parseInt(manualPayment.userId))?.monthlyAmount || 200)} × {manualDueInfo.length} due + {(allUsers.find(u => u.id === parseInt(manualPayment.userId))?.monthlyAmount || 200)} current = {(manualDueInfo.length + 1) * (allUsers.find(u => u.id === parseInt(manualPayment.userId))?.monthlyAmount || 200)} ৳
-                            </span>
-                          </p>
-                        </div>
-                      ) : (
-                        <p className="text-xs text-slate-400">
-                          পরিমাণ: <span className="text-amber-400 font-bold">{(allUsers.find(u => u.id === parseInt(manualPayment.userId))?.monthlyAmount || 200)} current = {(allUsers.find(u => u.id === parseInt(manualPayment.userId))?.monthlyAmount || 200)} ৳</span>
-                        </p>
-                      )
-                    ) : (
-                      nextUnpaid ? (
-                        <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-2.5 space-y-1">
-                          <p className="text-xs font-bold text-emerald-400 flex items-center gap-1">
-                            <svg className="w-3.5 h-3.5 text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                            </svg>
-                            অগ্রিম পেমেন্ট বিবরণ ({futureMonthsCount} মাস)
-                          </p>
-                          <p className="text-xs text-slate-300">
-                            মাসের তালিকা: <span className="text-amber-400 font-semibold">{getFutureCoveredMonths().map(m => `${MONTH_NAMES[m.month - 1]} ${m.year}`).join(', ')}</span>
-                          </p>
-                          <p className="text-xs text-white font-bold border-t border-emerald-500/20 pt-1.5 mt-1.5 flex justify-between">
-                            <span>মোট পরিমাণ:</span>
-                            <span className="text-amber-400">{(allUsers.find(u => u.id === parseInt(manualPayment.userId))?.monthlyAmount || 200) * futureMonthsCount} ৳</span>
-                          </p>
-                        </div>
-                      ) : (
-                        <p className="text-xs text-slate-400">শুরুর মাস লোড হচ্ছে...</p>
-                      )
-                    )}
-                    <p className="text-xs text-slate-500 mt-0.5">ম্যানুয়ালি পেমেন্ট নেওয়ার পর এই ফর্ম পূরণ করুন</p>
-                  </div>
-                )}
 
                 <button
                   type="submit"
