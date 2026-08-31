@@ -16,6 +16,7 @@ import { ExpensesModule } from './expenses/expenses.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { NoticesModule } from './notices/notices.module';
 import { FinesModule } from './fines/fines.module';
+import { ReportsModule } from './reports/reports.module';
 
 
 @Module({
@@ -51,6 +52,7 @@ import { FinesModule } from './fines/fines.module';
     NotificationsModule,
     NoticesModule,
     FinesModule,
+    ReportsModule,
   ],
   providers: [
     {

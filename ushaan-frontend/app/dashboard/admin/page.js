@@ -333,6 +333,15 @@ export default function AdminDashboard() {
                   </button>
                 );
               })}
+              <Link
+                href="/dashboard/ledger"
+                className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold transition-all group text-slate-400 hover:text-white hover:bg-white/5 ml-auto border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500 hover:text-white"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <span>আয়-ব্যয় রিপোর্ট</span>
+              </Link>
             </div>
 
             {/* Overview */}

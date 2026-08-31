@@ -208,11 +208,10 @@ export default  function AccountantDashboard() {
   // Forms
   const [manualPayment, setManualPayment] = useState({
     userId: "",
-    month: new Date().getMonth() + 1,
-    year: new Date().getFullYear(),
     paymentMethod: "bkash",
     transactionNumber: "",
     note: "",
+    paymentDate: new Date().toISOString().split("T")[0],
   });
   const [salaryForm, setSalaryForm] = useState({
     userId: "",
@@ -252,64 +251,31 @@ export default  function AccountantDashboard() {
 
   const [processing, setProcessing] = useState(null);
   const [submitting, setSubmitting] = useState(false);
-  const [manualDueInfo, setManualDueInfo] = useState([]);
-  const [manualPaymentType, setManualPaymentType] = useState("dues"); // dues or future
-  const [nextUnpaid, setNextUnpaid] = useState(null);
-  const [futureMonthsCount, setFutureMonthsCount] = useState(1);
-  const [loadingNextUnpaid, setLoadingNextUnpaid] = useState(false);
-
-  const getFutureCoveredMonths = () => {
-    if (!nextUnpaid) return [];
-    const list = [];
-    let currMonth = nextUnpaid.month;
-    let currYear = nextUnpaid.year;
-    for (let i = 0; i < futureMonthsCount; i++) {
-      list.push({ month: currMonth, year: currYear });
-      currMonth++;
-      if (currMonth > 12) {
-        currMonth = 1;
-        currYear++;
-      }
-    }
-    return list;
-  };
+  const [manualBills, setManualBills] = useState({ dues: [], fines: [], advances: [] });
+  const [selectedBills, setSelectedBills] = useState([]);
+  const [loadingBills, setLoadingBills] = useState(false);
+  const [showBillDropdown, setShowBillDropdown] = useState(false);
 
   useEffect(() => {
     if (!manualPayment.userId) {
-      setManualDueInfo([]);
-      setNextUnpaid(null);
+      setManualBills({ dues: [], fines: [], advances: [] });
+      setSelectedBills([]);
       return;
     }
     
-    if (manualPaymentType === 'dues') {
-      const fetchManualDues = async () => {
-        try {
-          const res = await api.get(`/payments/dues/${manualPayment.userId}?month=${manualPayment.month}&year=${manualPayment.year}`);
-          const dues = res.data.data || [];
-          const relevantDues = dues.filter((d) =>
-            d.year < manualPayment.year || (d.year === manualPayment.year && d.month < manualPayment.month)
-          );
-          setManualDueInfo(relevantDues);
-        } catch (err) {
-          console.error(err);
-        }
-      };
-      fetchManualDues();
-    } else if (manualPaymentType === 'future') {
-      const fetchNextUnpaid = async () => {
-        setLoadingNextUnpaid(true);
-        try {
-          const res = await api.get(`/payments/next-unpaid/${manualPayment.userId}`);
-          setNextUnpaid(res.data || null);
-        } catch (err) {
-          console.error(err);
-        } finally {
-          setLoadingNextUnpaid(false);
-        }
-      };
-      fetchNextUnpaid();
-    }
-  }, [manualPayment.userId, manualPayment.month, manualPayment.year, manualPaymentType]);
+    const fetchBills = async () => {
+      setLoadingBills(true);
+      try {
+        const res = await api.get(`/payments/bills/${manualPayment.userId}`);
+        setManualBills(res.data || { dues: [], fines: [], advances: [] });
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoadingBills(false);
+      }
+    };
+    fetchBills();
+  }, [manualPayment.userId]);
 
   const showToast = (msg, success = true) => {
     setToast({ show: true, msg, success });
@@ -435,29 +401,32 @@ const handlePaymentStatus = async (id, status) => {
   // Manual payment
   const handleManualPayment = async (e) => {
     e.preventDefault();
+    if (selectedBills.length === 0) {
+      showToast("দয়া করে অন্তত একটি বিল নির্বাচন করুন", false);
+      return;
+    }
     setSubmitting(true);
     try {
-      let payload = { ...manualPayment };
-      if (manualPaymentType === 'future') {
-        const list = getFutureCoveredMonths();
-        if (list.length === 0) {
-          showToast("কোনো বকেয়া/চলতি মাস পাওয়া যায়নি", false);
-          setSubmitting(false);
-          return;
-        }
-        const lastMonthObj = list[list.length - 1];
-        payload.month = lastMonthObj.month;
-        payload.year = lastMonthObj.year;
-      }
+      const payload = {
+        userId: parseInt(manualPayment.userId),
+        paymentMethod: manualPayment.paymentMethod,
+        transactionNumber: manualPayment.transactionNumber,
+        note: manualPayment.note,
+        paymentDate: manualPayment.paymentDate,
+        months: selectedBills.filter(b => b.type === 'monthly' || b.type === 'advance').map(b => ({ month: b.month, year: b.year })),
+        fineIds: selectedBills.filter(b => b.type === 'fine').map(b => b.fineId)
+      };
+
       await api.post("/payments/manual", payload);
       showToast("পেমেন্ট যোগ করা হয়েছে");
-      setManualPayment((f) => ({
-        ...f,
+      setManualPayment({
         userId: "",
+        paymentMethod: "bkash",
         transactionNumber: "",
         note: "",
-      }));
-      setNextUnpaid(null);
+        paymentDate: new Date().toISOString().split("T")[0],
+      });
+      setSelectedBills([]);
       fetchAll();
     } catch (err) {
       showToast(err.response?.data?.message || "ব্যর্থ হয়েছে", false);
@@ -755,6 +724,15 @@ const handleToggleProjectStatus = async (project) => {
               </button>
             );
           })}
+          <Link
+            href="/dashboard/ledger"
+            className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold transition-all group text-slate-400 hover:text-white hover:bg-white/5 ml-auto border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500 hover:text-white"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <span>আয়-ব্যয় রিপোর্ট</span>
+          </Link>
         </div>
                {/* My Payment */}
                 {tab === 'my-payment' && (
@@ -993,102 +971,89 @@ const handleToggleProjectStatus = async (project) => {
                   </select>
                 </div>
 
-                {/* পেমেন্ট ধরণ */}
                 <div>
                   <label className="block text-xs font-semibold text-slate-400 mb-1.5">
-                    পেমেন্ট ধরণ
+                    রিসিভড ডেট <span className="text-red-400">*</span>
                   </label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {[
-                      { value: "dues", label: "বকেয়া ও চলতি পেমেন্ট" },
-                      { value: "future", label: "অগ্রিম পেমেন্ট" }
-                    ].map((type) => (
-                      <button
-                        key={type.value}
-                        type="button"
-                        onClick={() => setManualPaymentType(type.value)}
-                        className={`py-2 px-3 rounded-xl text-xs font-bold transition-all border ${manualPaymentType === type.value ? "bg-amber-500 text-white border-amber-500 shadow-lg shadow-amber-500/20" : "bg-slate-800 border-white/5 text-slate-300 hover:bg-slate-700 hover:text-white"}`}
-                      >
-                        {type.label}
-                      </button>
-                    ))}
-                  </div>
+                  <input
+                    type="date"
+                    required
+                    value={manualPayment.paymentDate}
+                    onChange={(e) =>
+                      setManualPayment((f) => ({ ...f, paymentDate: e.target.value }))
+                    }
+                    className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-amber-400/50 transition-all"
+                  />
                 </div>
 
-                {manualPaymentType === "dues" ? (
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-400 mb-1.5">
-                        মাস
-                      </label>
-                      <select
-                        value={manualPayment.month}
-                        onChange={(e) =>
-                          setManualPayment((f) => ({
-                            ...f,
-                            month: parseInt(e.target.value),
-                          }))
-                        }
-                        className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-amber-400/50 transition-all"
-                      >
-                        {MONTH_NAMES.map((m, i) => (
-                          <option key={i} value={i + 1}>
-                            {m}
-                          </option>
-                        ))}
-                      </select>
+                <div className="relative">
+                  <label className="block text-xs font-semibold text-slate-400 mb-1.5">
+                    বকেয়া ও বিল নির্বাচন করুন <span className="text-red-400">*</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setShowBillDropdown(!showBillDropdown)}
+                    disabled={!manualPayment.userId || loadingBills}
+                    className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-left text-white text-sm focus:outline-none focus:border-amber-400/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex justify-between items-center"
+                  >
+                    <span>
+                      {selectedBills.length > 0
+                        ? `${selectedBills.length} টি বিল নির্বাচিত (${selectedBills.reduce((acc, curr) => acc + curr.amount, 0)} ৳)`
+                        : "বিল নির্বাচন করুন (Ref. Bill No.)"}
+                    </span>
+                    <svg className={`w-4 h-4 transition-transform ${showBillDropdown ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+
+                  {showBillDropdown && (
+                    <div className="absolute z-10 w-full mt-1 bg-slate-800 border border-white/10 rounded-xl shadow-xl max-h-60 overflow-y-auto p-2 space-y-1">
+                      {manualBills.dues.length === 0 && manualBills.fines.length === 0 && manualBills.advances.length === 0 ? (
+                        <div className="text-center text-xs text-slate-400 py-3">কোনো বিল পাওয়া যায়নি</div>
+                      ) : (
+                        <>
+                          {[...manualBills.dues, ...manualBills.fines, ...manualBills.advances].map((bill) => {
+                            const isSelected = selectedBills.some((b) => b.id === bill.id);
+                            return (
+                              <label
+                                key={bill.id}
+                                className={`flex items-center gap-3 p-2.5 rounded-lg cursor-pointer transition-colors ${isSelected ? 'bg-amber-500/10' : 'hover:bg-white/5'}`}
+                              >
+                                <input
+                                  type="checkbox"
+                                  className="w-4 h-4 rounded border-white/20 bg-slate-900 text-amber-500 focus:ring-amber-500 focus:ring-offset-slate-800"
+                                  checked={isSelected}
+                                  onChange={(e) => {
+                                    if (e.target.checked) {
+                                      setSelectedBills([...selectedBills, bill]);
+                                    } else {
+                                      setSelectedBills(selectedBills.filter((b) => b.id !== bill.id));
+                                    }
+                                  }}
+                                />
+                                <div className="flex-1 min-w-0">
+                                  <p className={`text-sm font-medium truncate ${isSelected ? 'text-amber-400' : 'text-slate-200'}`}>
+                                    {bill.label}
+                                  </p>
+                                  <p className="text-xs text-slate-400">
+                                    {bill.amount} ৳
+                                  </p>
+                                </div>
+                                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase shrink-0 ${
+                                  bill.type === 'monthly' ? 'bg-blue-500/10 text-blue-400' :
+                                  bill.type === 'fine' ? 'bg-red-500/10 text-red-400' :
+                                  'bg-emerald-500/10 text-emerald-400'
+                                }`}>
+                                  {bill.type === 'monthly' ? 'Due' : bill.type}
+                                </span>
+                              </label>
+                            );
+                          })}
+                        </>
+                      )}
                     </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-400 mb-1.5">
-                        বছর
-                      </label>
-                      <input
-                        type="number"
-                        value={manualPayment.year}
-                        onChange={(e) =>
-                          setManualPayment((f) => ({
-                            ...f,
-                            year: parseInt(e.target.value),
-                          }))
-                        }
-                        className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-amber-400/50 transition-all"
-                      />
-                    </div>
-                  </div>
-                ) : (
-                  <div className="bg-slate-800/50 border border-white/5 rounded-xl p-3.5 space-y-3">
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-slate-400 font-semibold">অগ্রিম শুরুর মাস:</span>
-                      <span className="text-sm text-amber-400 font-black">
-                        {loadingNextUnpaid ? (
-                          "লোডিং..."
-                        ) : nextUnpaid ? (
-                          `${MONTH_NAMES[nextUnpaid.month - 1]} ${nextUnpaid.year}`
-                        ) : (
-                          "সদস্য সিলেক্ট করুন"
-                        )}
-                      </span>
-                    </div>
-                    {nextUnpaid && (
-                      <div>
-                        <label className="block text-xs font-semibold text-slate-400 mb-1.5">
-                          অগ্রিম মাসের সংখ্যা
-                        </label>
-                        <select
-                          value={futureMonthsCount}
-                          onChange={(e) => setFutureMonthsCount(parseInt(e.target.value))}
-                          className="w-full px-3 py-2 bg-slate-900 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-amber-400/50 transition-all"
-                        >
-                          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((num) => (
-                            <option key={num} value={num}>
-                              {num} মাস
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    )}
-                  </div>
-                )}
+                  )}
+                </div>
 
                 <div>
                   <label className="block text-xs font-semibold text-slate-400 mb-1.5">

@@ -52,6 +52,9 @@ export class Payment {
   @CreateDateColumn()
   createdAt!: Date;
 
+  @Column({ type: 'date', nullable: true })
+  paymentDate!: string | null; // The date when the payment was actually received
+
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })
   user!: User;

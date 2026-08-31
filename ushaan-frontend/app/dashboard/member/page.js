@@ -93,11 +93,22 @@ export default function MemberDashboard() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
         {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-2xl sm:text-3xl font-black text-white">
-            স্বাগতম, {user?.name}! 👋
-          </h1>
-          <p className="text-slate-400 mt-1 text-sm">ঊষাণ কমিউনিটি ফান্ড ম্যানেজমেন্ট</p>
+        <div className="mb-6 flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-black text-white">
+              স্বাগতম, {user?.name}! 👋
+            </h1>
+            <p className="text-slate-400 mt-1 text-sm">ঊষাণ কমিউনিটি ফান্ড ম্যানেজমেন্ট</p>
+          </div>
+          <Link
+            href="/dashboard/ledger"
+            className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold transition-all border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500 hover:text-white"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <span className="hidden sm:inline">আয়-ব্যয় রিপোর্ট</span>
+          </Link>
         </div>
 
         {/* Personal Status Alert Banner (HCI Visual Hierarchy) */}

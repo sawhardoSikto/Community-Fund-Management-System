@@ -45,6 +45,13 @@ export class PaymentsController {
     return this.paymentsService.getMemberDueHistory(userId, month, year);
   }
 
+  // ✅ Admin/Accountant — get all pending bills (dues, fines, advances) for checklist
+  @Get('bills/:userId')
+  @Roles('admin', 'accountant')
+  getMemberBills(@Param('userId', ParseIntPipe) userId: number) {
+    return this.paymentsService.getMemberBills(userId);
+  }
+
   // ✅ Next unpaid month checking for self
   @Get('my/next-unpaid')
   getMyNextUnpaid(@Request() req) {

@@ -357,43 +357,88 @@ export class PaymentsService implements OnModuleInit {
     const user = await this.usersService.findById(dto.userId);
     if (!user) throw new NotFoundException('User not found');
 
-    const existing = await this.paymentRepo.findOne({
-      where: { userId: dto.userId, month: dto.month, year: dto.year },
-    });
-    if (existing) throw new BadRequestException(
-      `Payment for ${dto.month}/${dto.year} already exists for this user`
-    );
+    const months = dto.months || [];
+    const fineIds = dto.fineIds || [];
 
-    const dueMonths = await this.getDueMonths(dto.userId, dto.month, dto.year);
-    const coveredMonths = [
-      ...dueMonths,
-      { month: dto.month, year: dto.year },
-    ];
-    const totalAmount = user.monthlyAmount * coveredMonths.length;
+    if (months.length === 0 && fineIds.length === 0) {
+      throw new BadRequestException('No bills selected for payment');
+    }
+
+    // Calculate fines
+    let finesTotal = 0;
+    let fineNoteSuffix = '';
+    if (fineIds.length > 0) {
+      const fines = await this.fineRepo.find({
+        where: { id: In(fineIds), userId: dto.userId, status: FineStatus.PENDING },
+      });
+      finesTotal = fines.reduce((sum, f) => sum + Number(f.amount), 0);
+      if (fines.length > 0) {
+        fineNoteSuffix = `Fines covered: ${fines.map(f => `${f.reason} (${f.amount} ৳)`).join(', ')}`;
+      }
+    }
+
+    let totalAmount = finesTotal;
+    let mainMonth = new Date().getMonth() + 1;
+    let mainYear = new Date().getFullYear();
+    let coveredMonths: any[] = [];
+    let monthsNoteSuffix = '';
+
+    if (months.length > 0) {
+      // Sort chronologically
+      months.sort((a, b) => (a.year - b.year) || (a.month - b.month));
+      const latest = months[months.length - 1];
+      mainMonth = latest.month;
+      mainYear = latest.year;
+      coveredMonths = months;
+      totalAmount += user.monthlyAmount * months.length;
+      monthsNoteSuffix = `Months covered: ${months.map(m => `${m.month}/${m.year}`).join(', ')}`;
+    }
+
+    // Construct Note
+    let finalNote = dto.note ? `${dto.note}. ` : '';
+    if (monthsNoteSuffix) finalNote += monthsNoteSuffix + '. ';
+    if (fineNoteSuffix) finalNote += fineNoteSuffix;
 
     const capture = await this.getCaptureMonthAndYear();
+    
+    let approvedDate = new Date();
+    if (dto.paymentDate) {
+      approvedDate = new Date(dto.paymentDate);
+    }
 
     const payment = this.paymentRepo.create({
       userId: dto.userId,
-      month: dto.month,
-      year: dto.year,
+      month: mainMonth,
+      year: mainYear,
       amount: totalAmount,
       paymentMethod: dto.paymentMethod,
       transactionNumber: dto.transactionNumber,
       status: PaymentStatus.APPROVED, // ✅ auto approved
       approvedBy: addedBy,
-      approvedAt: new Date(),
+      approvedAt: approvedDate,
+      paymentDate: dto.paymentDate || approvedDate.toISOString().split('T')[0],
       capturedInMonth: capture.month,
       capturedInYear: capture.year,
-      coveredMonths: JSON.stringify(coveredMonths),
-      note: dueMonths.length > 0
-        ? `${dto.note ? `${dto.note}. ` : ''}Due months covered: ${dueMonths.map(d => `${d.month}/${d.year}`).join(', ')}`
-        : dto.note || 'Manually added by admin/accountant',
+      coveredMonths: coveredMonths.length > 0 ? JSON.stringify(coveredMonths) : null,
+      fineIds: fineIds.length > 0 ? JSON.stringify(fineIds) : null,
+      type: months.length > 0 ? 'monthly' : 'fine',
+      note: finalNote || 'Manually added by admin/accountant',
     });
+    
     await this.paymentRepo.save(payment);
+
+    // Update Fines
+    if (fineIds.length > 0) {
+      await this.fineRepo.update({ id: In(fineIds) }, {
+        status: FineStatus.PAID,
+        paidAt: approvedDate,
+        paymentId: payment.id,
+      });
+    }
+
     await this.notificationsService.create(
       dto.userId,
-      `আপনার ${dto.month}/${dto.year} মাসের পেমেন্ট যুক্ত করা হয়েছে (${coveredMonths.length} মাস)।`,
+      `আপনার ম্যানুয়াল পেমেন্ট যুক্ত করা হয়েছে (Total: ${totalAmount} ৳)।`,
     );
 
     // ✅ ডাইনামিক শিট রিক্যালকুলেট
@@ -402,8 +447,7 @@ export class PaymentsService implements OnModuleInit {
     }
 
     return {
-      message: `Payment added successfully (${coveredMonths.length} months)`,
-      dueMonths: dueMonths.length,
+      message: `Payment added successfully`,
       totalAmount,
       data: payment
     };
@@ -454,6 +498,94 @@ export class PaymentsService implements OnModuleInit {
     }
 
     return { message: 'Due history fetched', count: dueList.length, data: dueList };
+  }
+
+  // ✅ Member এর সব বকেয়া, জরিমানা এবং অগ্রিম মাস বের করো (For CheckList UI)
+  async getMemberBills(userId: number) {
+    const user = await this.usersService.findById(userId);
+    if (!user) throw new NotFoundException('User not found');
+
+    const now = new Date();
+    const currentMonth = now.getMonth() + 1;
+    const currentYear = now.getFullYear();
+
+    // 1. Get Dues (up to current month)
+    const dueHistoryRes = await this.getMemberDueHistory(userId, currentMonth, currentYear);
+    const dues = dueHistoryRes.data.map(d => ({
+      id: `due_${d.month}_${d.year}`,
+      type: 'monthly',
+      month: d.month,
+      year: d.year,
+      amount: d.amount,
+      label: `Service Charge - ${new Date(d.year, d.month - 1).toLocaleString('default', { month: 'long' })} ${d.year}`,
+    }));
+
+    // 2. Get Fines
+    const fines = await this.fineRepo.find({
+      where: { userId, status: FineStatus.PENDING },
+      order: { createdAt: 'ASC' },
+    });
+    const mappedFines = fines.map(f => ({
+      id: `fine_${f.id}`,
+      fineId: f.id,
+      type: 'fine',
+      amount: Number(f.amount),
+      label: `Fine: ${f.reason || 'Penalty'}`,
+    }));
+
+    // 3. Get Advances (next 12 unpaid months after dues)
+    let nextUnpaidMonth = currentMonth;
+    let nextUnpaidYear = currentYear;
+    
+    // Start after the last due month or current month
+    if (dues.length > 0) {
+      const lastDue = dues[dues.length - 1];
+      nextUnpaidMonth = lastDue.month + 1;
+      nextUnpaidYear = lastDue.year;
+      if (nextUnpaidMonth > 12) {
+        nextUnpaidMonth = 1;
+        nextUnpaidYear++;
+      }
+    } else {
+      // Find the actual next unpaid month if no dues exist
+      const nextUnpaidRes = await this.getNextUnpaidMonthAndYear(userId);
+      if (nextUnpaidRes) {
+        nextUnpaidMonth = nextUnpaidRes.month;
+        nextUnpaidYear = nextUnpaidRes.year;
+      } else {
+        // Fallback
+        nextUnpaidMonth++;
+        if (nextUnpaidMonth > 12) {
+          nextUnpaidMonth = 1;
+          nextUnpaidYear++;
+        }
+      }
+    }
+
+    const advances: any[] = [];
+    let cm = nextUnpaidMonth;
+    let cy = nextUnpaidYear;
+    for (let i = 0; i < 12; i++) {
+      advances.push({
+        id: `advance_${cm}_${cy}`,
+        type: 'advance',
+        month: cm,
+        year: cy,
+        amount: user.monthlyAmount,
+        label: `Advance - ${new Date(cy, cm - 1).toLocaleString('default', { month: 'long' })} ${cy}`,
+      });
+      cm++;
+      if (cm > 12) {
+        cm = 1;
+        cy++;
+      }
+    }
+
+    return {
+      dues,
+      fines: mappedFines,
+      advances,
+    };
   }
 
 

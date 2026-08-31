@@ -8,17 +8,6 @@ export class ManualPaymentDto {
   @Type(() => Number)
   userId: number;
 
-  @IsInt()
-  @Min(1)
-  @Max(12)
-  @Type(() => Number)
-  month: number;
-
-  @IsInt()
-  @IsPositive()
-  @Type(() => Number)
-  year: number;
-
   @IsString()
   @IsOptional()
   bkashNumber?: string;
@@ -26,10 +15,21 @@ export class ManualPaymentDto {
   @IsString()
   @IsOptional()
   note?: string;
-   @IsEnum(PaymentMethod)
-    paymentMethod: PaymentMethod; // ✅ bkash/nagad/cash/card/other
-  
-    @IsString()
-    @IsOptional()
-    transactionNumber?: string;
+
+  @IsEnum(PaymentMethod)
+  paymentMethod: PaymentMethod; // ✅ bkash/nagad/cash/card/other
+
+  @IsString()
+  @IsOptional()
+  transactionNumber?: string;
+
+  @IsString()
+  @IsOptional()
+  paymentDate?: string; // e.g. "2026-08-31"
+
+  @IsOptional()
+  months?: { month: number; year: number }[]; // Monthly dues and advances
+
+  @IsOptional()
+  fineIds?: number[]; // Fines
 }
