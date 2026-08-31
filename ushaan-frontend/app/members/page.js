@@ -10,6 +10,7 @@ export default function MembersPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [filterRole, setFilterRole] = useState('all');
+  const [filterAmount, setFilterAmount] = useState('all');
 
   useEffect(() => {
     api.get('/users').then(res => {
@@ -23,7 +24,8 @@ export default function MembersPage() {
       u.email?.toLowerCase().includes(search.toLowerCase()) ||
       u.phone?.includes(search);
     const matchRole = filterRole === 'all' || u.role === filterRole;
-    return matchSearch && matchRole;
+    const matchAmount = filterAmount === 'all' || String(u.monthlyAmount) === filterAmount;
+    return matchSearch && matchRole && matchAmount;
   });
 
   if (loading) return (
@@ -72,12 +74,18 @@ export default function MembersPage() {
             />
           </div>
           <select value={filterRole} onChange={e => setFilterRole(e.target.value)}
-            className="px-3 py-2.5 bg-slate-900/50 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-amber-400/50 transition-all">
+            className="px-3 py-2.5 bg-slate-900/50 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-amber-400/50 transition-all w-full sm:w-auto">
             <option value="all">সব ভূমিকা</option>
             <option value="member">সদস্য</option>
             <option value="admin">সভাপতি</option>
             <option value="general_secretary">সাধারণ সম্পাদক</option>
             <option value="accountant">হিসাবরক্ষক</option>
+          </select>
+          <select value={filterAmount} onChange={e => setFilterAmount(e.target.value)}
+            className="px-3 py-2.5 bg-slate-900/50 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-amber-400/50 transition-all w-full sm:w-auto">
+            <option value="all">সব চাঁদা</option>
+            <option value="200">১X (২০০ ৳)</option>
+            <option value="400">২X (৪০০ ৳)</option>
           </select>
         </div>
 

@@ -119,47 +119,47 @@ export default function LedgerPage() {
             <p className="text-sm text-slate-600 mt-1">Income Expense Ledger ({formatDate(data.startDate)} - {formatDate(data.endDate)})</p>
           </div>
 
-          <div className="grid grid-cols-2 gap-8">
+          <div className="grid grid-cols-2 gap-2 sm:gap-4 md:gap-8 print:gap-8">
             {/* Left Column: Cash-in Flow */}
             <div className="flex flex-col">
-              <h2 className="text-center font-bold text-slate-800 mb-3 border-b-2 border-slate-800 pb-2">Cash-in Flow (Income)</h2>
+              <h2 className="text-center font-bold text-slate-800 mb-2 sm:mb-3 border-b-2 border-slate-800 pb-1 sm:pb-2 text-xs sm:text-base print:text-base">Cash-in Flow (Income)</h2>
               
-              <table className="w-full text-sm border-collapse">
+              <table className="w-full text-[10px] sm:text-xs md:text-sm border-collapse print:text-sm">
                 <thead>
                   <tr className="bg-slate-200">
-                    <th className="text-left py-1.5 px-2 font-bold text-slate-700 border-b border-slate-300">GL Account Head</th>
-                    <th className="text-right py-1.5 px-2 font-bold text-slate-700 border-b border-slate-300 w-32">Amount</th>
+                    <th className="text-left py-1 px-1 sm:py-1.5 sm:px-2 font-bold text-slate-700 border-b border-slate-300">GL Account Head</th>
+                    <th className="text-right py-1 px-1 sm:py-1.5 sm:px-2 font-bold text-slate-700 border-b border-slate-300 w-auto sm:w-24 md:w-32 print:w-32">Amount</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr>
-                    <td colSpan="2" className="font-bold py-2 px-2 text-slate-800">Opening Balance</td>
+                    <td colSpan="2" className="font-bold py-1.5 px-1 sm:py-2 sm:px-2 text-slate-800">Opening Balance</td>
                   </tr>
                   <tr>
-                    <td className="py-1.5 px-2 text-slate-600 pl-4">Cash in Hand</td>
-                    <td className="text-right py-1.5 px-2 text-slate-600">{Number(data.openingBalance).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                    <td className="py-1 px-1 sm:py-1.5 sm:px-2 text-slate-600 pl-2 sm:pl-4 print:pl-4">Cash in Hand</td>
+                    <td className="text-right py-1 px-1 sm:py-1.5 sm:px-2 text-slate-600">{Number(data.openingBalance).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
                   </tr>
                   <tr>
                     <td colSpan="2" className="border-t border-slate-200 py-1"></td>
                   </tr>
                   <tr className="font-bold">
-                    <td className="py-1.5 px-2 text-slate-800">Total Opening Balance</td>
-                    <td className="text-right py-1.5 px-2 text-slate-800">{Number(data.openingBalance).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                    <td className="py-1 px-1 sm:py-1.5 sm:px-2 text-slate-800">Total Opening Balance</td>
+                    <td className="text-right py-1 px-1 sm:py-1.5 sm:px-2 text-slate-800">{Number(data.openingBalance).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
                   </tr>
 
                   <tr>
-                    <td colSpan="2" className="font-bold py-2 px-2 pt-6 text-slate-800">Income Description</td>
+                    <td colSpan="2" className="font-bold py-1.5 px-1 sm:py-2 sm:px-2 pt-4 sm:pt-6 print:pt-6 text-slate-800">Income Description</td>
                   </tr>
                   {data.incomes.length === 0 ? (
                     <tr>
-                      <td className="py-1.5 px-2 text-slate-500 italic pl-4">No income records</td>
-                      <td className="text-right py-1.5 px-2 text-slate-500">0.00</td>
+                      <td className="py-1 px-1 sm:py-1.5 sm:px-2 text-slate-500 italic pl-2 sm:pl-4 print:pl-4">No income records</td>
+                      <td className="text-right py-1 px-1 sm:py-1.5 sm:px-2 text-slate-500">0.00</td>
                     </tr>
                   ) : (
                     data.incomes.map((inc, i) => (
                       <tr key={i}>
-                        <td className="py-1.5 px-2 text-slate-600 pl-4">{inc.label}</td>
-                        <td className="text-right py-1.5 px-2 text-slate-600">{Number(inc.amount).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                        <td className="py-1 px-1 sm:py-1.5 sm:px-2 text-slate-600 pl-2 sm:pl-4 print:pl-4 break-words">{inc.label}</td>
+                        <td className="text-right py-1 px-1 sm:py-1.5 sm:px-2 text-slate-600">{Number(inc.amount).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
                       </tr>
                     ))
                   )}
@@ -167,13 +167,13 @@ export default function LedgerPage() {
                     <td colSpan="2" className="border-t border-slate-200 py-1"></td>
                   </tr>
                   <tr className="font-bold">
-                    <td className="py-1.5 px-2 text-slate-800">Total Income</td>
-                    <td className="text-right py-1.5 px-2 text-slate-800">{Number(data.totalIncome).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                    <td className="py-1 px-1 sm:py-1.5 sm:px-2 text-slate-800">Total Income</td>
+                    <td className="text-right py-1 px-1 sm:py-1.5 sm:px-2 text-slate-800">{Number(data.totalIncome).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
                   </tr>
                 </tbody>
               </table>
 
-              <div className="mt-auto border-2 border-slate-800 flex justify-between p-2 font-black text-slate-900 bg-slate-50">
+              <div className="mt-auto border-2 border-slate-800 flex justify-between p-1.5 sm:p-2 font-black text-slate-900 bg-slate-50 text-[10px] sm:text-xs md:text-sm print:text-sm">
                 <span>Total Balance</span>
                 <span>{Number(data.openingBalance + data.totalIncome).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
               </div>
@@ -181,29 +181,29 @@ export default function LedgerPage() {
 
             {/* Right Column: Cash-out Flow */}
             <div className="flex flex-col">
-              <h2 className="text-center font-bold text-slate-800 mb-3 border-b-2 border-slate-800 pb-2">Cash-out Flow (Expenses)</h2>
+              <h2 className="text-center font-bold text-slate-800 mb-2 sm:mb-3 border-b-2 border-slate-800 pb-1 sm:pb-2 text-xs sm:text-base print:text-base">Cash-out Flow (Expenses)</h2>
               
-              <table className="w-full text-sm border-collapse">
+              <table className="w-full text-[10px] sm:text-xs md:text-sm border-collapse print:text-sm">
                 <thead>
                   <tr className="bg-slate-200">
-                    <th className="text-left py-1.5 px-2 font-bold text-slate-700 border-b border-slate-300">GL Account Head</th>
-                    <th className="text-right py-1.5 px-2 font-bold text-slate-700 border-b border-slate-300 w-32">Amount</th>
+                    <th className="text-left py-1 px-1 sm:py-1.5 sm:px-2 font-bold text-slate-700 border-b border-slate-300">GL Account Head</th>
+                    <th className="text-right py-1 px-1 sm:py-1.5 sm:px-2 font-bold text-slate-700 border-b border-slate-300 w-auto sm:w-24 md:w-32 print:w-32">Amount</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr>
-                    <td colSpan="2" className="font-bold py-2 px-2 text-slate-800">Expense Description</td>
+                    <td colSpan="2" className="font-bold py-1.5 px-1 sm:py-2 sm:px-2 text-slate-800">Expense Description</td>
                   </tr>
                   {data.expenses.length === 0 ? (
                     <tr>
-                      <td className="py-1.5 px-2 text-slate-500 italic pl-4">No expense records</td>
-                      <td className="text-right py-1.5 px-2 text-slate-500">0.00</td>
+                      <td className="py-1 px-1 sm:py-1.5 sm:px-2 text-slate-500 italic pl-2 sm:pl-4 print:pl-4">No expense records</td>
+                      <td className="text-right py-1 px-1 sm:py-1.5 sm:px-2 text-slate-500">0.00</td>
                     </tr>
                   ) : (
                     data.expenses.map((exp, i) => (
                       <tr key={i}>
-                        <td className="py-1.5 px-2 text-slate-600 pl-4">{exp.label}</td>
-                        <td className="text-right py-1.5 px-2 text-slate-600">{Number(exp.amount).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                        <td className="py-1 px-1 sm:py-1.5 sm:px-2 text-slate-600 pl-2 sm:pl-4 print:pl-4 break-words">{exp.label}</td>
+                        <td className="text-right py-1 px-1 sm:py-1.5 sm:px-2 text-slate-600">{Number(exp.amount).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
                       </tr>
                     ))
                   )}
@@ -211,28 +211,28 @@ export default function LedgerPage() {
                     <td colSpan="2" className="border-t border-slate-200 py-1"></td>
                   </tr>
                   <tr className="font-bold">
-                    <td className="py-1.5 px-2 text-slate-800">Total Expenses</td>
-                    <td className="text-right py-1.5 px-2 text-slate-800">{Number(data.totalExpense).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                    <td className="py-1 px-1 sm:py-1.5 sm:px-2 text-slate-800">Total Expenses</td>
+                    <td className="text-right py-1 px-1 sm:py-1.5 sm:px-2 text-slate-800">{Number(data.totalExpense).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
                   </tr>
 
                   <tr>
-                    <td colSpan="2" className="font-bold py-2 px-2 pt-6 text-slate-800">Current Cash/Bank Balance</td>
+                    <td colSpan="2" className="font-bold py-1.5 px-1 sm:py-2 sm:px-2 pt-4 sm:pt-6 print:pt-6 text-slate-800">Current Cash/Bank Balance</td>
                   </tr>
                   <tr>
-                    <td className="py-1.5 px-2 text-slate-600 pl-4">Cash in Hand</td>
-                    <td className="text-right py-1.5 px-2 text-slate-600">{Number(data.closingBalance).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                    <td className="py-1 px-1 sm:py-1.5 sm:px-2 text-slate-600 pl-2 sm:pl-4 print:pl-4">Cash in Hand</td>
+                    <td className="text-right py-1 px-1 sm:py-1.5 sm:px-2 text-slate-600">{Number(data.closingBalance).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
                   </tr>
                   <tr>
                     <td colSpan="2" className="border-t border-slate-200 py-1"></td>
                   </tr>
                   <tr className="font-bold">
-                    <td className="py-1.5 px-2 text-slate-800">Total Cash/Bank Balance</td>
-                    <td className="text-right py-1.5 px-2 text-slate-800">{Number(data.closingBalance).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                    <td className="py-1 px-1 sm:py-1.5 sm:px-2 text-slate-800">Total Cash/Bank Balance</td>
+                    <td className="text-right py-1 px-1 sm:py-1.5 sm:px-2 text-slate-800">{Number(data.closingBalance).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
                   </tr>
                 </tbody>
               </table>
 
-              <div className="mt-auto border-2 border-slate-800 flex justify-between p-2 font-black text-slate-900 bg-slate-50">
+              <div className="mt-auto border-2 border-slate-800 flex justify-between p-1.5 sm:p-2 font-black text-slate-900 bg-slate-50 text-[10px] sm:text-xs md:text-sm print:text-sm">
                 <span>Total Balance</span>
                 <span>{Number(data.totalExpense + data.closingBalance).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
               </div>
