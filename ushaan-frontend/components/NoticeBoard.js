@@ -106,12 +106,14 @@ export default function NoticeBoard({ user }) {
   ];
 
   return (
-    <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5 shadow-xl">
+    <div className="bg-gradient-to-b from-slate-800/40 to-slate-900/60 backdrop-blur-md border border-white/10 shadow-2xl rounded-3xl p-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-base font-bold text-white flex items-center gap-2">
-          <span className="w-7 h-7 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-400 text-sm">
-            📢
+          <span className="w-7 h-7 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-400 shrink-0">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
+            </svg>
           </span>
           নোটিশ বোর্ড (Notice)
         </h2>
@@ -133,7 +135,7 @@ export default function NoticeBoard({ user }) {
       ) : notices.length === 0 ? (
         <div className="text-center py-8 text-slate-500 text-sm">কোনো নোটিশ নেই</div>
       ) : (
-        <div className="divide-y divide-white/5 max-h-[350px] overflow-y-auto pr-1">
+        <div className="space-y-2 max-h-[350px] overflow-y-auto pr-1">
           {(showAll ? notices : notices.slice(0, 5)).map((notice, index) => {
             const dateObj = new Date(notice.createdAt);
             const day = String(dateObj.getDate()).padStart(2, '0');
@@ -144,7 +146,7 @@ export default function NoticeBoard({ user }) {
               <div
                 key={notice.id}
                 onClick={() => handleNoticeClick(notice)}
-                className="flex items-center gap-3 py-3.5 hover:bg-white/5 transition-all cursor-pointer group"
+                className="flex items-center gap-3 p-3.5 bg-white/[0.02] hover:bg-white/[0.06] rounded-2xl border border-white/[0.02] hover:border-white/10 transition-all cursor-pointer group shadow-sm"
               >
                 {/* Date vertical badge */}
                 <div className={`flex flex-col items-center justify-center w-12 py-1.5 rounded-xl ${color.bg} shrink-0 text-center`}>
@@ -194,7 +196,7 @@ export default function NoticeBoard({ user }) {
                 e.stopPropagation();
                 setShowAll(!showAll);
               }}
-              className="w-full text-center text-xs text-amber-400 hover:text-amber-300 font-bold pt-3 mt-2 border-t border-white/5 cursor-pointer block"
+              className="w-full text-center text-xs text-amber-400 hover:text-amber-300 font-bold py-3 bg-white/[0.02] hover:bg-white/[0.05] rounded-xl border border-white/[0.02] hover:border-white/10 transition-all cursor-pointer block mt-4"
             >
               {showAll ? 'সংক্ষিপ্ত করুন' : `সব নোটিশ দেখুন (${notices.length})`}
             </button>
