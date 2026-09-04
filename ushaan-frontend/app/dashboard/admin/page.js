@@ -286,19 +286,28 @@ export default function AdminDashboard() {
 
         {/* Overall Status */}
         {overallStatus && (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-            {[
-              { label: 'হাতে আছে', value: `${Number(overallStatus.cashInHand).toFixed(0)} ৳`, color: 'text-emerald-400', bg: 'from-emerald-500/10 border-emerald-500/20', icon: '💵' },
-              { label: 'বিনিয়োগকৃত', value: `${Number(overallStatus.totalInvested).toFixed(0)} ৳`, color: 'text-blue-400', bg: 'from-blue-500/10 border-blue-500/20', icon: '📤' },
-              { label: 'নিট লাভ/ক্ষতি', value: `${Number(overallStatus.totalProfit).toFixed(0)} ৳`, color: Number(overallStatus.totalProfit) >= 0 ? 'text-purple-400' : 'text-red-400', bg: Number(overallStatus.totalProfit) >= 0 ? 'from-purple-500/10 border-purple-500/20' : 'from-red-500/10 border-red-500/20', icon: Number(overallStatus.totalProfit) >= 0 ? '📈' : '📉' },
-              { label: 'মোট সম্পদ', value: `${Number(overallStatus.totalAsset).toFixed(0)} ৳`, color: 'text-amber-400', bg: 'from-amber-500/10 border-amber-500/20', icon: '🏦' },
-            ].map((s, i) => (
-              <div key={i} className={`bg-gradient-to-br ${s.bg} border rounded-2xl p-4`}>
-                <div className="text-2xl mb-2">{s.icon}</div>
-                <p className={`text-xl sm:text-2xl font-black ${s.color}`}>{s.value}</p>
-                <p className="text-xs text-slate-400 mt-1">{s.label}</p>
-              </div>
-            ))}
+          <div className="mb-6 bg-gradient-to-br from-amber-500/10 to-orange-500/5 border border-amber-500/20 rounded-2xl p-5">
+            <h2 className="text-base font-bold text-white mb-4 flex items-center gap-2">
+              <span className="w-7 h-7 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-400 text-sm">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+              </span>
+              সামগ্রিক ফান্ড অবস্থা
+            </h2>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {[
+                { label: 'হাতে আছে', value: `${Number(overallStatus.cashInHand).toFixed(0)} ৳`, color: 'text-emerald-400', bg: 'bg-emerald-500/5 border-emerald-500/10' },
+                { label: 'বিনিয়োগকৃত', value: `${Number(overallStatus.totalInvested).toFixed(0)} ৳`, color: 'text-blue-400', bg: 'bg-blue-500/5 border-blue-500/10' },
+                { label: 'নিট লাভ/ক্ষতি', value: `${Number(overallStatus.totalProfit).toFixed(0)} ৳`, color: Number(overallStatus.totalProfit) >= 0 ? 'text-purple-400' : 'text-red-400', bg: Number(overallStatus.totalProfit) >= 0 ? 'bg-purple-500/5 border-purple-500/10' : 'bg-red-500/5 border-red-500/10' },
+                { label: 'মোট সম্পদ', value: `${Number(overallStatus.totalAsset).toFixed(0)} ৳`, color: 'text-amber-400', bg: 'bg-amber-500/5 border-amber-500/10' },
+              ].map((item, i) => (
+                <div key={i} className={`flex flex-col items-center justify-center p-4 rounded-xl border ${item.bg}`}>
+                  <span className={`text-lg sm:text-xl font-black ${item.color}`}>{item.value}</span>
+                  <span className="text-xs text-slate-400 mt-1">{item.label}</span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
