@@ -256,6 +256,10 @@ export default  function AccountantDashboard() {
   const [loadingBills, setLoadingBills] = useState(false);
   const [showBillDropdown, setShowBillDropdown] = useState(false);
 
+  // Modal states for Projects tab
+  const [isCreateProjectOpen, setIsCreateProjectOpen] = useState(false);
+  const [isAddTransactionOpen, setIsAddTransactionOpen] = useState(false);
+
   useEffect(() => {
     if (!manualPayment.userId) {
       setManualBills({ dues: [], fines: [], advances: [] });
@@ -485,6 +489,7 @@ const handleCreateProject = async (e) => {
     });
     showToast('প্রজেক্ট তৈরি হয়েছে!');
     setProjectForm({ name: '', description: '', openingInvested: '', startDate: '', endDate: '' });
+    setIsCreateProjectOpen(false);
     fetchAll();
   } catch (err) {
     showToast(err.response?.data?.message || 'ব্যর্থ হয়েছে', false);
@@ -528,6 +533,7 @@ const handleToggleProjectStatus = async (project) => {
       });
       showToast("লেনদেন যোগ হয়েছে!");
       setTransactionForm((f) => ({ ...f, amount: "", description: "" }));
+      setIsAddTransactionOpen(false);
       fetchAll();
     } catch (err) {
       showToast(err.response?.data?.message || "ব্যর্থ হয়েছে", false);
@@ -1166,218 +1172,80 @@ const handleToggleProjectStatus = async (project) => {
 
         {/* ── Projects Tab ── */}
         {tab === "projects" && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
-            {/* Create Project Form */}
-            <div className="lg:col-span-1 bg-gradient-to-b from-slate-800/40 to-slate-900/60 backdrop-blur-md border border-white/10 shadow-2xl rounded-3xl p-6 h-fit">
-              <h2 className="text-base font-bold text-white mb-4">নতুন প্রজেক্ট</h2>
-              <form onSubmit={handleCreateProject} className="space-y-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-400 mb-1.5">প্রজেক্টের নাম</label>
-                  <input type="text" value={projectForm.name} onChange={e => setProjectForm(f => ({ ...f, name: e.target.value }))}
-                    placeholder="যেমন: রাতুল ইনভেস্টমেন্ট" required
-                    className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-amber-400/50 transition-all" />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-400 mb-1.5">বিবরণ</label>
-                  <textarea value={projectForm.description} onChange={e => setProjectForm(f => ({ ...f, description: e.target.value }))}
-                    placeholder="প্রজেক্টের বিবরণ" rows={2}
-                    className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-amber-400/50 transition-all resize-none" />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-400 mb-1.5">শুরুর তারিখ</label>
-                    <input type="date" value={projectForm.startDate} onChange={e => setProjectForm(f => ({ ...f, startDate: e.target.value }))}
-                      className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-amber-400/50 transition-all" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-400 mb-1.5">শেষের তারিখ</label>
-                    <input type="date" value={projectForm.endDate} onChange={e => setProjectForm(f => ({ ...f, endDate: e.target.value }))}
-                      className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-amber-400/50 transition-all" />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-400 mb-1.5">পুরনো বিনিয়োগ (৳)</label>
-                  <input type="number" value={projectForm.openingInvested} onChange={e => setProjectForm(f => ({ ...f, openingInvested: e.target.value }))}
-                    placeholder="আগে থেকে যা invest আছে (না থাকলে 0)"
-                    className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-amber-400/50 transition-all" />
-                  <p className="text-xs text-slate-500 mt-1">ওয়েবসাইটের আগে যদি এই project এ invest করা থাকে</p>
-                </div>
-                <button type="submit" disabled={submitting}
-                  className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white font-bold rounded-xl transition-all disabled:opacity-60">
-                  {submitting && <span className="loading loading-spinner loading-xs" />}
-                  প্রজেক্ট তৈরি করুন
-                </button>
-              </form>
-            </div>
-
-            {/* Add Transaction */}
-            <div className="lg:col-span-1 bg-gradient-to-b from-slate-800/40 to-slate-900/60 backdrop-blur-md border border-white/10 shadow-2xl rounded-3xl p-6 h-fit">
-              <h2 className="text-base font-bold text-white mb-4">
-                লেনদেন যোগ করুন
-              </h2>
-              <form onSubmit={handleAddTransaction} className="space-y-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-400 mb-1.5">
-                    প্রজেক্ট
-                  </label>
-                  <select
-                    value={transactionForm.projectId}
-                    onChange={(e) =>
-                      setTransactionForm((f) => ({
-                        ...f,
-                        projectId: e.target.value,
-                      }))
-                    }
-                    required
-                    className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-amber-400/50 transition-all"
-                  >
-                    <option value="">প্রজেক্ট নির্বাচন করুন</option>
-                    {projects.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-400 mb-1.5">
-                    লেনদেনের ধরন
-                  </label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {[
-                      { value: "expense", label: "ব্যয়" },
-                      { value: "profit", label: "মুনাফা" },
-                      { value: "capital_return", label: "রিটার্ন" },
-                    ].map((type) => (
-                      <button
-                        key={type.value}
-                        type="button"
-                        onClick={() =>
-                          setTransactionForm((f) => ({
-                            ...f,
-                            type: type.value,
-                          }))
-                        }
-                        className={`inline-flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-semibold transition-all border ${transactionForm.type === type.value ? "bg-amber-500 text-white border-amber-500 shadow-lg shadow-amber-500/20" : "bg-slate-800 border-white/5 text-slate-454 hover:bg-slate-700 hover:text-white"}`}
-                      >
-                        {getTransactionTypeIcon(type.value, `w-3.5 h-3.5 ${transactionForm.type === type.value ? 'text-white' : 'text-slate-455'}`)}
-                        <span>{type.label}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-400 mb-1.5">
-                      পরিমাণ (৳)
-                    </label>
-                    <input
-                      type="number"
-                      value={transactionForm.amount}
-                      onChange={(e) =>
-                        setTransactionForm((f) => ({
-                          ...f,
-                          amount: e.target.value,
-                        }))
-                      }
-                      placeholder="0"
-                      required
-                      className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-amber-400/50 transition-all"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-400 mb-1.5">
-                      তারিখ
-                    </label>
-                    <input
-                      type="date"
-                      value={transactionForm.date}
-                      onChange={(e) =>
-                        setTransactionForm((f) => ({
-                          ...f,
-                          date: e.target.value,
-                        }))
-                      }
-                      className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-amber-400/50 transition-all"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-400 mb-1.5">
-                    বিবরণ
-                  </label>
-                  <input
-                    type="text"
-                    value={transactionForm.description}
-                    onChange={(e) =>
-                      setTransactionForm((f) => ({
-                        ...f,
-                        description: e.target.value,
-                      }))
-                    }
-                    placeholder="লেনদেনের বিবরণ"
-                    className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-amber-400/50 transition-all"
-                  />
-                </div>
+          <div className="space-y-6 mt-6">
+            {/* Top Action Bar */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-gradient-to-b from-slate-800/40 to-slate-900/60 backdrop-blur-md border border-white/10 rounded-3xl p-6 shadow-2xl">
+              <div>
+                <h2 className="text-xl font-black text-white">প্রজেক্টসমূহ ({projects.length})</h2>
+                <p className="text-xs text-slate-400 mt-1">সব প্রজেক্টের লিস্ট এবং লেনদেন</p>
+              </div>
+              <div className="flex flex-wrap items-center justify-center sm:justify-end gap-3 w-full sm:w-auto">
                 <button
-                  type="submit"
-                  disabled={submitting}
-                  className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white font-bold rounded-xl transition-all disabled:opacity-60"
+                  onClick={() => setIsCreateProjectOpen(true)}
+                  className="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-xl transition-all shadow-lg shadow-amber-500/25 flex items-center gap-2"
                 >
-                  {submitting && (
-                    <span className="loading loading-spinner loading-xs" />
-                  )}
-                  লেনদেন যোগ করুন
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                  </svg>
+                  নতুন প্রজেক্ট
                 </button>
-              </form>
+                <button
+                  onClick={() => setIsAddTransactionOpen(true)}
+                  className="px-4 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold rounded-xl transition-all shadow-lg shadow-emerald-500/25 flex items-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                  লেনদেন যোগ
+                </button>
+              </div>
             </div>
 
             {/* Projects List */}
-            <div className="lg:col-span-1 space-y-4">
-              <h2 className="text-base font-bold text-white">সব প্রজেক্ট ({projects.length})</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
               {projects.length === 0 ? (
-                <p className="text-center text-slate-500 py-12 bg-white/[0.02] border border-white/[0.05] rounded-2xl">কোনো প্রজেক্ট নেই</p>
+                <div className="col-span-full text-center text-slate-500 py-12 bg-white/[0.02] border border-white/[0.05] rounded-3xl">কোনো প্রজেক্ট নেই</div>
               ) : projects.map(project => (
-                <div key={project.id} className="bg-white/[0.02] hover:bg-white/[0.06] border border-white/[0.05] hover:border-white/10 rounded-2xl p-5 transition-all shadow-sm group">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-                    <Link href={`/projects/${project.id}`} className="group flex-1">
-                      <h3 className="text-base font-bold text-white group-hover:text-amber-400 transition-colors flex items-center gap-1.5">
+                <div key={project.id} className="bg-white/[0.02] hover:bg-white/[0.06] border border-white/[0.05] hover:border-white/10 rounded-3xl p-5 transition-all shadow-sm group">
+                  <div className="flex flex-col mb-4">
+                    <Link href={`/projects/${project.id}`} className="group mb-3">
+                      <h3 className="text-lg font-black text-white group-hover:text-amber-400 transition-colors flex items-center gap-1.5">
                         {project.name}
                         <span className="text-xs font-normal text-amber-500/80 group-hover:text-amber-400">→</span>
                       </h3>
-                      {project.description && <p className="text-xs text-slate-400 mt-0.5">{project.description}</p>}
+                      {project.description && <p className="text-xs text-slate-400 mt-1">{project.description}</p>}
                     </Link>
-                    <div className="flex items-center gap-2 self-start sm:self-center shrink-0">
+                    <div className="flex flex-wrap items-center gap-2 mt-auto">
                       {project.status === 'active' ? (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-lg border bg-emerald-500/10 text-emerald-400 border-emerald-500/20 shrink-0">
+                        <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-1 rounded-lg border bg-emerald-500/10 text-emerald-400 border-emerald-500/20 shrink-0">
                           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                           সক্রিয়
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-lg border bg-slate-800 text-slate-400 border-white/5 shrink-0">
+                        <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-1 rounded-lg border bg-slate-800 text-slate-400 border-white/5 shrink-0">
                           সম্পন্ন
                         </span>
                       )}
                       <button
                         onClick={() => handleToggleProjectStatus(project)}
-                        className={`inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-lg border transition-all cursor-pointer ${
+                        className={`inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-lg border transition-all cursor-pointer shrink-0 ${
                           project.status === 'active'
                             ? 'bg-slate-800 text-slate-300 border-white/5 hover:bg-amber-500/10 hover:text-amber-400 hover:border-amber-500/20'
                             : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500 hover:text-white'
                         }`}
                       >
-                        {project.status === 'active' ? "সম্পন্ন" : "সক্রিয়"}
+                        {project.status === 'active' ? "সম্পন্ন করুন" : "সক্রিয় করুন"}
                       </button>
                       <button
                         onClick={() => handleDeleteProject(project.id)}
-                        className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-lg bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500 hover:text-white transition-all cursor-pointer"
+                        className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-lg bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500 hover:text-white transition-all cursor-pointer shrink-0 ml-auto"
                       >
                         ডিলিট
                       </button>
                     </div>
                   </div>
                   {project.summary && (
-                    <Link href={`/projects/${project.id}`} className="grid grid-cols-2 gap-2 mb-3 block hover:opacity-90 transition-opacity">
+                    <Link href={`/projects/${project.id}`} className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-1 block hover:opacity-90 transition-opacity">
                       {[
                         { label: 'বিনিয়োগ', value: `${Number(project.totalInvested || 0).toFixed(0)} ৳`, color: 'text-red-400' },
                         { label: 'মুনাফা', value: `${Number(project.summary.totalProfit).toFixed(0)} ৳`, color: 'text-emerald-400' },
@@ -1394,6 +1262,151 @@ const handleToggleProjectStatus = async (project) => {
                 </div>
               ))}
             </div>
+
+            {/* Create Project Modal */}
+            {isCreateProjectOpen && (
+              <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={() => setIsCreateProjectOpen(false)}></div>
+                <div className="relative w-full max-w-md bg-gradient-to-b from-slate-800 to-slate-900 border border-white/10 shadow-2xl rounded-3xl p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-lg font-black text-white">নতুন প্রজেক্ট তৈরি</h2>
+                    <button onClick={() => setIsCreateProjectOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors">
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                  <form onSubmit={handleCreateProject} className="space-y-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-400 mb-1.5">প্রজেক্টের নাম</label>
+                      <input type="text" value={projectForm.name} onChange={e => setProjectForm(f => ({ ...f, name: e.target.value }))}
+                        placeholder="যেমন: রাতুল ইনভেস্টমেন্ট" required
+                        className="w-full px-4 py-3 bg-white/[0.02] hover:bg-white/[0.04] border border-white/10 rounded-2xl text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-amber-400/50 transition-all" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-400 mb-1.5">বিবরণ</label>
+                      <textarea value={projectForm.description} onChange={e => setProjectForm(f => ({ ...f, description: e.target.value }))}
+                        placeholder="প্রজেক্টের বিবরণ" rows={2}
+                        className="w-full px-4 py-3 bg-white/[0.02] hover:bg-white/[0.04] border border-white/10 rounded-2xl text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-amber-400/50 transition-all resize-none" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-400 mb-1.5">শুরুর তারিখ</label>
+                        <input type="date" value={projectForm.startDate} onChange={e => setProjectForm(f => ({ ...f, startDate: e.target.value }))}
+                          className="w-full px-4 py-3 bg-white/[0.02] hover:bg-white/[0.04] border border-white/10 rounded-2xl text-white text-sm focus:outline-none focus:border-amber-400/50 transition-all" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-400 mb-1.5">শেষের তারিখ</label>
+                        <input type="date" value={projectForm.endDate} onChange={e => setProjectForm(f => ({ ...f, endDate: e.target.value }))}
+                          className="w-full px-4 py-3 bg-white/[0.02] hover:bg-white/[0.04] border border-white/10 rounded-2xl text-white text-sm focus:outline-none focus:border-amber-400/50 transition-all" />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-400 mb-1.5">পুরনো বিনিয়োগ (৳)</label>
+                      <input type="number" value={projectForm.openingInvested} onChange={e => setProjectForm(f => ({ ...f, openingInvested: e.target.value }))}
+                        placeholder="আগে থেকে যা invest আছে (না থাকলে 0)"
+                        className="w-full px-4 py-3 bg-white/[0.02] hover:bg-white/[0.04] border border-white/10 rounded-2xl text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-amber-400/50 transition-all" />
+                    </div>
+                    <button type="submit" disabled={submitting}
+                      className="w-full flex items-center justify-center gap-2 py-3.5 bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white font-black rounded-2xl transition-all disabled:opacity-60 mt-2">
+                      {submitting && <span className="loading loading-spinner loading-xs" />}
+                      প্রজেক্ট তৈরি করুন
+                    </button>
+                  </form>
+                </div>
+              </div>
+            )}
+
+            {/* Add Transaction Modal */}
+            {isAddTransactionOpen && (
+              <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={() => setIsAddTransactionOpen(false)}></div>
+                <div className="relative w-full max-w-md bg-gradient-to-b from-slate-800 to-slate-900 border border-white/10 shadow-2xl rounded-3xl p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-lg font-black text-white">নতুন লেনদেন যোগ</h2>
+                    <button onClick={() => setIsAddTransactionOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors">
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                  <form onSubmit={handleAddTransaction} className="space-y-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-400 mb-1.5">প্রজেক্ট</label>
+                      <select
+                        value={transactionForm.projectId}
+                        onChange={(e) => setTransactionForm((f) => ({ ...f, projectId: e.target.value }))}
+                        required
+                        className="w-full px-4 py-3 bg-white/[0.02] hover:bg-white/[0.04] border border-white/10 rounded-2xl text-white text-sm focus:outline-none focus:border-emerald-400/50 transition-all"
+                      >
+                        <option value="" className="bg-slate-800">প্রজেক্ট নির্বাচন করুন</option>
+                        {projects.map((p) => (
+                          <option key={p.id} value={p.id} className="bg-slate-800">{p.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-400 mb-1.5">লেনদেনের ধরন</label>
+                      <div className="grid grid-cols-3 gap-2">
+                        {[
+                          { value: "expense", label: "ব্যয়" },
+                          { value: "profit", label: "মুনাফা" },
+                          { value: "capital_return", label: "রিটার্ন" },
+                        ].map((type) => (
+                          <button
+                            key={type.value}
+                            type="button"
+                            onClick={() => setTransactionForm((f) => ({ ...f, type: type.value }))}
+                            className={`inline-flex items-center justify-center gap-1.5 py-3 rounded-xl text-xs font-bold transition-all border ${transactionForm.type === type.value ? "bg-emerald-500 text-white border-emerald-500 shadow-lg shadow-emerald-500/20" : "bg-white/[0.02] border-white/5 text-slate-400 hover:bg-white/[0.06] hover:text-white"}`}
+                          >
+                            <span>{type.label}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-400 mb-1.5">পরিমাণ (৳)</label>
+                        <input
+                          type="number"
+                          value={transactionForm.amount}
+                          onChange={(e) => setTransactionForm((f) => ({ ...f, amount: e.target.value }))}
+                          placeholder="0" required
+                          className="w-full px-4 py-3 bg-white/[0.02] hover:bg-white/[0.04] border border-white/10 rounded-2xl text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-emerald-400/50 transition-all"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-400 mb-1.5">তারিখ</label>
+                        <input
+                          type="date"
+                          value={transactionForm.date}
+                          onChange={(e) => setTransactionForm((f) => ({ ...f, date: e.target.value }))}
+                          className="w-full px-4 py-3 bg-white/[0.02] hover:bg-white/[0.04] border border-white/10 rounded-2xl text-white text-sm focus:outline-none focus:border-emerald-400/50 transition-all"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-400 mb-1.5">বিবরণ</label>
+                      <input
+                        type="text"
+                        value={transactionForm.description}
+                        onChange={(e) => setTransactionForm((f) => ({ ...f, description: e.target.value }))}
+                        placeholder="লেনদেনের বিবরণ"
+                        className="w-full px-4 py-3 bg-white/[0.02] hover:bg-white/[0.04] border border-white/10 rounded-2xl text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-emerald-400/50 transition-all"
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={submitting}
+                      className="w-full flex items-center justify-center gap-2 py-3.5 bg-gradient-to-r from-emerald-400 to-teal-500 hover:from-emerald-500 hover:to-teal-600 text-white font-black rounded-2xl transition-all disabled:opacity-60 mt-2"
+                    >
+                      {submitting && <span className="loading loading-spinner loading-xs" />}
+                      লেনদেন যোগ করুন
+                    </button>
+                  </form>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
