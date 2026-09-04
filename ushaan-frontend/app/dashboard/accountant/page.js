@@ -691,7 +691,7 @@ const handleToggleProjectStatus = async (project) => {
             ].map((s, i) => (
               <div
                 key={i}
-                className={`bg-gradient-to-br ${s.bg} border rounded-2xl p-4`}
+                className={`bg-gradient-to-b ${s.bg} border backdrop-blur-md shadow-2xl rounded-3xl p-6`}
               >
                 <p className={`text-xl font-black ${s.color}`}>{s.value}</p>
                 <p className="text-xs text-slate-400 mt-1">{s.label}</p>
@@ -705,7 +705,7 @@ const handleToggleProjectStatus = async (project) => {
           {/* Left Column - Tabs and Tab Content */}
           <div className="lg:col-span-2 space-y-6">
             {/* Tabs */}
-            <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 bg-slate-900/50 border border-white/5 p-1.5 rounded-2xl">
+            <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 bg-gradient-to-b from-slate-800/40 to-slate-900/60 backdrop-blur-md border border-white/10 p-2 rounded-3xl shadow-2xl">
           {TABS.map((t) => {
             const isActive = tab === t.key;
             return (
@@ -1168,7 +1168,7 @@ const handleToggleProjectStatus = async (project) => {
         {tab === "projects" && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
             {/* Create Project Form */}
-            <div className="lg:col-span-1 bg-slate-900/50 border border-white/5 rounded-2xl p-5 h-fit">
+            <div className="lg:col-span-1 bg-gradient-to-b from-slate-800/40 to-slate-900/60 backdrop-blur-md border border-white/10 shadow-2xl rounded-3xl p-6 h-fit">
               <h2 className="text-base font-bold text-white mb-4">নতুন প্রজেক্ট</h2>
               <form onSubmit={handleCreateProject} className="space-y-3">
                 <div>
@@ -1211,7 +1211,7 @@ const handleToggleProjectStatus = async (project) => {
             </div>
 
             {/* Add Transaction */}
-            <div className="lg:col-span-1 bg-slate-900/50 border border-white/5 rounded-2xl p-5 h-fit">
+            <div className="lg:col-span-1 bg-gradient-to-b from-slate-800/40 to-slate-900/60 backdrop-blur-md border border-white/10 shadow-2xl rounded-3xl p-6 h-fit">
               <h2 className="text-base font-bold text-white mb-4">
                 লেনদেন যোগ করুন
               </h2>
@@ -1336,9 +1336,9 @@ const handleToggleProjectStatus = async (project) => {
             <div className="lg:col-span-1 space-y-4">
               <h2 className="text-base font-bold text-white">সব প্রজেক্ট ({projects.length})</h2>
               {projects.length === 0 ? (
-                <p className="text-center text-slate-500 py-12 bg-slate-900/50 border border-white/5 rounded-2xl">কোনো প্রজেক্ট নেই</p>
+                <p className="text-center text-slate-500 py-12 bg-white/[0.02] border border-white/[0.05] rounded-2xl">কোনো প্রজেক্ট নেই</p>
               ) : projects.map(project => (
-                <div key={project.id} className="bg-slate-900/50 border border-white/5 rounded-2xl p-5 hover:border-white/10 transition-all">
+                <div key={project.id} className="bg-white/[0.02] hover:bg-white/[0.06] border border-white/[0.05] hover:border-white/10 rounded-2xl p-5 transition-all shadow-sm group">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
                     <Link href={`/projects/${project.id}`} className="group flex-1">
                       <h3 className="text-base font-bold text-white group-hover:text-amber-400 transition-colors flex items-center gap-1.5">
@@ -2072,7 +2072,7 @@ const handleToggleProjectStatus = async (project) => {
           {/* Right Column - Notice Board */}
           <div className="lg:col-span-1 space-y-6">
             {/* সদস্যদের বকেয়া তালিকা */}
-            <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5">
+            <div className="bg-gradient-to-b from-slate-800/40 to-slate-900/60 backdrop-blur-md border border-white/10 shadow-2xl rounded-3xl p-6">
               <h2 className="text-base font-bold text-white mb-4 flex items-center gap-2">
                 <span className="w-7 h-7 rounded-lg bg-red-500/10 flex items-center justify-center text-red-400 text-sm">
                   ⚠️
@@ -2084,7 +2084,7 @@ const handleToggleProjectStatus = async (project) => {
                   .filter(u => u.isApproved && u.dueAmount > 0)
                   .sort((a, b) => b.dueAmount - a.dueAmount)
                   .map(u => (
-                    <div key={u.id} className="flex items-center justify-between p-3 bg-slate-800/30 rounded-xl border border-white/5">
+                    <div key={u.id} className="flex items-center justify-between p-3.5 bg-white/[0.02] hover:bg-white/[0.06] rounded-2xl border border-white/[0.02] hover:border-white/10 transition-all shadow-sm">
                       <div className="flex items-center gap-2">
                         <div className="w-6 h-6 rounded-md bg-rose-500/10 flex items-center justify-center text-rose-400 text-xs font-bold shrink-0">
                           {u.name ? u.name[0] : '👥'}
